@@ -1,2 +1,2 @@
 # GenReal.ai
-All AI  mdoels only
+Frontend
