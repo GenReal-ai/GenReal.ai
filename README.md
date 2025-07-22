@@ -1,2 +1,2 @@
 # GenReal.ai
-All codes
+All AI  mdoels only
