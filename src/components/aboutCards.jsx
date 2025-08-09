@@ -2,27 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Shield, FileSearch } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * A component that displays two interactive, flippable cards for different services.
+ * This version has been updated for full responsiveness and to fix 3D transform issues.
+ */
 const DeepfakeDetectionPlatform = () => {
+  // State to track which cards are flipped. Using a Set is efficient.
   const [flippedCards, setFlippedCards] = useState(new Set());
+  // State to manage the initial fade-in animation.
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
 
-  const width = window.innerWidth;
-
-  let minHeight;
-
-  if (width < 640) { // sm
-    minHeight = '110vh';
-  } else if (width < 768) { // md
-    minHeight = '50vh';
-  } else { // lg and up
-    minHeight = '70vh';
-  }
-
+  // Trigger the fade-in animation once the component mounts.
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
+  // Toggles the flipped state of a specific card by its index.
   const toggleCard = (index) => {
     setFlippedCards(prev => {
       const newSet = new Set(prev);
@@ -75,46 +71,46 @@ const DeepfakeDetectionPlatform = () => {
   ];
 
   return (
-    <div className="relative min-h-[90vh] py-12 overflow-hidden bg-black transition-colors duration-1000" >
+    <div className="relative min-h-screen py-16 sm:py-24 bg-black overflow-hidden" id="products">
       {/* Header */}
-      <div className={`relative z-20 pt-8 pb-12 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <div className={`relative z-20 pt-8 pb-12 sm:pb-16 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-6xl font-bold text-white mb-8 leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             <span className="block">
               <span className="text-cyan-400">Deepfake Detection</span>
               {' '} & {' '}
               <span className="text-cyan-400">AI Plagiarism Prevention</span>
             </span>
           </h1>
-          <p id="products" className="text-xl sm:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
             Cutting-edge AI tools to identify manipulated media and detect AI-generated content — built for trust, transparency, and digital integrity.
           </p>
         </div>
       </div>
 
       {/* Services Grid */}
-      <div  className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div  className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {services.map((service, index) => {
             const Icon = service.icon;
             const isFlipped = flippedCards.has(index);
 
             return (
+              // The card scene container. Sets up the 3D perspective.
               <div
                 key={index}
-                className={`group relative cursor-pointer ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                style={{ 
-                  transitionDelay: `${index * 300}ms`,
-                  height:`${minHeight}`,
-                  perspective: '1200px',  
-                }}
+                className={`group cursor-pointer transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} [perspective:1200px]`}
+                style={{ transitionDelay: `${index * 200}ms` }}
                 onClick={() => toggleCard(index)}
               >
-                <div className={`relative w-full h-full transition-transform duration-1000 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                {/* This container handles the actual 3D flip animation. */}
+                <div 
+                  className={`relative w-full h-[100vh] sm:h-[90vh] md:h-[85vh] lg:h-[75vh] transition-transform duration-1000 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
+                >
                   
-                  {/* Front Side - Product Focus */}
+                  {/* Front Side of the Card */}
                   <div 
-                    className="absolute inset-0 w-full h-full backface-hidden rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-700 hover:scale-[1.02] flex flex-col items-center justify-center overflow-hidden"
+                    className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-700 hover:scale-[1.02] flex flex-col items-center justify-center overflow-hidden [backface-visibility:hidden]"
                     style={{
                       backgroundImage: `url("${service.bgImage}")`,
                       backgroundSize: 'cover',
@@ -122,98 +118,80 @@ const DeepfakeDetectionPlatform = () => {
                       backgroundBlendMode: 'overlay'
                     }}
                   >
-                    {/* Overlay gradient */}
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-800/50 to-slate-900/80" />
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/10 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                     
-                    <div className="relative z-10 text-center px-8">
-                      {/* Icon */}
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 flex items-center justify-center mb-8 mx-auto group-hover:scale-110 transition-transform duration-500 backdrop-blur-sm border border-cyan-400/20">
-                        <Icon className="w-12 h-12 text-cyan-400" />
+                    <div className="relative z-10 text-center px-6 sm:px-8">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 flex items-center justify-center mb-6 sm:mb-8 mx-auto group-hover:scale-110 transition-transform duration-500 backdrop-blur-sm border border-cyan-400/20">
+                        <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400" />
                       </div>
                       
-                      {/* Title */}
-                      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 mb-6 tracking-wide leading-tight">
+                      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 mb-4 sm:mb-6 tracking-wide leading-tight">
                         {service.bigTitle}
                       </h2>
                       
-                      {/* Subtitle */}
-                      <p className="text-lg text-gray-300 mb-8 max-w-md mx-auto leading-relaxed">
+                      <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed">
                         {service.subtitle}
                       </p>
                       
-                      {/* Call to action */}
                       <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl px-6 py-4 border border-cyan-500/20">
-                        <p className="text-cyan-300 text-sm font-medium uppercase tracking-widest mb-2">
-                          Click to Get Details
+                        <p className="text-cyan-300 text-sm font-medium uppercase tracking-widest">
+                          Click for Details
                         </p>
-                        <div className="flex justify-center">
-                          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
-                        </div>
                       </div>
                     </div>
 
-                    {/* Decorative elements */}
                     <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400 rounded-full opacity-60 animate-pulse"></div>
                     <div className="absolute bottom-6 left-6 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-40 animate-pulse" style={{animationDelay: '1s'}}></div>
                   </div>
 
-                  {/* Back Side - Detailed Information */}
-                  <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl bg-slate-900/70 backdrop-blur-xl border border-cyan-400/40 shadow-2xl shadow-cyan-500/10 p-8 flex flex-col justify-between overflow-hidden">
-                    {/* Background pattern */}
+                  {/* Back Side of the Card */}
+                  <div className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/70 backdrop-blur-xl border border-cyan-400/40 shadow-2xl shadow-cyan-500/10 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto [transform:rotateY(180deg)] [backface-visibility:hidden]">
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-slate-900/50 to-blue-500/5" />
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-400/20 to-transparent"></div>
-                    </div>
                     
-                    <div className="relative z-10 flex-1">
-                      {/* Header */}
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center backdrop-blur-sm border border-cyan-400/20">
-                          <Icon className="w-7 h-7 text-cyan-400" />
+                    <div className="relative z-10 flex-1 flex flex-col">
+                      <div className="flex items-center gap-4 mb-4 sm:mb-6">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center backdrop-blur-sm border border-cyan-400/20 flex-shrink-0">
+                          <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-cyan-400" />
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-white mb-1">{service.title}</h3>
+                          <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{service.title}</h3>
                           <p className="text-cyan-300 font-medium text-sm">{service.subtitle}</p>
                         </div>
                       </div>
 
-                      {/* Description */}
-                      <p className="text-gray-300 text-base mb-8 leading-relaxed">
+                      <p className="text-gray-300 text-sm sm:text-base mb-6 sm:mb-8 leading-relaxed">
                         {service.description}
                       </p>
 
-                      {/* Features */}
-                      <div className="space-y-3 mb-8">
-                        <h4 className="text-white font-semibold text-lg mb-4">Key Features:</h4>
+                      <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+                        <h4 className="text-white font-semibold text-base sm:text-lg mb-3 sm:mb-4">Key Features:</h4>
                         {service.features.map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-3 text-gray-300">
-                            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400" />
+                            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 flex-shrink-0" />
                             <span className="text-sm font-medium">{feature}</span>
                           </div>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="relative z-10">
-                      <button
-                        className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/40 text-white font-semibold text-lg hover:from-cyan-500/40 hover:to-blue-500/40 hover:border-cyan-300/60 transition-all duration-300 backdrop-blur-sm group/btn"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevents the card from flipping back
-                          navigate(service.path);
-                        }}
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          {service.buttonLabel}
-                          <span className="inline-block group-hover/btn:translate-x-1 transition-transform duration-300">→</span>
-                        </span>
-                      </button>
                       
-                      {/* Additional info */}
-                      <p className="text-center text-gray-400 text-xs mt-3 font-medium">
-                        Free trial available • No credit card required
-                      </p>
+                      <div className="mt-auto pt-4"> {/* Pushes the button to the bottom */}
+                        <button
+                          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/40 text-white font-semibold text-base sm:text-lg hover:from-cyan-500/40 hover:to-blue-500/40 hover:border-cyan-300/60 transition-all duration-300 backdrop-blur-sm group/btn"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevents the card from flipping back
+                            navigate(service.path);
+                          }}
+                        >
+                          <span className="flex items-center justify-center gap-2">
+                            {service.buttonLabel}
+                            <span className="inline-block group-hover/btn:translate-x-1 transition-transform duration-300">→</span>
+                          </span>
+                        </button>
+                        
+                        <p className="text-center text-gray-400 text-xs mt-3 font-medium">
+                          Free trial available • No credit card required
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -222,18 +200,6 @@ const DeepfakeDetectionPlatform = () => {
           })}
         </div>
       </div>
-
-      <style jsx>{`
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
     </div>
   );
 };

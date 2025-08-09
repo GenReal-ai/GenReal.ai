@@ -33,20 +33,20 @@ const easeInOutCubic = (x) =>
   x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
 const ProfileCardComponent = ({
-  avatarUrl = "<Placeholder for avatar URL>",
+  avatarUrl = "vishwajeet.jpg",
   iconUrl = "<Placeholder for icon URL>",
   grainUrl = "<Placeholder for grain URL>",
   behindGradient,
   innerGradient,
-  showBehindGradient = true,
+  showBehindGradient = false, // Changed to false to remove rainbow when not hovered
   className = "",
   enableTilt = true,
   miniAvatarUrl,
-  name = "Javi A. Torres",
-  title = "Software Engineer",
-  handle = "javicodes",
+  name = "John Smith",
+  title = "CEO, Founder",
+  handle = "johnsmith",
   status = "Online",
-  contactText = "Contact",
+  contactText = "LinkedIn Profile",
   showUserInfo = true,
   onContactClick,
 }) => {
@@ -158,6 +158,9 @@ const ProfileCardComponent = ({
     animationHandlers.cancelAnimation();
     wrap.classList.add("active");
     card.classList.add("active");
+    
+    // Enable rainbow gradient only on hover
+    wrap.style.setProperty('--show-rainbow', '1');
   }, [animationHandlers]);
 
   const handlePointerLeave = useCallback(
@@ -176,6 +179,9 @@ const ProfileCardComponent = ({
       );
       wrap.classList.remove("active");
       card.classList.remove("active");
+      
+      // Disable rainbow gradient when not hovering
+      wrap.style.setProperty('--show-rainbow', '0');
     },
     [animationHandlers]
   );
@@ -227,12 +233,11 @@ const ProfileCardComponent = ({
     ({
       "--icon": iconUrl ? `url(${iconUrl})` : "none",
       "--grain": grainUrl ? `url(${grainUrl})` : "none",
-      "--behind-gradient": showBehindGradient
-        ? (behindGradient ?? DEFAULT_BEHIND_GRADIENT)
-        : "none",
+      "--behind-gradient": behindGradient ?? DEFAULT_BEHIND_GRADIENT,
       "--inner-gradient": innerGradient ?? DEFAULT_INNER_GRADIENT,
+      "--show-rainbow": "0", // Default to no rainbow
     }),
-    [iconUrl, grainUrl, showBehindGradient, behindGradient, innerGradient]
+    [iconUrl, grainUrl, behindGradient, innerGradient]
   );
 
   const handleContactClick = useCallback(() => {
@@ -252,7 +257,7 @@ const ProfileCardComponent = ({
           <div className="pc-content pc-avatar-content">
             <img
               className="avatar"
-              src='vishwajeet.jpg'
+              src={avatarUrl}
               alt={`${name || "User"} avatar`}
               loading="lazy"
               onError={(e) => {
@@ -263,21 +268,8 @@ const ProfileCardComponent = ({
             {showUserInfo && (
               <div className="pc-user-info">
                 <div className="pc-user-details">
-                  <div className="pc-mini-avatar">
-                    <img
-                      src={miniAvatarUrl || avatarUrl}
-                      alt={`${name || "User"} mini avatar`}
-                      loading="lazy"
-                      onError={(e) => {
-                        const target = e.target;
-                        target.style.opacity = "0.5";
-                        target.src = avatarUrl;
-                      }}
-                    />
-                  </div>
-                  <div className="pc-user-text">
-                    <div className="pc-handle">@{handle}</div>
-                    <div className="pc-status">{status}</div>
+                  <div className="pc-user-name">
+                    <div className="pc-name">{name}</div>
                   </div>
                 </div>
                 <button
@@ -285,18 +277,12 @@ const ProfileCardComponent = ({
                   onClick={handleContactClick}
                   style={{ pointerEvents: "auto" }}
                   type="button"
-                  aria-label={`Contact ${name || "user"}`}
+                  aria-label={`Visit ${name || "user"}'s LinkedIn profile`}
                 >
                   {contactText}
                 </button>
               </div>
             )}
-          </div>
-          <div className="pc-content">
-            <div className="pc-details">
-              <h3>{name}</h3>
-              <p>{title}</p>
-            </div>
           </div>
         </div>
       </section>

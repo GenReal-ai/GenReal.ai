@@ -113,6 +113,7 @@ const NewsTimeline = () => {
     <section
       ref={sectionRef}
       className="relative z-0 w-full bg-black text-white overflow-hidden"
+      id="news"
     >
       {/* Header */}
       <div

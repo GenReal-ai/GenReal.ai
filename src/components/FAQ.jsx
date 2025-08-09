@@ -169,7 +169,7 @@ const DynamicFAQ = () => {
 
 
   return (
-    <div className="min-h-screen bg-black text-gray-200 relative overflow-hidden pt-30">
+    <div className="min-h-screen bg-black text-gray-200 relative overflow-hidden pt-30" id="faq">
       {/* Background effects */}
       <div className="absolute inset-0 z-0">
         <div

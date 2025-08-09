@@ -107,9 +107,9 @@ if (heroRef.current) {
       ease: "none", // Use "none" for a linear scrub
       scrollTrigger: {
         trigger: heroRef.current,
-        start: "top 50%",   // When the top of the element is 80% down the viewport
-        end: "bottom 80%", // When the bottom of the element is 90% down the viewport
-        scrub: 1,           // KEY CHANGE: Links animation to scroll. The '1' adds a 1-second smoothing effect.
+        start: "top 50%",   
+        end: "top 20%", // When the bottom of the element is 90% down the viewport
+        scrub: 1.5,           // KEY CHANGE: Links animation to scroll. The '1' adds a 1-second smoothing effect.
         invalidateOnRefresh: true
       }
     }
@@ -121,7 +121,7 @@ if (heroRef.current) {
         scrollTrigger: {
           trigger: deepfakeRef.current,
           start: "top 90%",
-          end: "bottom 70%",
+          end: "top 20%",
           scrub: 1.3,
         }
       });
@@ -134,7 +134,7 @@ if (heroRef.current) {
         scrollTrigger: {
           trigger: plagiarismRef.current,
           start: "top 90%",
-          end: "bottom 90%",
+          end: "top 20%",
           scrub: 1.5,
         }
       });

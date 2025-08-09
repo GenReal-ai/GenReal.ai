@@ -18,18 +18,13 @@ const throttle = (func, limit) => {
   }
 };
 
-const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
+const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const [activeSection, setActiveSection] = useState('');
   const statsRef = useRef(null);
   const heroRef = useRef(null);
   const [isHeroInView, setIsHeroInView] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [animateScroll, setAnimateScroll] = useState(false);
-
-  // --- FIX: `useRef` is moved to the top level, outside of other hooks ---
-  const lastScrollPos = useRef(0);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -55,34 +50,15 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Close mobile menu on scroll
   useEffect(() => {
-    // The useRef hook is no longer inside here.
     const handleScroll = () => {
-      const currentScrollPos = window.scrollY;
-      setVisible(lastScrollPos.current > currentScrollPos || currentScrollPos < 10);
-      lastScrollPos.current = currentScrollPos;
       setIsMobileMenuOpen(false);
     };
 
     const throttledHandleScroll = throttle(handleScroll, 100);
     window.addEventListener('scroll', throttledHandleScroll);
     return () => window.removeEventListener('scroll', throttledHandleScroll);
-  }, []); // Note: dependency array is empty because lastScrollPos is a ref.
-
-  useEffect(() => {
-    const sections = ['home', 'about', 'news', 'faq', 'contact-us'];
-    const observers = sections.map(id => {
-      const section = document.getElementById(id);
-      if (!section) return null;
-      const observer = new IntersectionObserver(([entry]) => {
-        if (entry.isIntersecting) {
-          setActiveSection(id);
-        }
-      }, { threshold: 0.4 });
-      observer.observe(section);
-      return observer;
-    });
-    return () => observers.forEach(o => o?.disconnect());
   }, []);
 
   useEffect(() => {
@@ -106,15 +82,26 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
   const navLinks = [
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'About' },
+    { id: 'products', label: 'Products' },
     { id: 'news', label: 'News' },
     { id: 'faq', label: 'FAQ' },
     { id: 'contact-us', label: 'Contact Us' },
+    { id: 'team', label: 'Founders' },
   ];
 
+  // Updated getLinkClass to use the activeSection prop from App.js
   const getLinkClass = (id) =>
     activeSection === id
       ? 'text-white font-semibold border-b-2 border-white'
       : 'text-gray-300 hover:text-white';
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsMobileMenuOpen(false); // Close mobile menu after click
+  };
 
   return (
     <div className="relative h-screen bg-transparent text-white overflow-hidden" id="home" ref={heroRef}>
@@ -125,12 +112,14 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
         onModelLoaded={handleFaceModelLoaded}
       />
 
-      {/* The rest of the JSX is identical and does not need to be changed. */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/70 via-black/40 to-black z-20 pointer-events-none" />
 
-      <nav className={`w-full fixed top-0 z-50 transition-transform duration-300 bg-gradient-to-b from-black to-transparent ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
+      {/* Fixed Navbar - Always visible */}
+      <nav className="w-full fixed top-0 z-50 bg-gradient-to-b from-black to-transparent">
         <div className="flex justify-between items-center px-[4vw] py-4 w-full">
           <img src="/logoGenReal.png" alt="GenReal AI" className="h-[12vw] w-[12vw] sm:h-[8vw] sm:w-[8vw] md:h-[6.5vw] md:w-[6.5vw] lg:h-[6vw] lg:w-[6vw] xl:h-[5vw] xl:w-[5vw]" />
+          
+          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,26 +128,40 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
               </svg>
             </button>
           </div>
+          
+          {/* Desktop Navigation */}
           <ul className="hidden md:flex text-lg gap-[4vw] font-light">
             {navLinks.map(link => (
               <li key={link.id}>
-                <a href={`#${link.id}`} className={getLinkClass(link.id)}>{link.label}</a>
+                <button 
+                  onClick={() => scrollToSection(link.id)}
+                  className={`${getLinkClass(link.id)} transition-all duration-300 cursor-pointer`}
+                >
+                  {link.label}
+                </button>
               </li>
             ))}
           </ul>
         </div>
 
+        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <ul className="md:hidden px-[4vw] pb-4 space-y-2 bg-black/30 backdrop-blur-md z-40">
+          <ul className="md:hidden px-[4vw] pb-4 space-y-2 bg-black/80 backdrop-blur-md z-40">
             {navLinks.map(link => (
               <li key={link.id}>
-                <a href={`#${link.id}`} className={getLinkClass(link.id)}>{link.label}</a>
+                <button 
+                  onClick={() => scrollToSection(link.id)}
+                  className={`${getLinkClass(link.id)} w-full text-left py-2 transition-all duration-300`}
+                >
+                  {link.label}
+                </button>
               </li>
             ))}
           </ul>
         )}
       </nav>
 
+      {/* Hero Content */}
       <div className="absolute inset-0 z-30 pointer-events-none">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
           <h1 className="text-[clamp(3rem,12vw,8rem)] sm:text-[clamp(3.5rem,10vw,7rem)] md:text-[clamp(4rem,8vw,6rem)] lg:text-[clamp(4.5rem,7vw,5.5rem)] xl:text-[clamp(5rem,6vw,6rem)] leading-[0.9] font-bold whitespace-nowrap">
@@ -171,17 +174,17 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
             Discover the new age of security
           </p>
           <div className="relative pointer-events-auto">
-            <a href="#products">
-              <button 
-                className="get-started-btn mt-[clamp(1.5rem,3vw,2rem)] bg-orange-400 hover:bg-orange-500 text-white px-[clamp(1.5rem,2vw,2rem)] py-[clamp(0.75rem,1vw,1rem)] rounded-full text-[clamp(0.875rem,1vw,1rem)] font-semibold transition duration-300 transform hover:scale-105"
-              >
-                Get Started →
-              </button>
-            </a>
+            <button 
+              onClick={() => scrollToSection('products')}
+              className="get-started-btn mt-[clamp(1.5rem,3vw,2rem)] bg-orange-400 hover:bg-orange-500 text-white px-[clamp(1.5rem,2vw,2rem)] py-[clamp(0.75rem,1vw,1rem)] rounded-full text-[clamp(0.875rem,1vw,1rem)] font-semibold transition duration-300 transform hover:scale-105"
+            >
+              Get Started →
+            </button>
           </div>
         </div>
       </div>
       
+      {/* Stats Section */}
       <div
         ref={statsRef}
         className="absolute opacity-0 w-full bottom-0 z-40 flex flex-col md:flex-row justify-around items-center px-8 py-4 space-y-6 md:space-y-0 pointer-events-auto"
@@ -190,7 +193,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
           <h2 className="text-cyan-400 text-4xl font-bold">80%</h2>
           <p className="text-gray-400 mt-2 text-sm max-w-xs">of companies lack protocols to handle deepfake attacks</p>
         </div>
-        <div className=' translate-y-6 h-[4vw] hidden md:flex justify-center items-center flex-col'>
+        <div className='translate-y-6 h-[4vw] hidden md:flex justify-center items-center flex-col'>
           <p className={`relative transition-all text-white/60 duration-1000 ease-out ${animateScroll ? 'top-0' : 'top-[20px]'}`}>Scroll Down</p>
           <div className='w-full -mt-1 z-[99] h-[2vw] bg-black'></div>
         </div>
