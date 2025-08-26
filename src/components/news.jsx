@@ -133,9 +133,61 @@ const NewsTimeline = () => {
       </div>
 
       {isMobile ? (
-        <div className="flex flex-col items-center px-4 pt-8 pb-16 space-y-6">
-          {/* ... mobile JSX ... */}
-        </div>
+        <div className="relative w-full flex flex-col items-center px-4 pt-8 pb-16">
+    {/* Card */}
+    <div
+      className="w-full max-w-sm bg-[#1a1a1a] text-white rounded-2xl shadow-md p-6 flex flex-col justify-between text-center border border-gray-800"
+      onClick={() => handleCardClick(newsItems[currentIndex].link)}
+    >
+      <div>
+        <img
+          src={newsItems[currentIndex].image}
+          alt={newsItems[currentIndex].title}
+          className="w-full h-56 object-cover rounded-lg mb-4"
+        />
+        <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+          {newsItems[currentIndex].title}
+        </h3>
+        <p className="text-sm text-gray-400 mb-4 line-clamp-4">
+          {newsItems[currentIndex].summary}
+        </p>
+      </div>
+      <div className="flex flex-col items-center space-y-3">
+        <p className="text-xs text-gray-500">{newsItems[currentIndex].date}</p>
+        <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium py-2.5 px-6 rounded-full hover:from-cyan-600 hover:to-blue-700 transition-all duration-300">
+          Read More
+        </button>
+      </div>
+    </div>
+
+    {/* Navigation Arrows */}
+    <div className="flex justify-between items-center w-full max-w-sm mt-6">
+      <button
+        onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : newsItems.length - 1))}
+        className="p-2 bg-gray-800 rounded-full hover:bg-cyan-500 transition"
+      >
+        ←
+      </button>
+      <button
+        onClick={() => setCurrentIndex((prev) => (prev < newsItems.length - 1 ? prev + 1 : 0))}
+        className="p-2 bg-gray-800 rounded-full hover:bg-cyan-500 transition"
+      >
+        →
+      </button>
+    </div>
+
+    {/* Progress Bar */}
+    <div className="flex justify-center space-x-2 mt-4">
+      {newsItems.map((_, idx) => (
+        <span
+          key={idx}
+          className={`w-2.5 h-2.5 rounded-full transition-all ${
+            idx === currentIndex ? "bg-cyan-500 scale-125" : "bg-gray-600"
+          }`}
+        />
+      ))}
+    </div>
+  </div>
       ) : (
         <div
           ref={horizontalRef}

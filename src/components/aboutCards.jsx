@@ -71,136 +71,142 @@ const DeepfakeDetectionPlatform = () => {
   ];
 
   return (
-    <div className="relative min-h-screen py-16 sm:py-24 bg-black overflow-hidden" id="products">
-      {/* Header */}
-      <div className={`relative z-20 pt-8 pb-12 sm:pb-16 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            <span className="block">
-              <span className="text-cyan-400">Deepfake Detection</span>
-              {' '} & {' '}
-              <span className="text-cyan-400">AI Plagiarism Prevention</span>
-            </span>
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            Cutting-edge AI tools to identify manipulated media and detect AI-generated content — built for trust, transparency, and digital integrity.
-          </p>
-        </div>
-      </div>
+   <div className="relative min-h-screen py-12 sm:py-20 bg-black overflow-hidden" id="products">
+  {/* Header */}
+  <div
+    className={`relative z-20 pt-6 pb-10 sm:pb-14 transition-all duration-1000 ${
+      isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+    }`}
+  >
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+        <span className="block">
+          <span className="text-cyan-400">Deepfake Detection</span> &{" "}
+          <span className="text-cyan-400">AI Plagiarism Prevention</span>
+        </span>
+      </h1>
+      <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed px-2">
+        Cutting-edge AI tools to identify manipulated media and detect AI-generated
+        content — built for trust, transparency, and digital integrity.
+      </p>
+    </div>
+  </div>
 
-      {/* Services Grid */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-          {services.map((service, index) => {
-            const Icon = service.icon;
-            const isFlipped = flippedCards.has(index);
+  {/* Services Grid */}
+  <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+      {services.map((service, index) => {
+        const Icon = service.icon;
+        const isFlipped = flippedCards.has(index);
 
-            return (
-              // The card scene container. Sets up the 3D perspective.
+        return (
+          <div
+            key={index}
+            className={`group cursor-pointer transition-all duration-1000 ${
+              isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            } [perspective:1200px]`}
+            style={{ transitionDelay: `${index * 200}ms` }}
+            onClick={() => toggleCard(index)}
+          >
+            {/* Flip container */}
+            <div
+              className={`relative w-full min-h-[400px] sm:min-h-[450px] md:min-h-[500px] lg:min-h-[550px] transition-transform duration-1000 [transform-style:preserve-3d] ${
+                isFlipped ? "[transform:rotateY(180deg)]" : ""
+              }`}
+            >
+              {/* Front Side */}
               <div
-                key={index}
-                className={`group cursor-pointer transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} [perspective:1200px]`}
-                style={{ transitionDelay: `${index * 200}ms` }}
-                onClick={() => toggleCard(index)}
+                className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-700 hover:scale-[1.02] flex flex-col items-center justify-center overflow-hidden [backface-visibility:hidden]"
+                style={{
+                  backgroundImage: `url("${service.bgImage}")`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundBlendMode: "overlay",
+                }}
               >
-                {/* This container handles the actual 3D flip animation. */}
-                <div 
-                  className={`relative w-full h-[100vh] sm:h-[90vh] md:h-[85vh] lg:h-[75vh] transition-transform duration-1000 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
-                >
-                  
-                  {/* Front Side of the Card */}
-                  <div 
-                    className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-700 hover:scale-[1.02] flex flex-col items-center justify-center overflow-hidden [backface-visibility:hidden]"
-                    style={{
-                      backgroundImage: `url("${service.bgImage}")`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundBlendMode: 'overlay'
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-800/50 to-slate-900/80" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/10 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    
-                    <div className="relative z-10 text-center px-6 sm:px-8">
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 flex items-center justify-center mb-6 sm:mb-8 mx-auto group-hover:scale-110 transition-transform duration-500 backdrop-blur-sm border border-cyan-400/20">
-                        <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400" />
-                      </div>
-                      
-                      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 mb-4 sm:mb-6 tracking-wide leading-tight">
-                        {service.bigTitle}
-                      </h2>
-                      
-                      <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed">
-                        {service.subtitle}
-                      </p>
-                      
-                      <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl px-6 py-4 border border-cyan-500/20">
-                        <p className="text-cyan-300 text-sm font-medium uppercase tracking-widest">
-                          Click for Details
-                        </p>
-                      </div>
-                    </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-800/50 to-slate-900/80" />
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/10 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-                    <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400 rounded-full opacity-60 animate-pulse"></div>
-                    <div className="absolute bottom-6 left-6 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-40 animate-pulse" style={{animationDelay: '1s'}}></div>
+                <div className="relative z-10 text-center px-4 sm:px-6">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-500 backdrop-blur-sm border border-cyan-400/20">
+                    <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-cyan-400" />
                   </div>
 
-                  {/* Back Side of the Card */}
-                  <div className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/70 backdrop-blur-xl border border-cyan-400/40 shadow-2xl shadow-cyan-500/10 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-slate-900/50 to-blue-500/5" />
-                    
-                    <div className="relative z-10 flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 mb-4 sm:mb-6">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center backdrop-blur-sm border border-cyan-400/20 flex-shrink-0">
-                          <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-cyan-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{service.title}</h3>
-                          <p className="text-cyan-300 font-medium text-sm">{service.subtitle}</p>
-                        </div>
-                      </div>
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 mb-4 tracking-wide leading-tight">
+                    {service.bigTitle}
+                  </h2>
 
-                      <p className="text-gray-300 text-sm sm:text-base mb-6 sm:mb-8 leading-relaxed">
-                        {service.description}
-                      </p>
+                  <p className="text-sm sm:text-base text-gray-300 mb-6 max-w-md mx-auto leading-relaxed">
+                    {service.subtitle}
+                  </p>
 
-                      <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                        <h4 className="text-white font-semibold text-base sm:text-lg mb-3 sm:mb-4">Key Features:</h4>
-                        {service.features.map((feature, idx) => (
-                          <div key={idx} className="flex items-center gap-3 text-gray-300">
-                            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 flex-shrink-0" />
-                            <span className="text-sm font-medium">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-auto pt-4"> {/* Pushes the button to the bottom */}
-                        <button
-                          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/40 text-white font-semibold text-base sm:text-lg hover:from-cyan-500/40 hover:to-blue-500/40 hover:border-cyan-300/60 transition-all duration-300 backdrop-blur-sm group/btn"
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevents the card from flipping back
-                            navigate(service.path);
-                          }}
-                        >
-                          <span className="flex items-center justify-center gap-2">
-                            {service.buttonLabel}
-                            <span className="inline-block group-hover/btn:translate-x-1 transition-transform duration-300">→</span>
-                          </span>
-                        </button>
-                        
-                        <p className="text-center text-gray-400 text-xs mt-3 font-medium">
-                          Free trial available • No credit card required
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl px-4 py-3 border border-cyan-500/20">
+                    <p className="text-cyan-300 text-xs sm:text-sm font-medium uppercase tracking-widest">
+                      Click for Details
+                    </p>
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+
+              {/* Back Side */}
+              <div className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/70 backdrop-blur-xl border border-cyan-400/40 shadow-2xl shadow-cyan-500/10 p-5 sm:p-6 flex flex-col justify-between overflow-y-auto [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-slate-900/50 to-blue-500/5" />
+
+                <div className="relative z-10 flex-1 flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center backdrop-blur-sm border border-cyan-400/20 flex-shrink-0">
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-white">{service.title}</h3>
+                      <p className="text-cyan-300 font-medium text-xs sm:text-sm">{service.subtitle}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-300 text-sm sm:text-base mb-6 leading-relaxed">
+                    {service.description}
+                  </p>
+
+                  <div className="space-y-2 mb-6">
+                    <h4 className="text-white font-semibold text-base sm:text-lg mb-2">Key Features:</h4>
+                    {service.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-gray-300">
+                        <div className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto pt-4">
+                    <button
+                      className="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/40 text-white font-semibold text-sm sm:text-base hover:from-cyan-500/40 hover:to-blue-500/40 hover:border-cyan-300/60 transition-all duration-300 backdrop-blur-sm group/btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(service.path);
+                      }}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {service.buttonLabel}
+                        <span className="inline-block group-hover/btn:translate-x-1 transition-transform duration-300">
+                          →
+                        </span>
+                      </span>
+                    </button>
+
+                    <p className="text-center text-gray-400 text-xs mt-3 font-medium">
+                      Free trial available • No credit card required
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
+  </div>
+</div>
+
   );
 };
 
