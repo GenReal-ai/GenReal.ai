@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import useHashScroll from './components/useHashScroll';
+import LoginRegister from "./components/LoginRegister";
 
 // Import all the necessary components
 import Loader from './components/loader';
@@ -15,6 +16,8 @@ import Upload from './components/Upload';
 import Plagiarism from "./components/Plagiarism-upload";
 import DeepfakeDetectionPlatform from "./components/aboutCards";
 import Team from "./components/team";
+import LoginWidget from "./components/LoginWidget";
+
 
 /**
  * This hook is responsible for detecting which section is currently active.
@@ -57,11 +60,12 @@ const useActiveSection = (isLoaded) => {
   // This new useEffect cleanly separates the URL update from the detection logic.
   // It runs only when the activeSection state changes.
   useEffect(() => {
-    if (isLoaded && activeSection) {
-      // Update the URL hash without reloading or adding to browser history.
+    if (isLoaded && activeSection && window.location.pathname === '/') {
       window.history.replaceState(null, '', `/#${activeSection}`);
     }
+
   }, [activeSection, isLoaded]);
+
 
   return activeSection;
 };
@@ -104,12 +108,34 @@ const PageWrapper = ({ children }) => (
 );
 
 const AppContent = () => {
-  const location = useLocation();
-  
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [faceModelLoaded, setFaceModelLoaded] = useState(false);
 
+  const location = useLocation();
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [faceModelLoaded, setFaceModelLoaded] = useState(false);
+  const [isLogin, setIsLogin] = useState(location.pathname !== "/register");
+  
   useHashScroll(isLoaded);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // or wherever you store it
+    if (token) setIsLoggedIn(true);
+  }, []);
+
+  useEffect(() => {
+    if (location.pathname === "/register") setIsLogin(false);
+    else setIsLogin(true);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      setIsLoggedIn(true);
+      window.history.replaceState({}, "", "/"); // clean URL
+    }
+  }, []);
 
   const handleFaceModelLoaded = () => {
     setFaceModelLoaded(true);
@@ -152,6 +178,24 @@ const AppContent = () => {
               </PageWrapper>
             }
           />
+
+          <Route
+            path="/login"
+            element={
+              <PageWrapper>
+                <LoginRegister isLogin={true}/>
+              </PageWrapper>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PageWrapper>
+                <LoginRegister isLogin={false}/>
+              </PageWrapper>
+            }
+          />
+
           <Route
             path="*"
             element={
@@ -165,6 +209,11 @@ const AppContent = () => {
           />
         </Routes>
       </AnimatePresence>
+
+      
+      {isLoaded && ["/"].includes(location.pathname) && (
+        <LoginWidget isLoggedIn={isLoggedIn} />
+      )}
     </div>
   );
 };

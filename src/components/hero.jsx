@@ -76,7 +76,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
 
   /** Section Tracking */
   useEffect(() => {
-    const sections = ["home", "about", "news", "faq", "contact-us"];
+    const sections = ["home", "about", "Products","news", "faq", "contact-us", "Founders"];
     const observers = sections.map((id) => {
       const section = document.getElementById(id);
       if (!section) return null;
@@ -118,9 +118,11 @@ const HeroSection = ({ Loaded, onFaceModelLoaded }) => {
   const navLinks = [
     { id: "home", label: "Home" },
     { id: "about", label: "About" },
+    { id: "products", label: "Products" },
     { id: "news", label: "News" },
     { id: "faq", label: "FAQ" },
     { id: "contact-us", label: "Contact Us" },
+    { id: "team", label: "Founders" },
   ];
 
   const getLinkClass = (id) =>
