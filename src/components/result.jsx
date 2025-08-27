@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FaArrowRight, FaHome, FaChartBar, FaArrowLeft, FaEye, FaCog, FaShieldAlt, FaMicrophone, FaBrain, FaCheckCircle, FaExclamationTriangle, FaClock, FaLightbulb, FaWaveSquare } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import FeedbackForm from "./feedback";
 
 // Your DetailedAnalysis component remains unchanged.
 const DetailedAnalysis = ({ onBack }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+    
 
   const detailedModels = [
     {
@@ -262,6 +264,8 @@ const DetailedAnalysis = ({ onBack }) => {
 
 const Result = () => {
   const [showDetailed, setShowDetailed] = useState(false);
+const [showFeedbackPopup, setShowFeedbackPopup] = useState(true); // small bottom popup
+    const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false); // fullscreen form
 
   const modelResults = [
     {
@@ -496,6 +500,39 @@ const Result = () => {
                   </div>
                 </motion.div>
               </div>
+                {showFeedbackPopup && (
+                <div className="fixed bottom-6 right-6 bg-slate-800 border border-slate-700 shadow-xl rounded-xl p-4 w-72 z-40">
+                  {/* Close button */}
+                  <button
+                    onClick={() => setShowFeedbackPopup(false)}
+                    className="absolute top-2 right-2 text-slate-400 hover:text-white"
+                  >
+                    ×
+                  </button>
+        
+                  <h3 className="text-white font-semibold mb-2">
+                    Give us your Feedback
+                  </h3>
+                  <p className="text-slate-400 text-sm mb-4">
+                    Help us improve by sharing your thoughts on the results you got.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowFeedbackPopup(false);
+                      setIsFeedbackFormOpen(true);
+                    }}
+                    className="w-full py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium"
+                  >
+                    Open Feedback Form
+                  </button>
+                </div>
+              )}
+        
+              {/* Fullscreen Feedback Form */}
+              <FeedbackForm
+                isOpen={isFeedbackFormOpen}
+                onClose={() => {setIsFeedbackFormOpen(false);setShowFeedbackPopup(true)}}
+              />
 
               {/* Action Buttons */}
               <motion.div
@@ -534,6 +571,7 @@ const Result = () => {
           <DetailedAnalysis onBack={() => setShowDetailed(false)} />
         )}
       </AnimatePresence>
+        
     </div>
   );
 };

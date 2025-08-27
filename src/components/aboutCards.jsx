@@ -167,7 +167,7 @@ const DeepfakeDetectionPlatform = () => {
                     {service.description}
                   </p>
 
-                  <div className="space-y-2 mb-6">
+                  <div className="space-y-2 md:block hidden mb-6">
                     <h4 className="text-white font-semibold text-base sm:text-lg mb-2">Key Features:</h4>
                     {service.features.map((feature, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-gray-300">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // import { FileText, CheckCircle, AlertCircle } from 'lucide-react'; // Lucide icons are not directly used in the current display logic but kept if you plan to use them.
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+import FeedbackForm from "./feedback";
 
 export default function AIPlagiarismChecker() {
   const navigate = useNavigate(); // Initialize the navigate function
@@ -8,31 +9,28 @@ export default function AIPlagiarismChecker() {
   const [textInput, setTextInput] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false); // small bottom popup
+  const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false); // fullscreen form
 
   const handleCheckPlagiarism = () => {
     if (!textInput.trim()) return;
-
     setIsChecking(true);
-    // Simulate API call or processing time
     setTimeout(() => {
       setIsChecking(false);
       setHasResults(true);
+      setShowFeedbackPopup(true)
     }, 3000);
   };
 
   const handleReset = () => {
-    setTextInput('');
+    setTextInput("");
     setHasResults(false);
     setIsChecking(false);
   };
 
-  // Function to handle the main button's action (Check or Go Home)
   const handleMainButtonAction = () => {
-    if (hasResults) {
-      navigate('/'); // Go to home if results are shown
-    } else {
-      handleCheckPlagiarism(); // Check plagiarism if no results
-    }
+    if (hasResults) navigate("/");
+    else handleCheckPlagiarism();
   };
 
   return (
@@ -232,6 +230,39 @@ export default function AIPlagiarismChecker() {
       </div>
     </div>
   </div>
+  {showFeedbackPopup && (
+        <div className="fixed bottom-6 right-6 bg-slate-800 border border-slate-700 shadow-xl rounded-xl p-4 w-72 z-40">
+          {/* Close button */}
+          <button
+            onClick={() => setShowFeedbackPopup(false)}
+            className="absolute top-2 right-2 text-slate-400 hover:text-white"
+          >
+            ×
+          </button>
+
+          <h3 className="text-white font-semibold mb-2">
+            Give us your Feedback
+          </h3>
+          <p className="text-slate-400 text-sm mb-4">
+            Help us improve by sharing your thoughts on the results you got.
+          </p>
+          <button
+            onClick={() => {
+              setShowFeedbackPopup(false);
+              setIsFeedbackFormOpen(true);
+            }}
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium"
+          >
+            Open Feedback Form
+          </button>
+        </div>
+      )}
+
+      {/* Fullscreen Feedback Form */}
+      <FeedbackForm
+        isOpen={isFeedbackFormOpen}
+        onClose={() => {setIsFeedbackFormOpen(false);setShowFeedbackPopup(true)}}
+      />
 </div>
 
   );
