@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import useHashScroll from './components/useHashScroll';
-import LoginRegister from "./components/LoginRegister";
+import { LoginRegister, AuthCallback } from "./components/LoginRegister";
 
 // Import all the necessary components
 import Loader from './components/loader';
@@ -17,6 +17,7 @@ import Plagiarism from "./components/Plagiarism-upload";
 import DeepfakeDetectionPlatform from "./components/aboutCards";
 import Team from "./components/team";
 import LoginWidget from "./components/LoginWidget";
+import Dashboard from "./components/Dashboard";
 
 
 /**
@@ -66,7 +67,6 @@ const useActiveSection = (isLoaded) => {
 
   }, [activeSection, isLoaded]);
 
-
   return activeSection;
 };
 
@@ -108,7 +108,6 @@ const PageWrapper = ({ children }) => (
 );
 
 const AppContent = () => {
-
   const location = useLocation();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -117,21 +116,27 @@ const AppContent = () => {
   
   useHashScroll(isLoaded);
 
+  // Check for existing token on app load
   useEffect(() => {
-    const token = localStorage.getItem("token"); // or wherever you store it
-    if (token) setIsLoggedIn(true);
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    if (token) {
+      setIsLoggedIn(true);
+    }
   }, []);
 
+  // Handle route changes for login/register
   useEffect(() => {
     if (location.pathname === "/register") setIsLogin(false);
     else setIsLogin(true);
   }, [location.pathname]);
 
+  // Handle OAuth callback token from URL (legacy support)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
       localStorage.setItem("token", token);
+      localStorage.setItem("authToken", token);
       setIsLoggedIn(true);
       window.history.replaceState({}, "", "/"); // clean URL
     }
@@ -145,6 +150,12 @@ const AppContent = () => {
     setIsLoaded(true);
   };
 
+  // Handle logout
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    // Additional cleanup can be done here if needed
+  };
+
   useEffect(() => {
     if (isLoaded && !location.hash) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -152,8 +163,9 @@ const AppContent = () => {
   }, [isLoaded, location]);
 
   return (
-    <div className='relative bg-black overflow-hidden'>
-      {!isLoaded && (
+    <div className="relative bg-black overflow-hidden">
+      {/* Loader only on home */}
+      {location.pathname === "/" && !isLoaded && (
         <Loader
           onFinish={handleLoaderFinish}
           faceModelLoaded={faceModelLoaded}
@@ -162,6 +174,16 @@ const AppContent = () => {
 
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
+          {/* Dashboard Route */}
+          <Route
+            path="/dashboard"
+            element={
+              <PageWrapper>
+                <Dashboard />
+              </PageWrapper>
+            }
+          />
+
           <Route
             path="/deepfake-detection"
             element={
@@ -183,7 +205,7 @@ const AppContent = () => {
             path="/login"
             element={
               <PageWrapper>
-                <LoginRegister isLogin={true}/>
+                <LoginRegister isLogin={true} />
               </PageWrapper>
             }
           />
@@ -191,10 +213,13 @@ const AppContent = () => {
             path="/register"
             element={
               <PageWrapper>
-                <LoginRegister isLogin={false}/>
+                <LoginRegister isLogin={false} />
               </PageWrapper>
             }
           />
+
+          {/* Add the OAuth callback route */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           <Route
             path="*"
@@ -210,12 +235,15 @@ const AppContent = () => {
         </Routes>
       </AnimatePresence>
 
-      
-      {isLoaded && ["/"].includes(location.pathname) && (
-        <LoginWidget isLoggedIn={isLoggedIn} />
+      {isLoaded && location.pathname === "/" && (
+        <LoginWidget 
+          isLoggedIn={isLoggedIn} 
+          onLogout={handleLogout}
+        />
       )}
     </div>
   );
+
 };
 
 const App = () => {
