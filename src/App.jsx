@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import useHashScroll from './components/useHashScroll';
-import { LoginRegister, AuthCallback } from "./components/LoginRegister";
+import { LoginRegister, AuthCallback } from "./components/LoginRegister"; // Fixed import
 
 // Import all the necessary components
 import Loader from './components/loader';
@@ -19,22 +19,17 @@ import Team from "./components/team";
 import LoginWidget from "./components/LoginWidget";
 import Dashboard from "./components/Dashboard";
 
-
 /**
  * This hook is responsible for detecting which section is currently active.
- * It has been updated to use a more stable detection method.
  */
 const useActiveSection = (isLoaded) => {
   const [activeSection, setActiveSection] = useState('home');
 
-  // This effect sets up the IntersectionObserver to watch the sections.
   useEffect(() => {
     if (!isLoaded) return;
 
-    const sections = ['home', 'about', 'products', 'news', 'faq', 'contact-us', 'team'];
+    const sections = ['home', 'about', 'Products', 'news', 'faq', 'contact-us'];
     
-    // The observer now fires when a section crosses the vertical center of the viewport.
-    // This is much more reliable for sections of varying heights.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
@@ -44,58 +39,63 @@ const useActiveSection = (isLoaded) => {
         });
       },
       {
-        // This rootMargin defines a 1px horizontal line at the exact vertical center of the screen.
         rootMargin: '-50% 0px -50% 0px',
-        threshold: 0 // Fire as soon as any part of the element crosses the line
+        threshold: 0
       }
     );
 
     sections.forEach(id => {
       const el = document.getElementById(id);
+      console.log(`Looking for section: ${id}, found:`, el); // Debug line
       if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
   }, [isLoaded]);
 
-  // This new useEffect cleanly separates the URL update from the detection logic.
-  // It runs only when the activeSection state changes.
   useEffect(() => {
     if (isLoaded && activeSection && window.location.pathname === '/') {
       window.history.replaceState(null, '', `/#${activeSection}`);
     }
-
   }, [activeSection, isLoaded]);
 
   return activeSection;
 };
 
-// The Home component now correctly passes the activeSection to the Hero.
 const Home = ({ isLoaded, onFaceModelLoaded }) => {
   const activeSection = useActiveSection(isLoaded);
 
   return (
     <div className='z-10' style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
-      {/* The Hero component now receives the activeSection to highlight its nav links */}
       <div id="home">
         <Hero Loaded={isLoaded} onFaceModelLoaded={onFaceModelLoaded} activeSection={activeSection} />
       </div>
       
-      {/* Ensure each component correctly applies the `id` to its root element */}
-      <About id="about" />
-      <div id="products">
+      <div id="about">
+        <About />
+      </div>
+      <div id="Products">
         <DeepfakeDetectionPlatform />
       </div>
-      <News id="news" />
-      <FAQ id="faq" />
-      <ContactUs id="contact-us" />
-      <Team id="team" />
+      <div id="news">
+        <News />
+      </div>
+      <div id="faq">
+        <FAQ />
+      </div>
+      <div id="contact-us">
+        <ContactUs />
+      </div>
+      <div id="team">
+        <Team />
+      </div>
       <Footer />
     </div>
   );
 };
 
-// PageWrapper remains the same for transitions.
+
+// PageWrapper for transitions
 const PageWrapper = ({ children }) => (
   <motion.div
     initial={{ opacity: 0, y: 30 }}
@@ -116,12 +116,36 @@ const AppContent = () => {
   
   useHashScroll(isLoaded);
 
-  // Check for existing token on app load
+  // Check for existing authentication on app load
   useEffect(() => {
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-    if (token) {
-      setIsLoggedIn(true);
-    }
+    const checkAuthState = () => {
+      const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+      const user = localStorage.getItem("user");
+      
+      if (token && user) {
+        setIsLoggedIn(true);
+        console.log("User is already logged in");
+      } else {
+        setIsLoggedIn(false);
+        console.log("User is not logged in");
+      }
+    };
+
+    checkAuthState();
+  }, []);
+
+  // Listen for auth state changes (from login/register components)
+  useEffect(() => {
+    const handleAuthStateChange = (event) => {
+      console.log("Auth state changed:", event.detail);
+      setIsLoggedIn(event.detail.isLoggedIn);
+    };
+
+    window.addEventListener('authStateChanged', handleAuthStateChange);
+
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthStateChange);
+    };
   }, []);
 
   // Handle route changes for login/register
@@ -138,7 +162,7 @@ const AppContent = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("authToken", token);
       setIsLoggedIn(true);
-      window.history.replaceState({}, "", "/"); // clean URL
+      window.history.replaceState({}, "", "/");
     }
   }, []);
 
@@ -152,8 +176,12 @@ const AppContent = () => {
 
   // Handle logout
   const handleLogout = () => {
+    console.log("Logging out user");
     setIsLoggedIn(false);
-    // Additional cleanup can be done here if needed
+    // Clear storage
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
   };
 
   useEffect(() => {
@@ -218,7 +246,7 @@ const AppContent = () => {
             }
           />
 
-          {/* Add the OAuth callback route */}
+          {/* OAuth callback route */}
           <Route path="/auth/callback" element={<AuthCallback />} />
 
           <Route
@@ -235,6 +263,7 @@ const AppContent = () => {
         </Routes>
       </AnimatePresence>
 
+      {/* Login Widget - only show on home page when loaded */}
       {isLoaded && location.pathname === "/" && (
         <LoginWidget 
           isLoggedIn={isLoggedIn} 
@@ -243,7 +272,6 @@ const AppContent = () => {
       )}
     </div>
   );
-
 };
 
 const App = () => {

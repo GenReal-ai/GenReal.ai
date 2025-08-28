@@ -71,7 +71,7 @@ const DeepfakeDetectionPlatform = () => {
   ];
 
   return (
-   <div className="relative min-h-screen py-12 sm:py-20 bg-black overflow-hidden" id="products">
+   <div className="relative min-h-screen py-12 sm:py-20 bg-black overflow-hidden" id="Products">
   {/* Header */}
   <div
     className={`relative z-20 pt-6 pb-10 sm:pb-14 transition-all duration-1000 ${

@@ -25,7 +25,10 @@ const AuthCallback = () => {
         const user = JSON.parse(decodeURIComponent(userParam));
         localStorage.setItem("user", JSON.stringify(user));
 
-        navigate("/");
+        // Dispatch custom event to notify App component
+        window.dispatchEvent(new CustomEvent('authStateChanged', { detail: { isLoggedIn: true } }));
+        
+        navigate("/", { replace: true });
       } catch (err) {
         console.error("Error processing OAuth callback:", err);
         navigate("/login?error=processing_failed");
@@ -61,7 +64,7 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
 
   const navigate = useNavigate();
 
-  // ⚠️ API base URL (MUST match backend + redirect URI in Google console)
+  // API base URL
   const API_BASE_URL = "http://localhost:3001";
 
   useEffect(() => setIsLogin(initialLogin), [initialLogin]);
@@ -78,6 +81,31 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
     setError("");
     setSuccess("");
     navigate(newMode ? "/login" : "/register", { replace: true });
+  };
+
+  // Handle successful authentication
+  const handleAuthSuccess = (data) => {
+    console.log("Authentication successful:", data);
+    
+    // Store auth data
+    if (data.token) {
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("token", data.token); // Keep both for compatibility
+    }
+    if (data.user) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+
+    // Dispatch custom event to notify App component
+    window.dispatchEvent(new CustomEvent('authStateChanged', { detail: { isLoggedIn: true } }));
+
+    // Show success message
+    setSuccess(isLogin ? "Login successful! Redirecting..." : "Account created successfully! Redirecting...");
+    
+    // Redirect to home after short delay
+    setTimeout(() => {
+      navigate("/", { replace: true });
+    }, 1000);
   };
 
   const handleSubmit = async (e) => {
@@ -104,6 +132,8 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
         ? { email: formData.email, password: formData.password }
         : { name: formData.name, email: formData.email, password: formData.password };
 
+      console.log("Sending request to:", `${API_BASE_URL}${endpoint}`);
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,12 +142,10 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
       });
 
       const data = await response.json();
+      console.log("Server response:", data);
 
       if (data.success) {
-        setSuccess(isLogin ? "Login successful!" : "Account created successfully!");
-        if (data.token) localStorage.setItem("authToken", data.token);
-        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-        setTimeout(() => navigate("/"), 1500);
+        handleAuthSuccess(data);
       } else {
         setError(data.message || "Something went wrong");
       }
@@ -177,18 +205,43 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
                 {!isLogin && (
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400" />
+                    <input 
+                      type="text" 
+                      name="name" 
+                      value={formData.name} 
+                      onChange={handleInputChange} 
+                      required 
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 transition-colors" 
+                    />
                   </div>
                 )}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400" />
+                  <input 
+                    type="email" 
+                    name="email" 
+                    value={formData.email} 
+                    onChange={handleInputChange} 
+                    required 
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 transition-colors" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
                   <div className="relative">
-                    <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} required className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400" />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      name="password" 
+                      value={formData.password} 
+                      onChange={handleInputChange} 
+                      required 
+                      className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 transition-colors" 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)} 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
                       {showPassword ? "🙈" : "👁️"}
                     </button>
                   </div>
@@ -196,14 +249,34 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
                 {!isLogin && (
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
-                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} required className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400" />
+                    <input 
+                      type="password" 
+                      name="confirmPassword" 
+                      value={formData.confirmPassword} 
+                      onChange={handleInputChange} 
+                      required 
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 transition-colors" 
+                    />
                   </div>
                 )}
               </motion.div>
             </AnimatePresence>
 
-            <motion.button type="submit" disabled={isLoading} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-700 font-semibold rounded-xl text-white">
-              {isLoading ? (isLogin ? "Signing In..." : "Creating Account...") : isLogin ? "Sign In" : "Create Account"}
+            <motion.button 
+              type="submit" 
+              disabled={isLoading} 
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-700 font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-600 hover:to-blue-800 transition-all duration-200"
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {isLogin ? "Signing In..." : "Creating Account..."}
+                </div>
+              ) : (
+                isLogin ? "Sign In" : "Create Account"
+              )}
             </motion.button>
 
             <div className="relative my-6">
@@ -215,7 +288,14 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
               </div>
             </div>
 
-            <motion.button type="button" onClick={handleGoogleOAuth} className="w-full py-3 bg-white text-gray-800 font-semibold rounded-xl flex items-center justify-center">
+            <motion.button 
+              type="button" 
+              onClick={handleGoogleOAuth} 
+              disabled={isLoading}
+              className="w-full py-3 bg-white text-gray-800 font-semibold rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50"
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
+            >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -228,7 +308,7 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
 
           <div className="mt-8 text-center text-gray-300">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button onClick={toggleMode} className="text-cyan-400 hover:text-cyan-300 font-semibold transition">
+            <button onClick={toggleMode} className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
               {isLogin ? "Sign up" : "Sign in"}
             </button>
           </div>
