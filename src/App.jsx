@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import useHashScroll from './components/useHashScroll';
-import { LoginRegister, AuthCallback } from "./components/LoginRegister"; // Fixed import
+import { LoginRegister, AuthCallback } from "./components/LoginRegister";
 
 // Import all the necessary components
 import Loader from './components/loader';
@@ -20,7 +20,8 @@ import LoginWidget from "./components/LoginWidget";
 import Dashboard from "./components/Dashboard";
 
 /**
- * This hook is responsible for detecting which section is currently active.
+ * Enhanced active section detection using scroll position method
+ * This is more reliable than intersection observer for navbar highlighting
  */
 const useActiveSection = (isLoaded) => {
   const [activeSection, setActiveSection] = useState('home');
@@ -28,30 +29,54 @@ const useActiveSection = (isLoaded) => {
   useEffect(() => {
     if (!isLoaded) return;
 
-    const sections = ['home', 'about', 'Products', 'news', 'faq', 'contact-us'];
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+    const handleScroll = () => {
+      const sections = ['home', 'about', 'Products', 'news', 'faq', 'contact-us'];
+      const scrollPosition = window.scrollY + 200; // Offset for navbar height
+      
+      // Log for debugging
+      console.log('Current scroll position:', scrollPosition);
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const element = document.getElementById(sections[i]);
+        if (element) {
+          const elementTop = element.offsetTop;
+          const elementHeight = element.offsetHeight;
+          
+          console.log(`Section ${sections[i]}:`, {
+            top: elementTop,
+            height: elementHeight,
+            bottom: elementTop + elementHeight,
+            isActive: elementTop <= scrollPosition
+          });
+          
+          if (elementTop <= scrollPosition) {
+            if (activeSection !== sections[i]) {
+              console.log(`Setting active section to: ${sections[i]}`);
+              setActiveSection(sections[i]);
+            }
+            break;
           }
-        });
-      },
-      {
-        rootMargin: '-50% 0px -50% 0px',
-        threshold: 0
+        }
       }
-    );
+    };
 
-    sections.forEach(id => {
-      const el = document.getElementById(id);
-      console.log(`Looking for section: ${id}, found:`, el); // Debug line
-      if (el) observer.observe(el);
-    });
+    // Throttle scroll handler for performance
+    const throttledHandleScroll = (() => {
+      let timeoutId;
+      return () => {
+        if (timeoutId) return;
+        timeoutId = setTimeout(() => {
+          handleScroll();
+          timeoutId = null;
+        }, 50);
+      };
+    })();
 
-    return () => observer.disconnect();
-  }, [isLoaded]);
+    window.addEventListener('scroll', throttledHandleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', throttledHandleScroll);
+  }, [isLoaded, activeSection]);
 
   useEffect(() => {
     if (isLoaded && activeSection && window.location.pathname === '/') {
@@ -93,7 +118,6 @@ const Home = ({ isLoaded, onFaceModelLoaded }) => {
     </div>
   );
 };
-
 
 // PageWrapper for transitions
 const PageWrapper = ({ children }) => (
