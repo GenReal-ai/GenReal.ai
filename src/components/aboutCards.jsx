@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import for navigation
+import { useAuth } from './hooks/useAuth';
 import {
   Shield,
   FileSearch,
@@ -41,6 +43,11 @@ const DeepfakeDetectionPlatform = () => {
   const [flippedCards, setFlippedCards] = useState(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // --- ADDED: Hooks for navigation and authentication ---
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  // ---------------------------------------------------
+
   useEffect(() => {
     setIsLoaded(true);
   }, []);
@@ -59,7 +66,8 @@ const DeepfakeDetectionPlatform = () => {
       title: "Advanced Deepfake Detection",
       bigTitle: "DEEPFAKE DETECTION",
       subtitle: "Protect Your Content with AI-Powered Detection",
-      description: "We safeguard digital integrity by analyzing video and audio streams for signs of manipulation.",
+      description:
+        "We safeguard digital integrity by analyzing video and audio streams for signs of manipulation.",
       features: [
         { icon: Video, text: "Real-Time Video & Audio Analysis" },
         { icon: Zap, text: "Instant Threat Alerts" },
@@ -74,7 +82,8 @@ const DeepfakeDetectionPlatform = () => {
       title: "AI Plagiarism Prevention",
       bigTitle: "CODE PLAGIARISM",
       subtitle: "Ensure Code Originality with AI Analysis",
-      description: "Our service detects copied code and algorithmic similarities to protect your intellectual property.",
+      description:
+        "Our service detects copied code and algorithmic similarities to protect your intellectual property.",
       features: [
         { icon: Code, text: "Code & Algorithm Analysis" },
         { icon: Shield, text: "Private Repository Scanning" },
@@ -95,8 +104,19 @@ const DeepfakeDetectionPlatform = () => {
       <div className="absolute inset-0 opacity-20">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgb(6 182 212)" strokeWidth="0.5" opacity="0.3"/>
+            <pattern
+              id="grid"
+              width="60"
+              height="60"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 60 0 L 0 0 0 60"
+                fill="none"
+                stroke="rgb(6 182 212)"
+                strokeWidth="0.5"
+                opacity="0.3"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -109,7 +129,7 @@ const DeepfakeDetectionPlatform = () => {
           <div
             key={i}
             className={`absolute w-1 h-1 rounded-full animate-pulse ${
-              i % 2 === 0 ? 'bg-cyan-400/40' : 'bg-blue-400/40'
+              i % 2 === 0 ? "bg-cyan-400/40" : "bg-blue-400/40"
             }`}
             style={{
               left: `${Math.random() * 100}%`,
@@ -180,12 +200,19 @@ const DeepfakeDetectionPlatform = () => {
                     }}
                   >
                     <div className="absolute top-4 right-4 w-12 h-12 border border-cyan-400/20 rounded-full flex items-center justify-center">
-                      <div className="w-6 h-6 border border-cyan-400/30 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
+                      <div
+                        className="w-6 h-6 border border-cyan-400/30 rounded-full animate-spin"
+                        style={{ animationDuration: "8s" }}
+                      ></div>
                     </div>
-                    
+
                     <div className="absolute bottom-4 left-4 flex gap-1">
                       {[...Array(3)].map((_, i) => (
-                        <div key={i} className={`w-2 h-2 rounded-full ${colors.text} animate-pulse`} style={{ animationDelay: `${i * 200}ms` }}></div>
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full ${colors.text} animate-pulse`}
+                          style={{ animationDelay: `${i * 200}ms` }}
+                        ></div>
                       ))}
                     </div>
 
@@ -224,7 +251,9 @@ const DeepfakeDetectionPlatform = () => {
                     <div className="absolute bottom-0 left-0 w-16 h-16 border-t border-r border-cyan-400/20 rounded-tr-2xl"></div>
 
                     <div className="flex items-center gap-3 mb-4 lg:mb-6 relative z-10">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${colors.bgFrom} ${colors.bgTo} border ${colors.border}`}>
+                      <div
+                        className={`p-2 rounded-lg bg-gradient-to-br ${colors.bgFrom} ${colors.bgTo} border ${colors.border}`}
+                      >
                         <Icon
                           className={`w-4 h-4 lg:w-5 lg:h-5 ${colors.accent} flex-shrink-0`}
                         />
@@ -257,24 +286,33 @@ const DeepfakeDetectionPlatform = () => {
                               />
                               <span>{feature.text}</span>
                             </div>
-                          )
+                          );
                         })}
                       </div>
                     </div>
 
+                    {/* --- UPDATED: Button onClick logic --- */}
                     <button
                       className={`relative z-10 py-3 lg:py-4 px-6 lg:px-8 rounded-xl bg-gradient-to-r ${colors.bgFrom} ${colors.bgTo} border-2 ${colors.border} text-white font-bold flex items-center justify-center gap-3 text-sm lg:text-base hover:shadow-2xl ${colors.glow} transition-all duration-500 mt-auto group/btn overflow-hidden`}
                       onClick={(e) => {
-                        e.stopPropagation();
-                        console.log(`Navigating to ${service.path}`);
+                        e.stopPropagation(); // Prevents the card from flipping back
+                        if (isAuthenticated) {
+                          navigate(service.path);
+                        } else {
+                          navigate(`/login?redirect=${service.path}`);
+                        }
                       }}
                     >
-                      <div className={`absolute inset-0 bg-gradient-to-r ${colors.bgFrom} ${colors.bgTo} opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300`}></div>
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-r ${colors.bgFrom} ${colors.bgTo} opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300`}
+                      ></div>
                       <Play className="w-4 h-4 lg:w-5 lg:h-5 relative z-10" />
-                      <span className="relative z-10">{service.buttonLabel}</span>
+                      <span className="relative z-10">
+                        {service.buttonLabel}
+                      </span>
                       <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 relative z-10 group-hover/btn:translate-x-1 transition-transform duration-300" />
                     </button>
-                    
+                    {/* ------------------------------------ */}
                   </div>
                 </div>
               </div>
@@ -290,24 +328,18 @@ const DeepfakeDetectionPlatform = () => {
       </div>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-1">
-        
-        {/* HOW TO TUNE: This is the new glow effect for the top right. */}
-        {/* Position: Change top-0 right-0. e.g., top-[-10vh] right-[-10vw] */}
-        {/* Size: Adjust w-[50vw] h-[50vh]. vw/vh are responsive units. */}
-        {/* Color & Brightness: Modify bg-cyan-400/10. Change color or opacity (/10 = 10%). */}
-        {/* Softness: Change blur-[160px]. Larger number = softer. */}
         <div className="absolute top-0 right-0 w-[50vw] h-[50vh] bg-cyan-400/10 rounded-full blur-[160px]"></div>
-
-        {/* Large background orbs */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-radial from-cyan-500/15 to-transparent rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-radial from-blue-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-radial from-teal-500/12 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-        
-        {/* Accent lines */}
+        <div
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-radial from-blue-500/10 to-transparent rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-radial from-teal-500/12 to-transparent rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "0.5s" }}
+        ></div>
         <div className="absolute top-0 left-1/3 w-px h-full bg-gradient-to-b from-transparent via-cyan-400/20 to-transparent"></div>
         <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-blue-400/20 to-transparent"></div>
-        
-        {/* Corner accents */}
         <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-cyan-400/30 rounded-tl-2xl"></div>
         <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-blue-400/30 rounded-br-2xl"></div>
       </div>
@@ -316,4 +348,3 @@ const DeepfakeDetectionPlatform = () => {
 };
 
 export default DeepfakeDetectionPlatform;
-
