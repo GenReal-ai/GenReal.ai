@@ -167,11 +167,22 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
   };
 
   return (
-    <div className="flex items-center justify-center w-full min-h-screen p-4 bg-[#0a0a0a] font-sans">
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-indigo-900/50 to-transparent blur-3xl"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-slate-900/50 to-transparent blur-3xl"></div>
+    <div className="flex items-center justify-center w-full min-h-screen p-4 bg-[#0a0a0a] font-sans overflow-hidden">
+      {/* New Background */}
+      <div 
+        className="absolute inset-0 z-0" 
+        style={{
+            backgroundImage: `
+                radial-gradient(ellipse at center, rgba(49, 46, 129, 0.1), transparent 80%),
+                radial-gradient(ellipse at top left, rgba(167, 139, 250, 0.08), transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(129, 140, 248, 0.08), transparent 50%)
+            `,
+        }}
+      >
+        <div className="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-white/5 rounded-tl-3xl"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-white/5 rounded-br-3xl"></div>
       </div>
+
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -186,7 +197,8 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
             </Link>
 
             <div className="text-center">
-              <div className="inline-block p-3 mb-4 bg-gradient-to-br from-indigo-500 to-slate-700 rounded-full">
+              {/* New Logo Container */}
+              <div className="inline-block p-2 mb-4 bg-white/5 rounded-full ring-1 ring-white/10">
                 <div className="w-12 h-12">
                      <img src="/logoGenReal.png" alt="Company Logo" className="w-full h-full object-contain" />
                 </div>
@@ -362,3 +374,4 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
 };
 
 export { LoginRegister, AuthCallback };
+
