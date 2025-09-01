@@ -1,398 +1,476 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import {
+  Shield,
+  FileSearch,
+  Play,
+  Code,
+  Key,
+  Plus,
+  Settings,
+  BarChart3,
+  Book,
+  DollarSign,
+  Copy,
+  Eye,
+  EyeOff,
+  Activity,
+  Zap,
+  Globe,
+  Users,
+} from "lucide-react";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    joinedDate: '2024-01-15',
-    plan: 'Free'
-  });
-  
-  const [credits, setCredits] = useState({
-    total: 100,
-    used: 25,
-    remaining: 75
-  });
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showApiKey, setShowApiKey] = useState({});
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const [recentAnalyses, setRecentAnalyses] = useState([
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  const [projects, setProjects] = useState([
     {
       id: 1,
-      fileName: 'video_sample_01.mp4',
-      type: 'Deepfake Detection',
-      result: 'Authentic',
-      confidence: 89.5,
-      date: '2024-08-28',
-      creditsUsed: 5
+      name: "VideoGuard App",
+      type: "Deepfake Detection",
+      apiKey: "sk-proj-abc123def456...",
+      requests: 12847,
+      status: "active",
+      created: "2024-08-15",
     },
     {
       id: 2,
-      fileName: 'document_report.pdf',
-      type: 'Plagiarism Detection',
-      result: 'Minor Issues',
-      confidence: 76.3,
-      date: '2024-08-27',
-      creditsUsed: 3
+      name: "EduCheck Platform",
+      type: "Plagiarism Detection",
+      apiKey: "sk-proj-xyz789ghi012...",
+      requests: 8965,
+      status: "active",
+      created: "2024-07-22",
     },
     {
       id: 3,
-      fileName: 'profile_image.jpg',
-      type: 'Deepfake Detection',
-      result: 'Suspicious',
-      confidence: 92.1,
-      date: '2024-08-26',
-      creditsUsed: 2
-    }
+      name: "Media Verification",
+      type: "Combined Services",
+      apiKey: "sk-proj-mno345pqr678...",
+      requests: 5234,
+      status: "paused",
+      created: "2024-06-10",
+    },
   ]);
 
-  const [stats, setStats] = useState({
-    totalAnalyses: 48,
-    authenticContent: 35,
-    suspiciousContent: 13,
-    averageConfidence: 85.7
+  const [usage, setUsage] = useState({
+    totalRequests: 26046,
+    thisMonth: 8945,
+    successRate: 99.7,
+    avgResponseTime: 240,
   });
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+  const modelPricing = [
+    {
+      name: "Deepfake Detection",
+      model: "deepfake-v2.1",
+      pricing: {
+        tier1: { limit: "0-1K requests", price: "$0.05", unit: "per request" },
+        tier2: { limit: "1K-10K requests", price: "$0.03", unit: "per request" },
+        tier3: { limit: "10K+ requests", price: "$0.02", unit: "per request" },
+      },
+      features: ["Video Analysis", "Image Detection", "Real-time Processing"],
+    },
+    {
+      name: "Plagiarism Detection",
+      model: "plagiarism-v1.8",
+      pricing: {
+        tier1: { limit: "0-500 requests", price: "$0.08", unit: "per request" },
+        tier2: { limit: "500-5K requests", price: "$0.05", unit: "per request" },
+        tier3: { limit: "5K+ requests", price: "$0.03", unit: "per request" },
+      },
+      features: ["AI Content Detection", "Source Matching", "Citation Analysis"],
+    },
+  ];
+
+  const toggleApiKeyVisibility = (projectId) => {
+    setShowApiKey(prev => ({ ...prev, [projectId]: !prev[projectId] }));
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 24
-      }
-    }
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
   };
 
-  const getResultColor = (result) => {
-    switch (result.toLowerCase()) {
-      case 'authentic': return 'text-green-400';
-      case 'suspicious': return 'text-red-400';
-      case 'minor issues': return 'text-yellow-400';
-      default: return 'text-gray-400';
-    }
-  };
-
-  const getResultBg = (result) => {
-    switch (result.toLowerCase()) {
-      case 'authentic': return 'bg-green-400/10 border-green-400/20';
-      case 'suspicious': return 'bg-red-400/10 border-red-400/20';
-      case 'minor issues': return 'bg-yellow-400/10 border-yellow-400/20';
-      default: return 'bg-gray-400/10 border-gray-400/20';
-    }
-  };
+  const TabButton = ({ id, label, icon: Icon, isActive, onClick }) => (
+    <button
+      onClick={() => onClick(id)}
+      className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ${
+        isActive
+          ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-lg shadow-cyan-500/20"
+          : "text-gray-400 hover:text-gray-300 hover:bg-slate-800/50"
+      }`}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="text-sm font-medium">{label}</span>
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Header */}
-      <div className="border-b border-slate-800/50 backdrop-blur-sm bg-slate-900/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="border-b border-slate-800/50 backdrop-blur-sm bg-slate-900/30">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Dashboard
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-300 via-blue-300 to-cyan-400 bg-clip-text text-transparent">
+                AI Detection API
               </h1>
-              <p className="text-slate-400 mt-1">Welcome back, {user.name}</p>
+              <p className="text-slate-400 mt-1 text-sm">Developer Dashboard</p>
             </div>
-            <motion.button
-              onClick={() => navigate('/')}
-              className="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 rounded-lg transition-colors duration-200 flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Back to Home
-            </motion.button>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-sm text-slate-400">API Status</div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-400 text-sm font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-        >
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Credits Section */}
-            <motion.div variants={itemVariants} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Free Credits
-                </h2>
-                <span className="text-sm px-3 py-1 bg-green-400/20 text-green-400 rounded-full border border-green-400/30">
-                  {user.plan} Plan
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400">{credits.total}</div>
-                  <div className="text-sm text-slate-400">Total Credits</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-400">{credits.used}</div>
-                  <div className="text-sm text-slate-400">Used</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">{credits.remaining}</div>
-                  <div className="text-sm text-slate-400">Remaining</div>
-                </div>
-              </div>
+      {/* Navigation Tabs */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex flex-wrap gap-2 mb-8">
+          <TabButton id="overview" label="Overview" icon={BarChart3} isActive={activeTab === "overview"} onClick={setActiveTab} />
+          <TabButton id="projects" label="Projects" icon={Code} isActive={activeTab === "projects"} onClick={setActiveTab} />
+          <TabButton id="pricing" label="Pricing" icon={DollarSign} isActive={activeTab === "pricing"} onClick={setActiveTab} />
+          <TabButton id="docs" label="Documentation" icon={Book} isActive={activeTab === "docs"} onClick={setActiveTab} />
+        </div>
 
-              <div className="w-full bg-slate-700/50 rounded-full h-3 mb-4">
-                <motion.div
-                  className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(credits.remaining / credits.total) * 100}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                />
-              </div>
-
-              <p className="text-sm text-slate-400">
-                You have <span className="text-green-400 font-semibold">{credits.remaining} credits</span> remaining. 
-                Each analysis costs 2-5 credits depending on file size and complexity.
-              </p>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div variants={itemVariants} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Quick Actions
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <motion.button
-                  onClick={() => navigate('/deepfake-detection')}
-                  className="group p-6 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-lg hover:border-purple-500/40 transition-all duration-300"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2v11z" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
+        {/* Overview Tab */}
+        {activeTab === "overview" && (
+          <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            {/* Usage Stats */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { label: "Total Requests", value: usage.totalRequests.toLocaleString(), color: "cyan", icon: Activity },
+                  { label: "This Month", value: usage.thisMonth.toLocaleString(), color: "blue", icon: Zap },
+                  { label: "Success Rate", value: `${usage.successRate}%`, color: "green", icon: Shield },
+                  { label: "Avg Response", value: `${usage.avgResponseTime}ms`, color: "purple", icon: Globe },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <stat.icon className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs text-slate-400">{stat.label}</span>
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-white">Deepfake Detection</h3>
-                      <p className="text-sm text-slate-400">Analyze videos & images</p>
-                    </div>
+                    <div className="text-xl font-bold text-white">{stat.value}</div>
                   </div>
-                </motion.button>
-
-                <motion.button
-                  onClick={() => navigate('/plagiarism-detection')}
-                  className="group p-6 bg-gradient-to-br from-green-500/10 to-teal-500/10 border border-green-500/20 rounded-lg hover:border-green-500/40 transition-all duration-300"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2"/>
-                        <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2"/>
-                        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2"/>
-                        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-white">Plagiarism Detection</h3>
-                      <p className="text-sm text-slate-400">Check text & documents</p>
-                    </div>
-                  </div>
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* Recent Analyses */}
-            <motion.div variants={itemVariants} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                Recent Analyses
-              </h2>
-              
-              <div className="space-y-4">
-                {recentAnalyses.map((analysis, index) => (
-                  <motion.div
-                    key={analysis.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex items-center justify-between p-4 bg-slate-700/20 border border-slate-600/30 rounded-lg hover:bg-slate-700/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${getResultBg(analysis.result)}`} />
-                      <div>
-                        <h4 className="font-medium text-white">{analysis.fileName}</h4>
-                        <div className="flex items-center gap-4 text-sm text-slate-400">
-                          <span>{analysis.type}</span>
-                          <span>•</span>
-                          <span>{analysis.date}</span>
-                          <span>•</span>
-                          <span>{analysis.creditsUsed} credits</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className={`font-semibold ${getResultColor(analysis.result)}`}>
-                        {analysis.result}
-                      </div>
-                      <div className="text-sm text-slate-400">
-                        {analysis.confidence}% confidence
-                      </div>
-                    </div>
-                  </motion.div>
                 ))}
               </div>
 
-              <motion.button
-                className="w-full mt-4 py-2 text-blue-400 hover:text-blue-300 text-sm border border-slate-600/30 rounded-lg hover:border-blue-400/30 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                View All Analyses
-              </motion.button>
-            </motion.div>
-          </div>
+              {/* Recent Activity */}
+              <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-cyan-400" />
+                  Recent API Calls
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { project: "VideoGuard App", endpoint: "/v1/deepfake/detect", status: "success", time: "2m ago" },
+                    { project: "EduCheck Platform", endpoint: "/v1/plagiarism/check", status: "success", time: "5m ago" },
+                    { project: "Media Verification", endpoint: "/v1/deepfake/batch", status: "error", time: "12m ago" },
+                  ].map((call, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+                      <div>
+                        <div className="text-sm text-white font-medium">{call.project}</div>
+                        <div className="text-xs text-slate-400">{call.endpoint}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-xs font-medium ${call.status === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                          {call.status}
+                        </div>
+                        <div className="text-xs text-slate-400">{call.time}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* Account Info */}
-            <motion.div variants={itemVariants} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                Account Info
-              </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-slate-400">Name</label>
-                  <div className="text-white font-medium">{user.name}</div>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400">Email</label>
-                  <div className="text-white font-medium">{user.email}</div>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400">Plan</label>
-                  <div className="text-green-400 font-medium">{user.plan}</div>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400">Member Since</label>
-                  <div className="text-white font-medium">{new Date(user.joinedDate).toLocaleDateString()}</div>
+            {/* Quick Actions */}
+            <div className="space-y-6">
+              <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <button className="w-full p-3 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/30 rounded-lg hover:from-cyan-600/40 hover:to-blue-600/40 transition-all duration-300 flex items-center gap-3">
+                    <Plus className="w-4 h-4" />
+                    <span className="text-sm">Create New Project</span>
+                  </button>
+                  <button className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-lg hover:bg-slate-700/70 transition-all duration-300 flex items-center gap-3">
+                    <Key className="w-4 h-4" />
+                    <span className="text-sm">Generate API Key</span>
+                  </button>
+                  <button className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-lg hover:bg-slate-700/70 transition-all duration-300 flex items-center gap-3">
+                    <Book className="w-4 h-4" />
+                    <span className="text-sm">View Documentation</span>
+                  </button>
                 </div>
               </div>
 
-              <motion.button
-                className="w-full mt-6 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Upgrade Plan
-              </motion.button>
-            </motion.div>
+              <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-400" />
+                  Usage & Billing
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-2xl font-bold text-green-400">$127.43</div>
+                    <div className="text-xs text-slate-400">Current Month</div>
+                  </div>
+                  <div className="w-full bg-slate-700/50 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-green-500 to-cyan-500 h-2 rounded-full" style={{ width: '68%' }}></div>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    68% of monthly budget used
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-            {/* Usage Statistics */}
-            <motion.div variants={itemVariants} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" stroke="currentColor" strokeWidth="2"/>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                Usage Stats
-              </h2>
-              
+        {/* Projects Tab */}
+        {activeTab === "projects" && (
+          <div className={`transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Your Projects</h2>
+              <button className="px-4 py-2 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/30 rounded-lg hover:from-cyan-600/40 hover:to-blue-600/40 transition-all duration-300 flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                New Project
+              </button>
+            </div>
+
+            <div className="grid gap-6">
+              {projects.map((project) => (
+                <div key={project.id} className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-white">{project.name}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          project.status === 'active' 
+                            ? 'bg-green-400/20 text-green-400 border border-green-400/30'
+                            : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30'
+                        }`}>
+                          {project.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-400">{project.type}</p>
+                    </div>
+                    <button className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
+                      <Settings className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <div className="text-sm text-slate-400">API Requests</div>
+                      <div className="text-xl font-bold text-cyan-400">{project.requests.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-400">Created</div>
+                      <div className="text-sm text-white">{new Date(project.created).toLocaleDateString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-400">Last Activity</div>
+                      <div className="text-sm text-white">2 minutes ago</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/30">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-sm text-slate-400 mb-1">API Key</div>
+                        <div className="font-mono text-sm text-white">
+                          {showApiKey[project.id] ? project.apiKey : "sk-proj-" + "•".repeat(20)}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => toggleApiKeyVisibility(project.id)}
+                          className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                        >
+                          {showApiKey[project.id] ? 
+                            <EyeOff className="w-4 h-4 text-slate-400" /> : 
+                            <Eye className="w-4 h-4 text-slate-400" />
+                          }
+                        </button>
+                        <button
+                          onClick={() => copyToClipboard(project.apiKey)}
+                          className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                        >
+                          <Copy className="w-4 h-4 text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pricing Tab */}
+        {activeTab === "pricing" && (
+          <div className={`transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Model Pricing</h2>
+              <p className="text-slate-400 text-sm">Pay-per-use pricing with volume discounts</p>
+            </div>
+
+            <div className="grid gap-6">
+              {modelPricing.map((model, index) => (
+                <div key={index} className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    {model.name.includes('Deepfake') ? 
+                      <Shield className="w-6 h-6 text-cyan-400" /> : 
+                      <FileSearch className="w-6 h-6 text-blue-400" />
+                    }
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">{model.name}</h3>
+                      <p className="text-sm text-slate-400">Model: {model.model}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                    {Object.entries(model.pricing).map(([tier, info]) => (
+                      <div key={tier} className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/30">
+                        <div className="text-sm text-slate-400 mb-1">{info.limit}</div>
+                        <div className="text-xl font-bold text-cyan-400">{info.price}</div>
+                        <div className="text-xs text-slate-400">{info.unit}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {model.features.map((feature, i) => (
+                      <span key={i} className="px-2 py-1 text-xs bg-cyan-500/20 text-cyan-300 rounded-full border border-cyan-500/30">
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Documentation Tab */}
+        {activeTab === "docs" && (
+          <div className={`transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Code className="w-5 h-5 text-cyan-400" />
+                    Quick Start Guide
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/30">
+                      <h4 className="text-sm font-semibold text-white mb-2">1. Get Your API Key</h4>
+                      <p className="text-xs text-slate-400">Create a project and copy your API key from the dashboard.</p>
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/30">
+                      <h4 className="text-sm font-semibold text-white mb-2">2. Make Your First Request</h4>
+                      <div className="bg-black/50 rounded p-3 mt-2">
+                        <code className="text-xs text-green-400 font-mono">
+                          curl -X POST https://api.aidetection.com/v1/deepfake/detect \<br/>
+                          &nbsp;&nbsp;-H "Authorization: Bearer YOUR_API_KEY" \<br/>
+                          &nbsp;&nbsp;-F "file=@video.mp4"
+                        </code>
+                      </div>
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/30">
+                      <h4 className="text-sm font-semibold text-white mb-2">3. Handle Response</h4>
+                      <div className="bg-black/50 rounded p-3 mt-2">
+                        <code className="text-xs text-cyan-400 font-mono">
+                          {`{
+  "result": "authentic",
+  "confidence": 89.5,
+  "analysis_time": 240ms
+}`}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-400 mb-1">{stats.totalAnalyses}</div>
-                  <div className="text-sm text-slate-400">Total Analyses</div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-semibold text-green-400">{stats.authenticContent}</div>
-                    <div className="text-xs text-slate-400">Authentic</div>
+                <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold mb-4">API Endpoints</h3>
+                  <div className="space-y-3">
+                    {[
+                      { method: "POST", endpoint: "/v1/deepfake/detect", desc: "Single file analysis" },
+                      { method: "POST", endpoint: "/v1/deepfake/batch", desc: "Bulk processing" },
+                      { method: "POST", endpoint: "/v1/plagiarism/check", desc: "Text analysis" },
+                      { method: "GET", endpoint: "/v1/analysis/:id", desc: "Get analysis result" },
+                    ].map((api, i) => (
+                      <div key={i} className="flex items-center gap-3 p-2 bg-slate-700/30 rounded">
+                        <span className="px-2 py-1 text-xs bg-cyan-500/20 text-cyan-300 rounded font-mono">
+                          {api.method}
+                        </span>
+                        <div className="flex-1">
+                          <div className="text-sm font-mono text-white">{api.endpoint}</div>
+                          <div className="text-xs text-slate-400">{api.desc}</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-center">
-                    <div className="text-xl font-semibold text-red-400">{stats.suspiciousContent}</div>
-                    <div className="text-xs text-slate-400">Suspicious</div>
-                  </div>
                 </div>
-                
-                <div className="text-center pt-4 border-t border-slate-700/50">
-                  <div className="text-lg font-semibold text-purple-400 mb-1">{stats.averageConfidence}%</div>
-                  <div className="text-sm text-slate-400">Avg. Confidence</div>
-                </div>
-              </div>
-            </motion.div>
 
-            {/* API Access */}
-            <motion.div variants={itemVariants} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <polyline points="16 18 22 12 16 6" stroke="currentColor" strokeWidth="2"/>
-                  <polyline points="8 6 2 12 8 18" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                API Access
-              </h2>
-              
-              <p className="text-sm text-slate-400 mb-4">
-                Integrate our detection capabilities into your applications.
-              </p>
-              
-              <div className="space-y-3">
-                <motion.button
-                  className="w-full py-2 text-left px-3 bg-slate-700/30 border border-slate-600/30 rounded-lg hover:bg-slate-700/50 transition-colors text-sm"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  📚 View Documentation
-                </motion.button>
-                <motion.button
-                  className="w-full py-2 text-left px-3 bg-slate-700/30 border border-slate-600/30 rounded-lg hover:bg-slate-700/50 transition-colors text-sm"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  🔑 Generate API Key
-                </motion.button>
+                <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold mb-4">SDKs & Libraries</h3>
+                  <div className="space-y-2">
+                    {[
+                      { lang: "Python", status: "Available" },
+                      { lang: "JavaScript", status: "Available" },
+                      { lang: "PHP", status: "Coming Soon" },
+                      { lang: "Go", status: "Coming Soon" },
+                    ].map((sdk, i) => (
+                      <div key={i} className="flex justify-between items-center p-2">
+                        <span className="text-sm text-white">{sdk.lang}</span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          sdk.status === 'Available' 
+                            ? 'bg-green-400/20 text-green-400' 
+                            : 'bg-yellow-400/20 text-yellow-400'
+                        }`}>
+                          {sdk.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </motion.div>
+        )}
+      </div>
+
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-radial from-cyan-500/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-radial from-blue-500/8 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        
+        {/* Grid overlay */}
+        <div className="absolute inset-0 opacity-5">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgb(6 182 212)" strokeWidth="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
       </div>
     </div>
   );
