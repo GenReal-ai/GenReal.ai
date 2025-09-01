@@ -191,34 +191,37 @@ const NewsTimeline = () => {
       ) : (
         <div
           ref={horizontalRef}
-          className="flex items-start w-max space-x-16 px-24 py-12"
+          className="flex items-start w-max space-x-8 sm:space-x-12 lg:space-x-16 px-4 sm:px-8 lg:px-24 py-8 sm:py-12"
         >
           {newsItems.map((item, index) => (
             <div
               key={index}
-              className="group min-w-[480px] max-w-[480px] h-[540px] bg-[#1a1a1a] text-white rounded-2xl shadow-md p-6 flex flex-col justify-between text-center border border-gray-800 cursor-pointer transition-all duration-300 ease-in-out hover:!border-cyan-400 hover:-translate-y-4 hover:shadow-2xl hover:shadow-cyan-500/20"
+              className="group w-[85vw] sm:w-[320px] md:w-[400px] lg:w-[480px] h-auto min-h-[400px] bg-[#1a1a1a] text-white rounded-2xl shadow-md p-4 sm:p-6 flex flex-col justify-between text-center border border-gray-800 cursor-pointer transition-all duration-300 ease-in-out hover:!border-cyan-400 hover:-translate-y-3 hover:shadow-2xl hover:shadow-cyan-500/20"
               onClick={() => handleCardClick(item.link)}
             >
               <div>
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-64 object-cover rounded-lg mb-4 transition-transform duration-300 ease-in-out group-hover:scale-105"
+                  className="w-full aspect-[4/3] object-cover rounded-lg mb-4 transition-transform duration-300 ease-in-out group-hover:scale-105"
                 />
-                <h3 className="text-xl font-semibold mb-3 line-clamp-2">{item.title}</h3>
+                <h3 className="text-lg md:text-xl font-semibold mb-3 line-clamp-2">
+                  {item.title}
+                </h3>
                 <p className="text-sm text-gray-400 mb-4 line-clamp-4">
                   {item.summary}
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-3">
+              <div className="flex flex-col items-center space-y-2 sm:space-y-3">
                 <p className="text-xs text-gray-500">{item.date}</p>
-                <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium py-2.5 px-6 rounded-full hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform group-hover:scale-105">
+                <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium py-2 px-5 sm:py-2.5 sm:px-6 rounded-full hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform group-hover:scale-105">
                   Read More
                 </button>
               </div>
             </div>
           ))}
         </div>
+
       )}
     </section>
   );
