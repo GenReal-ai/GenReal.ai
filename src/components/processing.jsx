@@ -1,55 +1,119 @@
 import React, { useEffect, useState } from 'react';
 import { FaInfoCircle, FaTimes, FaEye } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import DeepfakeQuiz from './Quiz';
-import Result from "./result";
+import DeepfakeQuiz from './Quiz'; // Assuming Quiz.js is in the same directory
 
-const Processing = () => {
+const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expectedDuration = 180 }) => {
   const [progress, setProgress] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [processingComplete, setProcessingComplete] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  
+  const [currentStage, setCurrentStage] = useState('upload');
+  const [timeElapsed, setTimeElapsed] = useState(0);
+
+  // Progress stages with realistic timing
+  const stages = [
+    { name: 'Upload', threshold: 5, message: 'Uploading and preprocessing...' },
+    { name: 'Analysis', threshold: 35, message: 'Running deepfake detection algorithms...' },
+    { name: 'Verification', threshold: 85, message: 'Finalizing analysis and verification...' },
+    { name: 'Complete', threshold: 100, message: 'Analysis complete!' }
+  ];
+
   useEffect(() => {
-    let start = null;
-    let animationFrame;
+    let startTime = Date.now();
+    let interval;
 
-    const step = (timestamp) => {
-      if (!start) start = timestamp;
-      const elapsed = timestamp - start;
+    const updateProgress = () => {
+      const elapsed = Date.now() - startTime;
+      const elapsedSeconds = Math.floor(elapsed / 1000);
+      setTimeElapsed(elapsedSeconds);
 
-      const percentage = Math.min((elapsed / 10000) * 200, 100);
-      setProgress(prev => (percentage > prev ? Math.floor(percentage) : prev));
-
-      if (percentage < 100) {
-        animationFrame = requestAnimationFrame(step);
+      let targetProgress;
+      
+      // If we have a result, accelerate to 100%
+      if (analysisResult) {
+        targetProgress = 100;
       } else {
-        setProcessingComplete(true);
+        // Realistic 3-minute progression curve
+        const progressPercent = Math.min((elapsed / (expectedDuration * 1000)) * 100, 95);
+        
+        // Use a non-linear curve for more realistic progression
+        if (progressPercent < 30) {
+          targetProgress = progressPercent * 0.8; // Slower start
+        } else if (progressPercent < 70) {
+          targetProgress = 24 + (progressPercent - 30) * 1.2; // Normal speed
+        } else {
+          targetProgress = 72 + (progressPercent - 70) * 0.6; // Slower towards end
+        }
       }
+
+      setProgress(prev => {
+        // Smoothly approach the target progress
+        const newProgress = Math.min(targetProgress, prev + (analysisResult ? 2 : 0.5));
+        
+        // Update current stage based on progress
+        const currentStageObj = stages.find(stage => newProgress < stage.threshold) || stages[stages.length - 1];
+        setCurrentStage(currentStageObj.name);
+        
+        return newProgress;
+      });
     };
 
-    animationFrame = requestAnimationFrame(step);
-
-    const timeout = setTimeout(() => {
+    // Update progress frequently for smoother animation
+    interval = setInterval(updateProgress, 100);
+    
+    // Show notification after 2 seconds
+    const notificationTimeout = setTimeout(() => {
       setShowNotification(true);
-    }, 500);
+    }, 2000);
 
     return () => {
-      clearTimeout(timeout);
-      cancelAnimationFrame(animationFrame);
+      clearInterval(interval);
+      clearTimeout(notificationTimeout);
     };
-  }, []);
+  }, [analysisResult, expectedDuration]);
+  
+  // Check if the process is complete
+  useEffect(() => {
+    if(progress >= 100 && analysisResult) {
+      setProcessingComplete(true);
+    }
+  }, [progress, analysisResult]);
 
-  const handleSeeResults = () => {
-    setShowResult(true);
+  // Handle auto-transition after analysis is complete
+  useEffect(() => {
+    if (processingComplete) {
+      const completeTimeout = setTimeout(() => {
+        onProcessingComplete();
+      }, 1500); // Small delay to show 100% completion before transitioning
+
+      return () => clearTimeout(completeTimeout);
+    }
+  }, [processingComplete, onProcessingComplete]);
+
+  const getCurrentStageMessage = () => {
+    const stage = stages.find(s => s.name === currentStage);
+    return stage ? stage.message : 'Processing...';
   };
 
-  if (showResult) return <Result />;
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getEstimatedTimeRemaining = () => {
+    if (processingComplete) return '0:00';
+    const remaining = Math.max(0, expectedDuration - timeElapsed);
+    return formatTime(remaining);
+  };
+
+  const handleSeeResults = () => {
+    onProcessingComplete();
+  };
 
   return (
     <div className="w-screen min-h-screen pt-10 overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col items-center justify-start font-sans relative">
-
       {/* Fixed background behind all content */}
       <div className="fixed inset-0 overflow-hidden -z-10">
         <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-400/10 rounded-full blur-xl animate-pulse"></div>
@@ -79,6 +143,19 @@ const Processing = () => {
           </div>
         </motion.div>
 
+        {/* File Info */}
+        {uploadedFile && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-center mb-6 bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm border border-slate-700/50"
+          >
+            <p className="text-sm text-slate-300">Analyzing: <span className="text-cyan-400 font-semibold">{uploadedFile.name}</span></p>
+            <p className="text-xs text-slate-400">Size: {(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+          </motion.div>
+        )}
+
         {/* Headline */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -90,17 +167,19 @@ const Processing = () => {
             Analyzing Content
           </h1>
           <p className="text-sm sm:text-base text-slate-300 mb-6">
-            Our AI is processing your media for deepfake detection
+            Our AI is processing your video for deepfake detection
           </p>
 
           <div className="flex justify-center items-center flex-wrap gap-4 mb-8 text-center">
-            {['Upload', 'Analysis', 'Verification', 'Complete'].map((label, i) => (
-              <div className="flex items-center gap-2" key={label}>
+            {stages.map((stage, i) => (
+              <div className="flex items-center gap-2" key={stage.name}>
                 <div className={`w-3 h-3 rounded-full transition-colors duration-500 ${
-                  progress > [0, 30, 70, 99][i] ? (i === 3 ? 'bg-green-400' : 'bg-cyan-400') : 'bg-slate-600'
+                  progress >= stage.threshold - 5 ? 
+                    (stage.name === 'Complete' && progress === 100 ? 'bg-green-400' : 'bg-cyan-400') : 
+                    'bg-slate-600'
                 }`}></div>
-                <span className="text-xs sm:text-sm text-slate-400">{label}</span>
-                {i < 3 && <div className="w-8 h-0.5 bg-slate-600"></div>}
+                <span className="text-xs sm:text-sm text-slate-400">{stage.name}</span>
+                {i < stages.length - 1 && <div className="w-8 h-0.5 bg-slate-600"></div>}
               </div>
             ))}
           </div>
@@ -117,20 +196,23 @@ const Processing = () => {
             <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden shadow-inner">
               <motion.div
                 className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-lg"
-                style={{ width: `${progress}%` }}
-                transition={{ duration: 0.3 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.3, ease: "linear" }}
               />
             </div>
             <div className="absolute -top-8 left-0 right-0 text-center">
-              <span className="text-xl sm:text-2xl font-bold text-cyan-400">{progress}%</span>
+              <span className="text-xl sm:text-2xl font-bold text-cyan-400">{Math.floor(progress)}%</span>
             </div>
           </div>
-          <p className="text-slate-400 text-xs sm:text-sm text-center">
-            {progress < 30 ? 'Uploading and preprocessing...' :
-             progress < 70 ? 'Running deepfake detection algorithms...' :
-             progress < 100 ? 'Finalizing analysis...' :
-             'Analysis complete!'}
-          </p>
+          <div className="flex justify-between items-center">
+            <p className="text-slate-400 text-xs sm:text-sm">
+              {getCurrentStageMessage()}
+            </p>
+            <div className="text-right">
+              <p className="text-xs text-slate-400">ETA: {getEstimatedTimeRemaining()}</p>
+              <p className="text-xs text-slate-500">Elapsed: {formatTime(timeElapsed)}</p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Fun Fact */}
@@ -147,7 +229,7 @@ const Processing = () => {
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
               60% of people encountered a deepfake video in the past year, but only 
               <span className="text-cyan-400 font-semibold"> 24% </span> 
-              could identify them correctly
+              could identify them correctly.
             </p>
           </div>
         </motion.div>
@@ -174,7 +256,7 @@ const Processing = () => {
       </div>
 
       {/* Notification */}
-      {showNotification && (
+      {showNotification && !showQuiz && !processingComplete && (
         <motion.div
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -192,15 +274,14 @@ const Processing = () => {
             >
               Take Quiz
             </button>
-
           </div>
           <button
-                onClick={() => setShowNotification(false)}
-                className="absolute top-2 right-2 text-slate-400 hover:text-red-400 text-lg font-bold"
-                aria-label="Close"
-              >
-                &times;
-              </button>
+            onClick={() => setShowNotification(false)}
+            className="absolute top-2 right-2 text-slate-400 hover:text-red-400 text-lg font-bold"
+            aria-label="Close"
+          >
+            &times;
+          </button>
         </motion.div>
       )}
 
@@ -216,15 +297,21 @@ const Processing = () => {
             backdropFilter: 'blur(10px)',
           }}
         >
-          
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="relative max-w-full sm:max-w-4xl w-full max-h-[90vh] overflow-auto sm:overflow-hidden"
+            className="relative w-full max-w-lg bg-slate-800/80 border border-cyan-400/30 rounded-2xl shadow-2xl p-6"
           >
-            <DeepfakeQuiz onClose={() => setShowQuiz(false)} />
+            <button 
+              onClick={() => setShowQuiz(false)} 
+              className="absolute top-3 right-3 text-slate-400 hover:text-cyan-300 text-2xl z-10"
+              aria-label="Close quiz"
+            >
+              <FaTimes />
+            </button>
+            <DeepfakeQuiz />
           </motion.div>
         </motion.div>
       )}

@@ -1,12 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { FiUploadCloud } from 'react-icons/fi';
-import Processing from './processing';
 
-const UploadModal = () => {
+const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
-  const [showProcessing, setShowProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [linkInput, setLinkInput] = useState('');
 
@@ -21,7 +19,15 @@ const UploadModal = () => {
     );
   }, []);
 
-  // Paste file from clipboard (optional)
+  // Show error toast when uploadError changes
+  useEffect(() => {
+    if (uploadError) {
+      setToastMessage(`❌ ${uploadError}`);
+      setTimeout(() => setToastMessage(null), 5000);
+    }
+  }, [uploadError]);
+
+  // Paste file from clipboard
   useEffect(() => {
     const handlePaste = (e) => {
       const items = e.clipboardData.items;
@@ -44,20 +50,28 @@ const UploadModal = () => {
     setDragging(false);
     if (e.dataTransfer.files?.length > 0) {
       setFile(e.dataTransfer.files[0]);
-      setToastMessage("📋 File Dropped!");
+      setToastMessage("📁 File Dropped!");
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    if (e.target.files?.length > 0) {
+      setFile(e.target.files[0]);
+      setToastMessage("📁 File Selected!");
       setTimeout(() => setToastMessage(null), 3000);
     }
   };
 
   const handleConfirm = async () => {
-    
+    if (!file && !linkInput.trim()) {
+      setToastMessage("❌ Please select a file or provide a link");
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
 
-    setShowProcessing(true);
-
-   
+    await onFileUpload(file, linkInput.trim());
   };
-
-  if (showProcessing) return <Processing />;
 
   return (
     <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative font-exo text-white overflow-hidden">
@@ -82,7 +96,7 @@ const UploadModal = () => {
         </button>
 
         <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-          Upload your file
+          Upload your video
         </h2>
 
         {/* Dropzone */}
@@ -102,13 +116,21 @@ const UploadModal = () => {
               <FiUploadCloud className="text-cyan-400 text-6xl mx-auto animate-pulse" />
             </div>
             <p className="font-semibold text-lg mb-2">
-              {file ? file.name : 'Drag and drop files here'}
+              {file ? file.name : 'Drag and drop video files here'}
             </p>
             <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-              Supported formats: Pdf, Docx, xlsx, pptx, txt, jpeg, jpg, png <br />
-              <span className="text-cyan-400">Max file size: 25MB</span>
+              Supported formats: MP4, AVI, MOV, MKV, WEBM <br />
+              <span className="text-cyan-400">Max file size: 500MB</span>
             </p>
           </label>
+          <input
+            id="file-upload"
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="video/*"
+            onChange={handleFileSelect}
+          />
         </div>
 
         {/* Separator */}
@@ -116,19 +138,19 @@ const UploadModal = () => {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-600"></div>
           </div>
-          <div className="relative bg-slate-800 px-4 text-sm">or paste a link</div>
+          <div className="relative bg-slate-800 px-4 text-sm">or paste a video link</div>
         </div>
 
         {/* Link input field */}
         <div className="mb-8">
           <label htmlFor="link-input" className="block mb-2 text-sm font-semibold text-slate-300">
-            Paste a link here
+            Paste a video link here
           </label>
           <input
             type="text"
             id="link-input"
             className="w-full px-4 py-3 rounded-xl bg-slate-700/50 text-white placeholder-slate-400 border border-cyan-400/30 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            placeholder="https://example.com/your-file"
+            placeholder="https://example.com/video.mp4"
             value={linkInput}
             onChange={(e) => setLinkInput(e.target.value)}
           />
@@ -139,21 +161,38 @@ const UploadModal = () => {
           <button
             className="bg-slate-600 hover:bg-slate-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
             onClick={() => window.location.replace('/')}
+            disabled={isUploading}
           >
             Cancel
           </button>
           <button
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg"
+            className={`px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg ${
+              isUploading 
+                ? 'bg-slate-600 text-slate-300 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white'
+            }`}
             onClick={handleConfirm}
+            disabled={isUploading}
           >
-            Confirm
+            {isUploading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                Uploading...
+              </div>
+            ) : (
+              'Analyze Video'
+            )}
           </button>
         </div>
       </div>
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-3 rounded-xl shadow-2xl animate-fade-in-out z-50 backdrop-blur-sm border border-cyan-400/30">
+        <div className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-2xl animate-fade-in-out z-50 backdrop-blur-sm border ${
+          toastMessage.includes('❌') 
+            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-400/30' 
+            : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400/30'
+        }`}>
           {toastMessage}
         </div>
       )}

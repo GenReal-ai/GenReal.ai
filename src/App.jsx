@@ -13,34 +13,25 @@ import News from './components/news';
 import ContactUs from './components/ContactUs';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
-import Upload from './components/Upload';
+import DeepFakeUpload from './pages/DeepfakeUploadHandler';
 import Plagiarism from "./components/Plagiarism-upload";
 import DeepfakeDetectionPlatform from "./components/aboutCards";
 import Team from "./components/team";
 import LoginWidget from "./components/LoginWidget";
 import Dashboard from "./components/Dashboard";
 
-// ==========================================================
-// ADDED: Simple Protected Route Component
-// This component uses your existing `isLoggedIn` state.
-// If the user is not logged in, it redirects to the /login page.
-// ==========================================================
 const ProtectedRoute = ({ isLoggedIn, children }) => {
   const location = useLocation();
 
   if (!isLoggedIn) {
-    // Redirect them to the /login page, saving the current location
-    // so we can send them there after they log in.
+
     return <Navigate to={`/login?redirect=${location.pathname}`} replace />;
   }
 
   return children;
 };
 
-/**
-* Enhanced active section detection using scroll position method
-* This is more reliable than intersection observer for navbar highlighting
-*/
+
 const useActiveSection = (isLoaded) => {
  const [activeSection, setActiveSection] = useState('home');
 
@@ -262,7 +253,7 @@ const AppContent = () => {
       element={
        <ProtectedRoute isLoggedIn={isLoggedIn}>
         <PageWrapper>
-         <Upload />
+         <DeepFakeUpload />
         </PageWrapper>
        </ProtectedRoute>
       }
