@@ -42,8 +42,6 @@ const useActiveSection = (isLoaded) => {
    const sections = ['home', 'about', 'Products', 'news', 'faq', 'contact-us'];
    const scrollPosition = window.scrollY + 200; // Offset for navbar height
    
-   // Log for debugging
-   console.log('Current scroll position:', scrollPosition);
 
    for (let i = sections.length - 1; i >= 0; i--) {
     const element = document.getElementById(sections[i]);
@@ -51,16 +49,9 @@ const useActiveSection = (isLoaded) => {
      const elementTop = element.offsetTop;
      const elementHeight = element.offsetHeight;
      
-     console.log(`Section ${sections[i]}:`, {
-      top: elementTop,
-      height: elementHeight,
-      bottom: elementTop + elementHeight,
-      isActive: elementTop <= scrollPosition
-     });
      
      if (elementTop <= scrollPosition) {
       if (activeSection !== sections[i]) {
-       console.log(`Setting active section to: ${sections[i]}`);
        setActiveSection(sections[i]);
       }
       break;
