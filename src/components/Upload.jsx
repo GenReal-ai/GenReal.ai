@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { FiUploadCloud } from 'react-icons/fi';
+import { FaVideo, FaImage, FaVolumeUp } from 'react-icons/fa';
 
 const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [linkInput, setLinkInput] = useState('');
+  const [selectedType, setSelectedType] = useState('all'); // 'all', 'video', 'image', 'audio'
 
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
@@ -73,8 +75,41 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
     await onFileUpload(file, linkInput.trim());
   };
 
+  const getAcceptString = () => {
+    switch (selectedType) {
+      case 'video':
+        return 'video/*';
+      case 'image':
+        return 'image/*';
+      case 'audio':
+        return 'audio/*';
+      default:
+        return 'video/*,image/*,audio/*';
+    }
+  };
+
+  const getFileTypeDescription = () => {
+    switch (selectedType) {
+      case 'video':
+        return 'MP4, AVI, MOV, MKV, WEBM';
+      case 'image':
+        return 'JPG, PNG, JPEG, WEBP, GIF';
+      case 'audio':
+        return 'MP3, WAV, M4A, AAC, OGG';
+      default:
+        return 'Videos, Images, Audio files';
+    }
+  };
+
+  const fileTypeOptions = [
+    { id: 'all', label: 'All Types', icon: FiUploadCloud, color: 'cyan' },
+    { id: 'video', label: 'Video', icon: FaVideo, color: 'blue' },
+    { id: 'image', label: 'Image', icon: FaImage, color: 'green' },
+    { id: 'audio', label: 'Audio', icon: FaVolumeUp, color: 'purple' },
+  ];
+
   return (
-    <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative font-exo text-white overflow-hidden">
+    <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative font-exo text-white overflow-hidden p-4">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-400/10 rounded-full blur-xl animate-pulse"></div>
@@ -86,18 +121,40 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative bg-slate-800/90 backdrop-blur-sm border border-cyan-400/30 rounded-3xl px-6 sm:px-10 md:px-12 py-8 w-[95vw] max-w-[800px] shadow-2xl z-10"
+        className="relative bg-slate-800/90 backdrop-blur-sm border border-cyan-400/30 rounded-3xl px-4 sm:px-6 md:px-8 py-6 w-full max-w-2xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
       >
         <button
           onClick={() => window.location.replace('/')}
-          className="absolute top-3 right-4 text-white text-2xl font-bold hover:text-cyan-400 transition"
+          className="absolute top-3 right-4 text-white text-xl font-bold hover:text-cyan-400 transition"
         >
           &times;
         </button>
 
-        <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-          Upload your video
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          Upload your content
         </h2>
+
+        {/* File Type Selector */}
+        <div className="grid grid-cols-4 gap-2 mb-4 sm:mb-6">
+          {fileTypeOptions.map((option) => {
+            const Icon = option.icon;
+            const isSelected = selectedType === option.id;
+            return (
+              <button
+                key={option.id}
+                onClick={() => setSelectedType(option.id)}
+                className={`p-2 sm:p-3 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2 ${
+                  isSelected 
+                    ? `border-${option.color}-400 bg-${option.color}-400/10 text-${option.color}-400` 
+                    : 'border-slate-600 bg-slate-700/30 text-slate-400 hover:border-slate-500'
+                }`}
+              >
+                <Icon className="text-sm sm:text-lg" />
+                <span className="text-xs sm:text-sm font-medium">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
         {/* Dropzone */}
         <div
@@ -107,19 +164,19 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
             setDragging(true);
           }}
           onDragLeave={() => setDragging(false)}
-          className={`border-2 border-dashed rounded-xl p-8 mb-6 text-center transition-all duration-300 font-inter ${
+          className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 font-inter ${
             dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'
           }`}
         >
           <label htmlFor="file-upload" className="cursor-pointer block">
-            <div className="mb-4">
-              <FiUploadCloud className="text-cyan-400 text-6xl mx-auto animate-pulse" />
+            <div className="mb-3 sm:mb-4">
+              <FiUploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
             </div>
-            <p className="font-semibold text-lg mb-2">
-              {file ? file.name : 'Drag and drop video files here'}
+            <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
+              {file ? file.name : `Drag and drop ${selectedType === 'all' ? 'media files' : selectedType + ' files'} here`}
             </p>
-            <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-              Supported formats: MP4, AVI, MOV, MKV, WEBM <br />
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Supported formats: {getFileTypeDescription()} <br />
               <span className="text-cyan-400">Max file size: 500MB</span>
             </p>
           </label>
@@ -128,45 +185,45 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
             ref={fileInputRef}
             type="file"
             className="hidden"
-            accept="video/*"
+            accept={getAcceptString()}
             onChange={handleFileSelect}
           />
         </div>
 
         {/* Separator */}
-        <div className="text-center text-slate-400 mb-6 relative">
+        <div className="text-center text-slate-400 mb-4 sm:mb-6 relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-600"></div>
           </div>
-          <div className="relative bg-slate-800 px-4 text-sm">or paste a video link</div>
+          <div className="relative bg-slate-800 px-4 text-xs sm:text-sm">or paste a media link</div>
         </div>
 
         {/* Link input field */}
-        <div className="mb-8">
-          <label htmlFor="link-input" className="block mb-2 text-sm font-semibold text-slate-300">
-            Paste a video link here
+        <div className="mb-6 sm:mb-8">
+          <label htmlFor="link-input" className="block mb-2 text-xs sm:text-sm font-semibold text-slate-300">
+            Paste a media link here
           </label>
           <input
             type="text"
             id="link-input"
-            className="w-full px-4 py-3 rounded-xl bg-slate-700/50 text-white placeholder-slate-400 border border-cyan-400/30 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            placeholder="https://example.com/video.mp4"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl bg-slate-700/50 text-white placeholder-slate-400 border border-cyan-400/30 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base"
+            placeholder="https://example.com/media.mp4"
             value={linkInput}
             onChange={(e) => setLinkInput(e.target.value)}
           />
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3 sm:gap-4">
           <button
-            className="bg-slate-600 hover:bg-slate-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 text-sm sm:text-base"
             onClick={() => window.location.replace('/')}
             disabled={isUploading}
           >
             Cancel
           </button>
           <button
-            className={`px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg ${
+            className={`px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base ${
               isUploading 
                 ? 'bg-slate-600 text-slate-300 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white'
@@ -176,11 +233,11 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
           >
             {isUploading ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3 sm:w-4 h-3 sm:h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                 Uploading...
               </div>
             ) : (
-              'Analyze Video'
+              'Analyze Content'
             )}
           </button>
         </div>
@@ -188,7 +245,7 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
 
       {/* Toast */}
       {toastMessage && (
-        <div className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-2xl animate-fade-in-out z-50 backdrop-blur-sm border ${
+        <div className={`fixed bottom-4 sm:bottom-6 right-4 sm:right-6 px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-2xl animate-fade-in-out z-50 backdrop-blur-sm border text-sm sm:text-base ${
           toastMessage.includes('❌') 
             ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-400/30' 
             : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400/30'
