@@ -41,9 +41,9 @@ const Face = ({ isParentInView, paused, disableTracking, onModelLoaded }) => {
       const width = window.innerWidth;
       let newScale, newY;
       if (width < 480) {
-        newScale = { x: 0.95, y: 0.8, z: 1 }; newY = -0.85;
+        newScale = { x: 0.95, y: 0.75, z: 1 }; newY = -0.9;
       } else if (width < 768) {
-        newScale = { x: 1, y: 0.8, z: 1 }; newY = -0.9;
+        newScale = { x: 1.05, y: 0.85, z: 1 }; newY = -0.95;
       } else if (width < 1024) {
         newScale = { x: 1.3, y: 1, z: 1 }; newY = -1.4;
       } else {
@@ -144,7 +144,7 @@ const FaceModel = ({ paused, disableTracking, onModelLoaded }) => {
       <directionalLight position={[2, 2, 5]} intensity={1.2} />
       <Suspense fallback={null}>
         {/* The Face component is always mounted for stability. 
-          Its internal animations are controlled by the `paused` prop.
+          Its internal animations are controlled by the paused prop.
         */}
         <Face 
           isParentInView={!paused} 

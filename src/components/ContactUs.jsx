@@ -1,16 +1,154 @@
-import React, { useState } from 'react';
-import { Mail, MapPin, Send, MessageCircle, Linkedin, Clock } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, MapPin, Send, MessageCircle, Linkedin } from 'lucide-react';
+
+// Reusable Floating Label Input Component
+const FloatingLabelInput = ({ name, label, type = 'text', value, onChange }) => {
+    const [isFocused, setIsFocused] = useState(false);
+    const hasValue = value.length > 0;
+
+    return (
+        <motion.div className="relative" layout>
+            <motion.label
+                htmlFor={name}
+                className="absolute left-3 text-gray-400 cursor-text pointer-events-none"
+                animate={{
+                    y: isFocused || hasValue ? -24 : 0,
+                    scale: isFocused || hasValue ? 0.85 : 1,
+                    color: isFocused ? '#22d3ee' : '#9ca3af',
+                }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                style={{ originX: 0 }}
+            >
+                {label}
+            </motion.label>
+            <input
+                id={name}
+                name={name}
+                type={type}
+                value={value}
+                onChange={onChange}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                required={name !== 'phone'} // Phone can be optional
+                className="w-full px-3 py-3 bg-transparent border-b-2 text-white transition-colors duration-300 outline-none focus:border-cyan-400 border-gray-600"
+            />
+        </motion.div>
+    );
+};
+
+// Reusable Floating Label Textarea Component with Autosize
+const FloatingLabelTextarea = ({ name, label, value, onChange }) => {
+    const [isFocused, setIsFocused] = useState(false);
+    const hasValue = value.length > 0;
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [value]);
+
+    return (
+        <motion.div className="relative" layout>
+            <motion.label
+                htmlFor={name}
+                className="absolute left-3 text-gray-400 cursor-text pointer-events-none"
+                animate={{
+                    y: isFocused || hasValue ? -24 : 0,
+                    scale: isFocused || hasValue ? 0.85 : 1,
+                    color: isFocused ? '#22d3ee' : '#9ca3af',
+                }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                style={{ originX: 0 }}
+            >
+                {label}
+            </motion.label>
+            <textarea
+                ref={textareaRef}
+                id={name}
+                name={name}
+                value={value}
+                onChange={onChange}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                required
+                rows={1}
+                className="w-full px-3 py-3 bg-transparent border-b-2 text-white transition-colors duration-300 outline-none focus:border-cyan-400 border-gray-600 resize-none overflow-hidden"
+            />
+        </motion.div>
+    );
+};
+
+// New Gradient Contact Panel inspired by the image
+const GradientContactPanel = ({ variants }) => {
+  const contactDetails = [
+    {
+      title: "Visit us",
+      lines: ["Come say hello at our office HQ.", "VIT Vellore, Tamil Nadu, India"]
+    },
+    {
+      title: "Chat to us",
+      lines: ["Our friendly team is here to help.", "genreal.ai@gmail.com"]
+    },
+  ];
+
+  const socialLinks = [
+    { href: "mailto:genreal.ai@gmail.com", icon: <Mail/> },
+    { href: "https://www.linkedin.com/company/genreal-ai/", icon: <Linkedin/> },
+    { href: "#", icon: <MapPin/> },
+  ];
+
+  return (
+    <motion.div
+      variants={variants}
+      className="hidden lg:flex lg:order-2 flex-col justify-between bg-gradient-to-b from-cyan-900/50 via-[#0e152b]/80 to-[#0e152b] border border-cyan-500/20 rounded-3xl p-8 backdrop-blur-sm text-white"
+    >
+      <div>
+        <h2 className="text-3xl font-bold mb-8">Get in touch</h2>
+        <div className="space-y-6">
+          {contactDetails.map((item, index) => (
+            <div key={index}>
+              <h3 className="font-semibold text-lg text-cyan-400 mb-1">{item.title}</h3>
+              {item.lines.map((line, lineIndex) => (
+                <p key={lineIndex} className="text-gray-300 leading-relaxed">{line}</p>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h3 className="font-semibold text-lg text-cyan-400 mb-3">Social media</h3>
+        <div className="flex space-x-4">
+          {socialLinks.map((link, index) => (
+            <motion.a
+              key={index}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-cyan-300 transition-colors"
+              whileHover={{ scale: 1.2, y: -3 }}
+              transition={{type: 'spring', stiffness: 300}}
+            >
+              {link.icon}
+            </motion.a>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     phone: '',
     subject: '',
     message: ''
   });
-  const [focused, setFocused] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
@@ -20,238 +158,119 @@ const ContactForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("Form Submitted:", formData);
     setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    setTimeout(() => setSubmitted(false), 5000);
     setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
+      name: '', email: '', phone: '', subject: '', message: ''
     });
   };
 
-  const contactInfo = [
-    {
-      icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />,
-      title: "Email",
-      info: "genreal.ai@gmail.com",
-      subInfo: "24/7 Support"
-    },
-    {
-      icon: <Linkedin className="w-4 h-4 sm:w-5 sm:h-5" />,
-      title: "LinkedIn",
-      info: "https://www.linkedin.com/company/genreal-ai/",
-      subInfo: "Let's connect"
-    },
-    {
-      icon: <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />,
-      title: "Visit Us",
-      info: "VIT Vellore",
-      subInfo: "Vellore, Tamil Nadu, India"
-    },
-    {
-      icon: <Clock className="w-4 h-4 sm:w-5 sm:h-5" />,
-      title: "Response Time",
-      info: "Within 2 working days",
-      subInfo: "We'll get back to you soon"
-    }
-  ];
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
+  };
+  
+  const successVariants = {
+    hidden: { opacity: 0, y: -20, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.3 } }
+  };
 
   return (
-    <div className="min-h-screen bg-black px-3 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 lg:py-12" id="contact-us">
-      {/* Glow Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-cyan-500/20 rounded-full blur-[80px] sm:blur-[160px]" />
-        <div className="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-40 h-40 sm:w-80 sm:h-80 bg-cyan-400/20 rounded-full blur-[80px] sm:blur-[160px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-[32rem] sm:h-[32rem] bg-cyan-500/5 rounded-full blur-[80px] sm:blur-[160px]" />
+    <div className="min-h-screen bg-black px-4 sm:px-8 py-12 flex items-center" id="contact-us">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <motion.div 
+          className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/20 rounded-full blur-[160px]"
+          animate={{ x: [0, 20, 0], y: [0, -30, 0] }}
+          transition={{ duration: 20, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+        />
+        <motion.div 
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-400/20 rounded-full blur-[160px]"
+          animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
+          transition={{ duration: 18, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay: 1 }}
+        />
+        <motion.div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] bg-cyan-500/5 rounded-full blur-[160px]"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 22, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+        />
       </div>
 
-      <div className="relative max-w-7xl mx-auto">
-        {/* Heading */}
-        <div className="text-center mb-6 sm:mb-8 md:mb-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-2 sm:mb-3">
+      <motion.div 
+        className="relative max-w-7xl mx-auto w-full"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="text-center mb-10" variants={itemVariants}>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-3">
             Get In <span className="text-cyan-400">Touch</span>
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto px-4">
+          <p className="text-gray-400 text-base md:text-lg lg:text-xl max-w-2xl mx-auto">
             Have a question or want to work together? We'd love to hear from you.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Content */}
-        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-          {/* Contact Info */}
-          <div className="space-y-3 sm:space-y-4 lg:order-2">
-            {contactInfo.map((item, index) => (
-              <div
-                key={index}
-                className="bg-[#10182f] border border-cyan-500/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 backdrop-blur-sm"
-              >
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="bg-cyan-500/10 p-2 sm:p-3 rounded-full text-cyan-400 flex-shrink-0">
-                    {item.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-white font-semibold text-sm sm:text-base md:text-lg">{item.title}</h3>
-                    {item.title === 'LinkedIn' ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        <a
-                          href={item.info}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-cyan-300 font-medium text-xs sm:text-sm break-all hover:underline"
-                          title={item.info}
-                        >
-                          LinkedIn Profile
-                        </a>
-                        <a
-                          href={item.info}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-2 py-1 text-xs bg-cyan-700/30 rounded hover:bg-cyan-700/60 transition self-start"
-                          title="Visit LinkedIn"
-                        >
-                          Visit
-                        </a>
-                      </div>
-                    ) : (
-                      <p className="text-cyan-300 font-medium text-xs sm:text-sm break-words">{item.info}</p>
-                    )}
-                    <p className="text-gray-500 text-xs sm:text-sm">{item.subInfo}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="grid lg:grid-cols-3 gap-8">
+          
+          <GradientContactPanel variants={itemVariants} />
 
           {/* Form */}
-          <div className="lg:col-span-2 lg:order-1">
-            <div className="bg-[#0e152b] border border-cyan-500/20 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 backdrop-blur-sm">
-              <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Send us a message</h2>
+          <motion.div className="col-span-3 lg:col-span-2 lg:order-1" variants={itemVariants}>
+            <div className="bg-[#0e152b]/50 border border-cyan-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-sm h-full">
+              <div className="flex items-center space-x-3 mb-8">
+                <MessageCircle className="w-6 h-6 text-cyan-400" />
+                <h2 className="text-2xl font-bold text-white">Send us a message</h2>
               </div>
+              
+              <AnimatePresence>
+                {submitted && (
+                  <motion.div 
+                    className="mb-6 p-4 bg-green-500/10 border border-green-500/50 rounded-xl text-center"
+                    variants={successVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                  >
+                    <p className="text-green-300 font-medium">Message sent! We'll be in touch soon.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              {submitted && (
-                <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-500/10 border border-green-500/50 rounded-xl">
-                  <p className="text-green-300 font-medium text-sm sm:text-base">
-                    Message sent successfully! We'll get back to you soon.
-                  </p>
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <FloatingLabelInput name="name" label="Name" value={formData.name} onChange={handleChange} />
+                <div className="grid sm:grid-cols-2 gap-8">
+                  <FloatingLabelInput name="email" label="Email" type="email" value={formData.email} onChange={handleChange} />
+                  <FloatingLabelInput name="phone" label="Phone (Optional)" type="tel" value={formData.phone} onChange={handleChange} />
                 </div>
-              )}
+                <FloatingLabelInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} />
+                <FloatingLabelTextarea name="message" label="Message" value={formData.message} onChange={handleChange} />
 
-              <div className="space-y-4 sm:space-y-5">
-                <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
-                  {["firstName", "lastName"].map((field) => (
-                    <div key={field}>
-                      <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base capitalize">
-                        {field.replace(/([A-Z])/g, " $1")}
-                      </label>
-                      <input
-                        type="text"
-                        name={field}
-                        value={formData[field]}
-                        onChange={handleChange}
-                        onFocus={() => setFocused(field)}
-                        onBlur={() => setFocused(null)}
-                        required
-                        className={`w-full bg-[#121c35] border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base transition-all duration-300 ${
-                          focused === field
-                            ? 'border-cyan-400 shadow-md shadow-cyan-400/20'
-                            : 'border-slate-700 hover:border-slate-600'
-                        }`}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
-                  <div>
-                    <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      onFocus={() => setFocused('email')}
-                      onBlur={() => setFocused(null)}
-                      required
-                      className={`w-full bg-[#121c35] border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base transition-all duration-300 ${
-                        focused === 'email'
-                          ? 'border-cyan-400 shadow-md shadow-cyan-400/20'
-                          : 'border-slate-700 hover:border-slate-600'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base">Phone</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      onFocus={() => setFocused('phone')}
-                      onBlur={() => setFocused(null)}
-                      className={`w-full bg-[#121c35] border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base transition-all duration-300 ${
-                        focused === 'phone'
-                          ? 'border-cyan-400 shadow-md shadow-cyan-400/20'
-                          : 'border-slate-700 hover:border-slate-600'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base">Subject</label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    onFocus={() => setFocused('subject')}
-                    onBlur={() => setFocused(null)}
-                    required
-                    className={`w-full bg-[#121c35] border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base transition-all duration-300 ${
-                      focused === 'subject'
-                        ? 'border-cyan-400 shadow-md shadow-cyan-400/20'
-                        : 'border-slate-700 hover:border-slate-600'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-medium mb-2 text-sm sm:text-base">Message</label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    onFocus={() => setFocused('message')}
-                    onBlur={() => setFocused(null)}
-                    required
-                    rows={3}
-                    className={`w-full bg-[#121c35] border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base resize-none transition-all duration-300 ${
-                      focused === 'message'
-                        ? 'border-cyan-400 shadow-md shadow-cyan-400/20'
-                        : 'border-slate-700 hover:border-slate-600'
-                    }`}
-                  />
-                </div>
-
-                <button
+                <motion.button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-cyan-400/25 flex items-center justify-center space-x-2 sm:space-x-3 text-sm sm:text-base"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-cyan-400 text-white font-semibold py-3 px-8 rounded-xl flex items-center justify-center space-x-3 text-base"
+                  whileHover={{ scale: 1.03, boxShadow: '0px 5px 20px rgba(0, 255, 255, 0.25)' }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 17 }}
                 >
-                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Send className="w-5 h-5" />
                   <span>Send Message</span>
-                </button>
-              </div>
+                </motion.button>
+              </form>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
 export default ContactForm;
+

@@ -11,7 +11,7 @@ const NewsTimeline = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const newsItems = [
-    // ... newsItems array ...
+    // ... newsItems array remains the same ...
     {
       title: "Facebook expands deepfake rules, but no full ban",
       image: "/News/news1.webp",
@@ -71,39 +71,55 @@ const NewsTimeline = () => {
   ];
 
   useEffect(() => {
+    // This effect handles checking for mobile view
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // ROBUST useEffect HOOK
+  // --- REVISED useEffect FOR GSAP ---
   useEffect(() => {
+    // Don't run GSAP animation on mobile
     if (isMobile) return;
 
     const section = sectionRef.current;
     const horizontal = horizontalRef.current;
+
+    // Ensure refs are available
     if (!section || !horizontal) return;
-    gsap.set(section, { height: section.offsetHeight });
+
+    // Use a GSAP context for safe cleanup
     const ctx = gsap.context(() => {
+      // Key Change 1: Dynamically get the right padding of the container
+      const paddingRight = parseFloat(gsap.getProperty(horizontal, "paddingRight"));
+
+      // Key Change 2: Calculate the correct scroll distance, accounting for padding
+      const scrollDistance = horizontal.scrollWidth - window.innerWidth + paddingRight;
+      
+      // Ensure there's content to scroll before creating the animation
+      if (scrollDistance <= 0) return;
+
       gsap.to(horizontal, {
-        x: () => `-${horizontal.scrollWidth - window.innerWidth}px`,
-        ease: "none",
+        // Animate the x position to the calculated scroll distance
+        x: -scrollDistance,
+        ease: "none", // Linear movement
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: () => `+=${horizontal.scrollWidth - window.innerWidth}`,
-          scrub: true,
-          pin: true,
+          // The scroll duration is the same as the distance we need to move
+          end: () => `+=${scrollDistance}`,
+          scrub: true, // Smoothly ties the animation progress to the scrollbar
+          pin: true,   // Pins the section during the scroll
           anticipatePin: 1,
-          invalidateOnRefresh: true,
+          invalidateOnRefresh: true, // Recalculates values on resize
         },
       });
-    }, section);
+    }, section); // Scope the context to the section
 
+    // Cleanup function to revert all GSAP animations within the context
     return () => ctx.revert();
-  }, [isMobile]);
-
+  }, [isMobile]); // Re-run this effect if the `isMobile` state changes
 
   const handleCardClick = (link) => {
     window.open(link, "_blank", "noopener,noreferrer");
@@ -118,7 +134,7 @@ const NewsTimeline = () => {
       {/* Header */}
       <div
         className="flex flex-col items-center justify-center w-full text-center px-4 pt-16 pb-8"
-        id="news"
+        id="news-header" // Changed id to avoid duplicate "news" id
       >
         <h2
           className={`font-bold text-center mb-2 ${
@@ -133,34 +149,103 @@ const NewsTimeline = () => {
       </div>
 
       {isMobile ? (
-        <div className="flex flex-col items-center px-4 pt-8 pb-16 space-y-6">
-          {/* ... mobile JSX ... */}
+        // --- MOBILE VIEW (SLIDER) ---
+        <div className="relative w-full flex flex-col items-center px-4 pt-8 pb-16">
+          {/* Card */}
+          <div
+            className="w-full max-w-sm bg-[#1a1a1a] text-white rounded-2xl shadow-md p-6 flex flex-col justify-between text-center border border-gray-800"
+            onClick={() => handleCardClick(newsItems[currentIndex].link)}
+          >
+            <div>
+              <img
+                src={newsItems[currentIndex].image}
+                alt={newsItems[currentIndex].title}
+                className="w-full h-56 object-cover rounded-lg mb-4"
+              />
+              <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+                {newsItems[currentIndex].title}
+              </h3>
+              <p className="text-sm text-gray-400 mb-4 line-clamp-4">
+                {newsItems[currentIndex].summary}
+              </p>
+            </div>
+            <div className="flex flex-col items-center space-y-3">
+              <p className="text-xs text-gray-500">{newsItems[currentIndex].date}</p>
+              <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium py-2.5 px-6 rounded-full hover:from-cyan-600 hover:to-blue-700 transition-all duration-300">
+                Read More
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation Arrows */}
+          <div className="flex justify-between items-center w-full max-w-sm mt-6">
+            <button
+              onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : newsItems.length - 1))}
+              className="p-2 bg-gray-800 rounded-full hover:bg-cyan-500 transition"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => setCurrentIndex((prev) => (prev < newsItems.length - 1 ? prev + 1 : 0))}
+              className="p-2 bg-gray-800 rounded-full hover:bg-cyan-500 transition"
+            >
+              →
+            </button>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="flex justify-center space-x-2 mt-4">
+            {newsItems.map((_, idx) => (
+              <span
+                key={idx}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  idx === currentIndex ? "bg-cyan-500 scale-125" : "bg-gray-600"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       ) : (
+        // --- DESKTOP VIEW (HORIZONTAL SCROLL) ---
         <div
           ref={horizontalRef}
-          className="flex items-start w-max space-x-16 px-24 py-12"
+          className="flex items-center w-max space-x-8 sm:space-x-12 lg:space-x-16 px-4 sm:px-8 lg:px-24 py-8 sm:py-12"
         >
           {newsItems.map((item, index) => (
             <div
               key={index}
-              className="group min-w-[480px] max-w-[480px] h-[540px] bg-[#1a1a1a] text-white rounded-2xl shadow-md p-6 flex flex-col justify-between text-center border border-gray-800 cursor-pointer transition-all duration-300 ease-in-out hover:!border-cyan-400 hover:-translate-y-4 hover:shadow-2xl hover:shadow-cyan-500/20"
+              className="group w-[85vw] sm:w-[320px] md:w-[360px] lg:w-[420px] 
+                         bg-[#1a1a1a] text-white rounded-2xl shadow-md 
+                         p-4 sm:p-6 pb-6 sm:pb-8 flex flex-col justify-between 
+                         text-center border border-gray-800 cursor-pointer 
+                         transition-all duration-300 ease-in-out 
+                         hover:!border-cyan-400 hover:-translate-y-3 
+                         hover:shadow-2xl hover:shadow-cyan-500/20 
+                         overflow-hidden"
               onClick={() => handleCardClick(item.link)}
             >
-              <div>
+              <div className="flex-1 flex flex-col">
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-64 object-cover rounded-lg mb-4 transition-transform duration-300 ease-in-out group-hover:scale-105"
+                  className="w-full aspect-[16/9] object-cover rounded-lg mb-4 
+                             transition-transform duration-300 ease-in-out 
+                             group-hover:scale-105"
                 />
-                <h3 className="text-xl font-semibold mb-3 line-clamp-2">{item.title}</h3>
-                <p className="text-sm text-gray-400 mb-4 line-clamp-4">
+                <h3 className="text-lg md:text-xl font-semibold mb-3 line-clamp-2">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-gray-400 mb-4 line-clamp-4 flex-grow">
                   {item.summary}
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-3">
+              <div className="flex flex-col items-center space-y-2 sm:space-y-3 mt-2">
                 <p className="text-xs text-gray-500">{item.date}</p>
-                <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium py-2.5 px-6 rounded-full hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform group-hover:scale-105">
+                <button className="bg-gradient-to-r from-cyan-500 to-blue-600 
+                                   text-white text-sm font-medium py-3 px-5 
+                                   sm:py-2.5 sm:px-6 rounded-full 
+                                   hover:from-cyan-600 hover:to-blue-700 
+                                   transition-all duration-300 transform group-hover:scale-105">
                   Read More
                 </button>
               </div>

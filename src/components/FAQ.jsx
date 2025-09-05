@@ -344,14 +344,11 @@ const DynamicFAQ = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>
+      {`
         @keyframes scan {
-          0% {
-            transform: translateY(-100%);
-          }
-          100% {
-            transform: translateY(100vh);
-          }
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100vh); }
         }
         .scanline {
           position: absolute;
@@ -369,7 +366,9 @@ const DynamicFAQ = () => {
           opacity: 0.6;
           z-index: 1;
         }
-      `}</style>
+      `}
+    </style>
+
     </div>
   );
 };

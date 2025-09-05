@@ -203,7 +203,7 @@ if (heroRef.current) {
   );
 
   return (
-    <div ref={sectionRef} className="bg-black text-white font-sans relative overflow-hidden" id="about">
+    <div ref={sectionRef} className="bg-gradient-to-b from-black via-slate-900 to-slate-950 text-white font-sans relative overflow-hidden" id="about">
       
       {/* Hero Section - Redesigned */}
       <section ref={heroRef} className="min-h-screen flex items-center justify-center relative z-10 pt-24 opacity-0">

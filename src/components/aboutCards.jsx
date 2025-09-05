@@ -1,32 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, FileSearch } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+const useAuth = () => ({ isAuthenticated: false }); // Mock hook for standalone example
 
-/**
- * A component that displays two interactive, flippable cards for different services.
- * This version has been updated for full responsiveness and to fix 3D transform issues.
- */
+import {
+  Shield,
+  FileSearch,
+  Play,
+  Scan,
+  CheckCircle,
+  ArrowRight,
+  Zap,
+  Image,
+  Video,
+  Mic,
+} from "lucide-react";
+
+// Cyan/Blue theme WITHOUT hover color changes
+const colorMap = {
+  cyan: {
+    border: "border-cyan-400/40",
+    text: "text-cyan-300",
+    accent: "text-cyan-400",
+    bgFrom: "from-cyan-900/60",
+    bgTo: "to-slate-900/80",
+    shadow: "shadow-cyan-500/25",
+    glow: "shadow-cyan-400/30",
+  },
+  blue: {
+    border: "border-blue-400/40",
+    text: "text-blue-300",
+    accent: "text-blue-400",
+    bgFrom: "from-blue-900/60",
+    bgTo: "to-slate-900/80",
+    shadow: "shadow-blue-500/25",
+    glow: "shadow-blue-400/30",
+  },
+};
+
 const DeepfakeDetectionPlatform = () => {
-  // State to track which cards are flipped. Using a Set is efficient.
   const [flippedCards, setFlippedCards] = useState(new Set());
-  // State to manage the initial fade-in animation.
   const [isLoaded, setIsLoaded] = useState(false);
-  const navigate = useNavigate();
 
-  // Trigger the fade-in animation once the component mounts.
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  // Toggles the flipped state of a specific card by its index.
   const toggleCard = (index) => {
-    setFlippedCards(prev => {
+    setFlippedCards((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
-      }
+      newSet.has(index) ? newSet.delete(index) : newSet.add(index);
       return newSet;
     });
   };
@@ -36,169 +61,180 @@ const DeepfakeDetectionPlatform = () => {
       icon: Shield,
       title: "Advanced Deepfake Detection",
       bigTitle: "DEEPFAKE DETECTION",
-      subtitle: "Protect Your Content with AI-Powered Detection",
+      subtitle: "AI-powered multi-modal deepfake protection",
       description:
-        "Our cutting-edge deepfake detection service identifies manipulated media using state-of-the-art artificial intelligence to safeguard visual and audio content authenticity in real-time.",
+        "We safeguard digital integrity by analyzing video, audio, and images for signs of manipulation.",
       features: [
-        "Real-time Video Analysis",
-        "99.7% Detection Accuracy",
-        "Multiple Format Support",
-        "Batch Processing Available",
-        "API Integration Ready"
+        { icon: Video, text: "Deepfake Video Analysis" },
+        { icon: Mic, text: "Deepfake Audio Detection" },
+        { icon: Image, text: "Deepfake Image Detection" },
       ],
       buttonLabel: "Try Detection Tool",
       path: "/deepfake-detection",
-      bgImage: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23064e77;stop-opacity:0.3'/%3E%3Cstop offset='100%25' style='stop-color:%23155e75;stop-opacity:0.1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg1)'/%3E%3Cg opacity='0.4'%3E%3Ccircle cx='80' cy='80' r='3' fill='%2306b6d4'/%3E%3Ccircle cx='320' cy='60' r='2' fill='%2306b6d4'/%3E%3Ccircle cx='150' cy='180' r='2.5' fill='%2306b6d4'/%3E%3Ccircle cx='280' cy='220' r='2' fill='%2306b6d4'/%3E%3Cpath d='M50 150 Q200 100 350 200' stroke='%2306b6d4' stroke-width='1' fill='none' opacity='0.3'/%3E%3Cpath d='M100 250 Q250 180 380 240' stroke='%2306b6d4' stroke-width='1' fill='none' opacity='0.2'/%3E%3C/g%3E%3Ctext x='200' y='160' text-anchor='middle' fill='%2306b6d4' font-family='Arial' font-size='24' font-weight='bold' opacity='0.1'%3EDETECT%3C/text%3E%3C/svg%3E"
+      color: "cyan",
     },
     {
       icon: FileSearch,
       title: "AI Plagiarism Prevention",
-      bigTitle: "PLAGIARISM DETECTION",
-      subtitle: "Ensure Academic Integrity with AI Detection",
+      bigTitle: "CODE PLAGIARISM",
+      subtitle: "Ensure Code Originality with AI Analysis",
       description:
-        "Comprehensive plagiarism detection tools that identify AI-generated content and copied text with advanced language understanding, tailored for educational institutions and content creators.",
+        "Our service detects copied code and algorithmic similarities to protect your intellectual property.",
       features: [
-        "AI Content Detection",
-        "Smart Plagiarism Analysis",
-        "Instant Detailed Reports",
-        "Multi-language Support",
-        "Citation Verification"
+        { icon: Shield, text: "Algorithmic Similarity Detection" },
+        { icon: Zap, text: "Developer-Friendly API" },
+        { icon: CheckCircle, text: "Secure Repository Scanning" },
       ],
       buttonLabel: "Try Plagiarism Tool",
       path: "/plagiarism-detection",
-      bgImage: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23075985;stop-opacity:0.3'/%3E%3Cstop offset='100%25' style='stop-color:%234338ca;stop-opacity:0.1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg2)'/%3E%3Cg opacity='0.3'%3E%3Crect x='60' y='60' width='80' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='60' y='80' width='120' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='60' y='100' width='90' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='220' y='60' width='100' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='220' y='80' width='80' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='220' y='100' width='110' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='60' y='160' width='70' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='60' y='180' width='140' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='220' y='160' width='90' height='4' fill='%2306b6d4' rx='2'/%3E%3Crect x='220' y='180' width='75' height='4' fill='%2306b6d4' rx='2'/%3E%3C/g%3E%3Ctext x='200' y='260' text-anchor='middle' fill='%2306b6d4' font-family='Arial' font-size='20' font-weight='bold' opacity='0.1'%3EVERIFY%3C/text%3E%3C/svg%3E"
-    }
+      color: "blue",
+    },
   ];
 
   return (
-    <div className="relative min-h-screen py-16 sm:py-24 bg-black overflow-hidden" id="products">
-      {/* Header */}
-      <div className={`relative z-20 pt-8 pb-12 sm:pb-16 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            <span className="block">
-              <span className="text-cyan-400">Deepfake Detection</span>
-              {' '} & {' '}
-              <span className="text-cyan-400">AI Plagiarism Prevention</span>
-            </span>
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            Cutting-edge AI tools to identify manipulated media and detect AI-generated content — built for trust, transparency, and digital integrity.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-black p-4 md:p-8 relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 opacity-20">
+        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+              <path
+                d="M 60 0 L 0 0 0 60"
+                fill="none"
+                stroke="rgb(6 182 212)"
+                strokeWidth="0.5"
+                opacity="0.3"
+              />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
       </div>
 
-      {/* Services Grid */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+      {/* Header */}
+      <div
+        className={`text-center mb-8 lg:mb-16 transition-all duration-1000 relative z-10 ${
+          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+        }`}
+      >
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+            AI-Powered
+          </span>{" "}
+          Detection Platform
+        </h1>
+        <p className="text-gray-300 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto">
+          Advanced deepfake detection and plagiarism prevention tools for digital integrity.
+        </p>
+      </div>
+
+      {/* Cards */}
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {services.map((service, index) => {
             const Icon = service.icon;
             const isFlipped = flippedCards.has(index);
+            const colors = colorMap[service.color];
 
             return (
-              // The card scene container. Sets up the 3D perspective.
               <div
                 key={index}
-                className={`group cursor-pointer transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} [perspective:1200px]`}
-                style={{ transitionDelay: `${index * 200}ms` }}
+                className={`group cursor-pointer transition-all duration-1000 ${
+                  isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                } w-full h-[460px] lg:h-[480px] xl:h-[500px]`}
                 onClick={() => toggleCard(index)}
+                style={{ perspective: "1200px" }}
               >
-                {/* This container handles the actual 3D flip animation. */}
-                <div 
-                  className={`relative w-full h-[100vh] sm:h-[90vh] md:h-[85vh] lg:h-[75vh] transition-transform duration-1000 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
+                <div
+                  className={`relative w-full h-full transition-transform duration-[1000ms] ease-in-out`}
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                  }}
                 >
-                  
-                  {/* Front Side of the Card */}
-                  <div 
-                    className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-700 hover:scale-[1.02] flex flex-col items-center justify-center overflow-hidden [backface-visibility:hidden]"
-                    style={{
-                      backgroundImage: `url("${service.bgImage}")`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundBlendMode: 'overlay'
-                    }}
+                  {/* Front Side */}
+                  <div
+                    className={`absolute inset-0 w-full h-full rounded-2xl 
+                      bg-gradient-to-br ${colors.bgFrom} ${colors.bgTo} 
+                      border-2 ${colors.border} shadow-2xl ${colors.shadow} 
+                      flex flex-col items-center justify-center p-6 text-center 
+                      backdrop-blur-md transition-all duration-500 ease-in-out`}
+                    style={{ backfaceVisibility: "hidden" }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-800/50 to-slate-900/80" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/10 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    
-                    <div className="relative z-10 text-center px-6 sm:px-8">
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 flex items-center justify-center mb-6 sm:mb-8 mx-auto group-hover:scale-110 transition-transform duration-500 backdrop-blur-sm border border-cyan-400/20">
-                        <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400" />
-                      </div>
-                      
-                      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 mb-4 sm:mb-6 tracking-wide leading-tight">
-                        {service.bigTitle}
-                      </h2>
-                      
-                      <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed">
-                        {service.subtitle}
-                      </p>
-                      
-                      <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl px-6 py-4 border border-cyan-500/20">
-                        <p className="text-cyan-300 text-sm font-medium uppercase tracking-widest">
-                          Click for Details
-                        </p>
-                      </div>
+                    <Icon className={`w-14 h-14 lg:w-16 lg:h-16 ${colors.accent} mb-4 drop-shadow-lg`} />
+                    <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 drop-shadow-md">
+                      {service.bigTitle}
+                    </h2>
+                    <p className="text-gray-200 text-sm lg:text-base max-w-xs drop-shadow-sm">
+                      {service.subtitle}
+                    </p>
+                    <div className="mt-6 text-gray-400 text-xs flex items-center gap-2 animate-pulse">
+                      <Scan className="w-4 h-4" />
+                      Click to explore features
                     </div>
-
-                    <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400 rounded-full opacity-60 animate-pulse"></div>
-                    <div className="absolute bottom-6 left-6 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-40 animate-pulse" style={{animationDelay: '1s'}}></div>
                   </div>
 
-                  {/* Back Side of the Card */}
-                  <div className="absolute inset-0 w-full h-full rounded-3xl bg-slate-900/70 backdrop-blur-xl border border-cyan-400/40 shadow-2xl shadow-cyan-500/10 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-slate-900/50 to-blue-500/5" />
-                    
-                    <div className="relative z-10 flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 mb-4 sm:mb-6">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center backdrop-blur-sm border border-cyan-400/20 flex-shrink-0">
-                          <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-cyan-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{service.title}</h3>
-                          <p className="text-cyan-300 font-medium text-sm">{service.subtitle}</p>
-                        </div>
-                      </div>
 
-                      <p className="text-gray-300 text-sm sm:text-base mb-6 sm:mb-8 leading-relaxed">
-                        {service.description}
-                      </p>
-
-                      <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                        <h4 className="text-white font-semibold text-base sm:text-lg mb-3 sm:mb-4">Key Features:</h4>
-                        {service.features.map((feature, idx) => (
-                          <div key={idx} className="flex items-center gap-3 text-gray-300">
-                            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 flex-shrink-0" />
-                            <span className="text-sm font-medium">{feature}</span>
-                          </div>
-                        ))}
+                  {/* Back */}
+                  <div
+                    className={`absolute inset-0 w-full h-full rounded-2xl border-2 ${colors.border} shadow-2xl ${colors.glow} p-4 sm:p-6 flex flex-col backdrop-blur-md bg-slate-900/80`}
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-2 rounded-lg bg-slate-800/50 border ${colors.border}`}>
+                        <Icon className={`w-5 h-5 ${colors.accent}`} />
                       </div>
-                      
-                      <div className="mt-auto pt-4"> {/* Pushes the button to the bottom */}
-                        <button
-                          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/40 text-white font-semibold text-base sm:text-lg hover:from-cyan-500/40 hover:to-blue-500/40 hover:border-cyan-300/60 transition-all duration-300 backdrop-blur-sm group/btn"
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevents the card from flipping back
-                            navigate(service.path);
-                          }}
-                        >
-                          <span className="flex items-center justify-center gap-2">
-                            {service.buttonLabel}
-                            <span className="inline-block group-hover/btn:translate-x-1 transition-transform duration-300">→</span>
-                          </span>
-                        </button>
-                        
-                        <p className="text-center text-gray-400 text-xs mt-3 font-medium">
-                          Free trial available • No credit card required
-                        </p>
-                      </div>
+                      <h3 className="text-base sm:text-lg font-bold text-white">
+                        {service.title}
+                      </h3>
                     </div>
+                    <p className="text-gray-300 text-xs sm:text-sm leading-relaxed p-3 mb-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                      {service.description}
+                    </p>
+                    <div className="space-y-3 flex-1">
+                      {service.features.map((feature, i) => {
+                        const FeatureIcon = feature.icon;
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center gap-3 text-gray-200 text-xs sm:text-sm p-2 rounded-lg bg-slate-800/30 border border-slate-700/30"
+                          >
+                            <FeatureIcon className={`w-4 h-4 ${colors.accent}`} />
+                            <span>{feature.text}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      className={`w-full mt-4 py-3 px-6 rounded-xl bg-gradient-to-r ${colors.bgFrom} ${colors.bgTo} border-2 ${colors.border} text-white font-bold flex items-center justify-center gap-3 text-sm sm:text-base hover:shadow-2xl ${colors.glow} transition-all duration-500`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isAuthenticated) {
+                          navigate(service.path);
+                        } else {
+                          navigate(`/login?redirect=${service.path}`);
+                        }
+                      }}
+                    >
+                      <Play className="w-5 h-5" />
+                      <span>{service.buttonLabel}</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+      </div>
+
+      <div className="text-center text-gray-400 text-xs mt-8 lg:mt-12 relative z-10">
+        <span className="bg-slate-900/80 px-4 py-2 rounded-full border border-slate-700/50">
+          Click on any card to flip and explore features
+        </span>
       </div>
     </div>
   );
