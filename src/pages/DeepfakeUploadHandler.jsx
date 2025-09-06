@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import UploadModal from '../components/Upload';
 import Processing from '../components/processing';
 import UnifiedResult from '../components/DeepfakeResult';
-import api from '../utils/api'; // <-- import the API helper
+import api from '../utils/api'; 
 
 const DeepfakeUploadHandler = () => {
   const [currentStep, setCurrentStep] = useState('upload'); // 'upload', 'processing', 'result'
@@ -11,6 +11,7 @@ const DeepfakeUploadHandler = () => {
   const [uploadError, setUploadError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // --- File Type Helpers ---
   const getFileType = (file) => {
     if (file.type.startsWith('video/')) return 'video';
     if (file.type.startsWith('image/')) return 'image';
@@ -28,10 +29,7 @@ const DeepfakeUploadHandler = () => {
   const validateFile = (file) => {
     const fileType = getFileType(file);
     if (fileType === 'unknown') {
-      return {
-        valid: false,
-        error: `Unsupported file type: ${file.type || 'unknown'}`
-      };
+      return { valid: false, error: `Unsupported file type: ${file.type || 'unknown'}` };
     }
     if (file.size > 500 * 1024 * 1024) {
       return { valid: false, error: 'File size too large. Max 500MB' };
@@ -39,6 +37,7 @@ const DeepfakeUploadHandler = () => {
     return { valid: true };
   };
 
+  // --- Upload Handler ---
   const handleFileUpload = async (file, linkInput) => {
     if (!file && !linkInput) {
       setUploadError('Please select a file or provide a link');
@@ -78,15 +77,15 @@ const DeepfakeUploadHandler = () => {
       formData.append('file', fileToUpload);
       formData.append('fileType', fileType);
 
-      // ✅ Use API helper (attaches JWT automatically)
+      // ✅ Use API helper (JWT attached automatically)
       const response = await api.post('/api/analyze', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setAnalysisResult({
         ...response.data,
         detectedFileType: fileType,
-        originalFileName: fileToUpload.name
+        originalFileName: fileToUpload.name,
       });
     } catch (error) {
       console.error('Upload error:', error);
@@ -97,6 +96,7 @@ const DeepfakeUploadHandler = () => {
     }
   };
 
+  // --- Step Handlers ---
   const handleProcessingComplete = () => setCurrentStep('result');
   const handleReset = () => {
     setCurrentStep('upload');
@@ -118,14 +118,33 @@ const DeepfakeUploadHandler = () => {
     }
   };
 
+  // --- UI Renderer ---
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'upload':
-        return <UploadModal onFileUpload={handleFileUpload} uploadError={uploadError} isUploading={isUploading} />;
+        return (
+          <UploadModal
+            onFileUpload={handleFileUpload}
+            uploadError={uploadError}
+            isUploading={isUploading}
+          />
+        );
       case 'processing':
-        return <Processing uploadedFile={uploadedFile} analysisResult={analysisResult} onProcessingComplete={handleProcessingComplete} expectedDuration={getExpectedDuration()} />;
+        return (
+          <Processing
+            uploadedFile={uploadedFile}
+            analysisResult={analysisResult}
+            onProcessingComplete={handleProcessingComplete}
+            expectedDuration={getExpectedDuration()}
+          />
+        );
       case 'result':
-        return <UnifiedResult analysisResult={analysisResult} onReset={handleReset} />;
+        return (
+          <UnifiedResult
+            analysisResult={analysisResult}
+            onReset={handleReset}
+          />
+        );
       default:
         return <UploadModal onFileUpload={handleFileUpload} />;
     }

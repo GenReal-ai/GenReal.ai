@@ -304,7 +304,7 @@ const AppContent = () => {
      onLogout={handleLogout}
     />
    )}
-  </div>
+  </div>  
  );
 };
 
