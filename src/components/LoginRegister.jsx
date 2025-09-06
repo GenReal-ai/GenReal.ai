@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { X, Mail, Lock, User, Eye, EyeOff, Clock, ArrowLeft } from "lucide-react";
+import { useAuth } from './hooks/useAuth';
 
 const API_BASE_URL = "http://localhost:3001";
 
@@ -15,47 +16,46 @@ const GoogleIcon = () => (
   </svg>
 );
 
-
-// ================== Auth Callback (No changes needed) ==================
+// ================== Auth Callback (Updated) ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { login } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get("token");
     const error = searchParams.get("error");
+    const redirect = searchParams.get("redirect") || "/";
 
     if (error) {
       console.error("OAuth error:", error);
-      navigate("/login?error=" + error, { replace: true });
+      navigate(`/login?error=${error}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
       return;
     }
 
     if (!token) {
-      navigate("/login?error=missing_token", { replace: true });
+      navigate(`/login?error=missing_token&redirect=${encodeURIComponent(redirect)}`, { replace: true });
       return;
     }
 
-    localStorage.setItem("authToken", token);
-
+    // Validate token with backend
     fetch(`${API_BASE_URL}/api/auth/validate`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
-          window.dispatchEvent(new CustomEvent("authStateChanged", { detail: { isLoggedIn: true } }));
-          navigate(searchParams.get("redirect") || "/", { replace: true });
+          // Use the auth hook's login method
+          login(token, data.user);
+          navigate(decodeURIComponent(redirect), { replace: true });
         } else {
-          localStorage.removeItem("authToken");
-          navigate("/login?error=fetch_failed", { replace: true });
+          navigate(`/login?error=validation_failed&redirect=${encodeURIComponent(redirect)}`, { replace: true });
         }
       })
       .catch(() => {
-        navigate("/login?error=network", { replace: true });
+        navigate(`/login?error=network&redirect=${encodeURIComponent(redirect)}`, { replace: true });
       });
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, login]);
 
   return (
     <div className="h-screen w-full bg-[#111] flex items-center justify-center text-white">
@@ -148,7 +148,7 @@ const OTPInput = ({ value, onChange, length = 6 }) => {
   );
 };
 
-// ================== Login/Register Component ==================
+// ================== Login/Register Component (Updated) ==================
 const LoginRegister = ({ isLogin: initialLogin = true }) => {
   const [authMode, setAuthMode] = useState(initialLogin ? "login" : "register");
   const [formData, setFormData] = useState({ name: "", email: "", otp: "" });
@@ -160,16 +160,26 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [animationDirection, setAnimationDirection] = useState(1);
-  
   const [otpExpired, setOtpExpired] = useState(false);
-  const [resetToken, setResetToken] = useState(null);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { login } = useAuth();
+
+  // Get redirect URL from search params
+  const redirectUrl = searchParams.get("redirect") || "/";
 
   useEffect(() => {
     const redirectError = searchParams.get("error");
-    if (redirectError) setError("Authentication failed. Please try again.");
+    if (redirectError) {
+      const errorMessages = {
+        'missing_token': 'Authentication failed. Missing token.',
+        'validation_failed': 'Token validation failed. Please try again.',
+        'network': 'Network error. Please check your connection.',
+        'fetch_failed': 'Authentication service unavailable.'
+      };
+      setError(errorMessages[redirectError] || 'Authentication failed. Please try again.');
+    }
   }, [searchParams]);
   
   const handleInputChange = (e) => {
@@ -184,11 +194,16 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
   };
 
   const handleAuthSuccess = (data) => {
-    if (data.token) localStorage.setItem("authToken", data.token);
-    if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-    window.dispatchEvent(new CustomEvent("authStateChanged", { detail: { isLoggedIn: true } }));
-    setSuccess(authMode === "login" ? "Login successful!" : "Account created!");
-    setTimeout(() => navigate(searchParams.get("redirect") || "/", { replace: true }), 1000);
+    if (data.token && data.user) {
+      // Use the auth hook's login method
+      login(data.token, data.user);
+      setSuccess(authMode === "login" ? "Login successful!" : "Account created!");
+      
+      // Redirect to the original destination or home
+      setTimeout(() => {
+        navigate(decodeURIComponent(redirectUrl), { replace: true });
+      }, 1000);
+    }
   };
   
   const switchMode = (newMode) => {
@@ -213,8 +228,7 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
   };
 
   const handleGoogleOAuth = () => {
-    const redirect = searchParams.get("redirect") || "/";
-    window.location.href = `${API_BASE_URL}/api/auth/google?redirect=${encodeURIComponent(redirect)}`;
+    window.location.href = `${API_BASE_URL}/api/auth/google?redirect=${encodeURIComponent(redirectUrl)}`;
   };
   
   const handleResendOtp = async () => {
@@ -264,14 +278,18 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
       } else if (authMode === "forgot") {
         endpoint = "/api/auth/send-password-reset-otp";
         payload = { email: formData.email };
+        
       } else if (authMode === "otp") {
+        // For OTP verification only, we don't reset password yet
         endpoint = "/api/auth/verify-password-reset-otp";
         payload = { email: formData.email, otp: formData.otp };
+        
       } else if (authMode === "reset") {
         if (password !== confirmPassword) throw new Error("Passwords do not match");
         if (password.length < 6) throw new Error("Password must be at least 6 characters");
+
         endpoint = "/api/auth/reset-password-with-otp";
-        payload = { email: formData.email, otp: resetToken, newPassword: password };
+        payload = { email: formData.email, otp: formData.otp, newPassword: password };
       }
 
       const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -287,20 +305,18 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
       }
       
       // Handle success based on mode
-      if (authMode === 'login' || authMode === 'register') handleAuthSuccess(data);
-      if (authMode === 'forgot') {
-         setSuccess(data.message || 'OTP sent successfully!');
-         switchMode('otp');
-      }
-      if (authMode === 'otp') {
-         setResetToken(data.otp); // Assuming backend sends back the validated OTP as a token
-         setSuccess(data.message || 'OTP verified!');
-         switchMode('reset');
-      }
-      if (authMode === 'reset') {
-         setSuccess(data.message || 'Password has been reset successfully!');
-         setResetToken(null);
-         setTimeout(() => switchMode('login'), 2000);
+      if (authMode === 'login' || authMode === 'register') {
+        handleAuthSuccess(data);
+      } else if (authMode === 'forgot') {
+        setSuccess(data.message || 'OTP sent successfully!');
+        switchMode('otp');
+      } else if (authMode === 'otp') {
+        // For OTP mode, we just verified the OTP, now go to reset
+        setSuccess('OTP verified successfully!');
+        switchMode('reset');
+      } else if (authMode === 'reset') {
+        setSuccess(data.message || 'Password has been reset successfully!');
+        setTimeout(() => switchMode('login'), 2000);
       }
 
     } catch (err) {
@@ -324,12 +340,16 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
           <div className="text-center mb-6">
             <img src="/logoGenReal.png" alt="Logo" className="w-14 h-14 rounded-full object-cover mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-white">{getTitle()}</h1>
+            {redirectUrl !== "/" && (
+              <p className="text-sm text-gray-400 mt-2">Sign in to continue to your destination</p>
+            )}
           </div>
           <AnimatePresence>{error && <motion.div key="error" initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="p-3 mb-4 text-sm text-center text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg">{error}</motion.div>}</AnimatePresence>
           <AnimatePresence>{success && <motion.div key="success" initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="p-3 mb-4 text-sm text-center text-green-300 bg-green-500/10 border border-green-500/20 rounded-lg">{success}</motion.div>}</AnimatePresence>
           <form onSubmit={handleSubmit} className="overflow-hidden relative">
             <AnimatePresence mode="wait" custom={animationDirection}>
-              {authMode === "login" && ( <motion.div key="login" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
+              {authMode === "login" && ( 
+                <motion.div key="login" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
                   <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/><input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Email Address" required className="w-full pl-10 pr-4 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/></div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/>
@@ -338,8 +358,11 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
                   </div>
                   <div className="text-right"><button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium" onClick={() => switchMode('forgot')}>Forgot Password?</button></div>
                   <motion.button type="submit" disabled={isLoading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading?"Processing...":"Sign In"}</motion.button>
-              </motion.div>)}
-              {authMode === "register" && ( <motion.div key="register" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
+                </motion.div>
+              )}
+              
+              {authMode === "register" && ( 
+                <motion.div key="register" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
                   <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/><input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Full Name" required className="w-full pl-10 pr-4 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/></div>
                   <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/><input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Email Address" required className="w-full pl-10 pr-4 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/></div>
                   <div className="relative">
@@ -349,26 +372,37 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
                   </div>
                   <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/><input type="password" ref={confirmPasswordRef} placeholder="Confirm Password" required className="w-full pl-10 pr-4 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/></div>
                   <motion.button type="submit" disabled={isLoading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading?"Processing...":"Create Account"}</motion.button>
-              </motion.div>)}
-              {authMode === 'forgot' && (<motion.div key="forgot" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
+                </motion.div>
+              )}
+              
+              {authMode === 'forgot' && (
+                <motion.div key="forgot" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
                   <p className="text-center text-sm text-gray-400">Enter your email and we'll send you a code to reset your password.</p>
                   <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/><input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Email Address" required className="w-full pl-10 pr-4 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/></div>
                   <motion.button type="submit" disabled={isLoading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading ? "Sending..." : "Send Code"}</motion.button>
                   <div className="text-center"><button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium flex items-center justify-center w-full gap-2" onClick={() => switchMode('login')}><ArrowLeft size={16}/> Back to Login</button></div>
-              </motion.div>)}
-              {authMode === 'otp' && (<motion.div key="otp" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
-                   <p className="text-center text-sm text-gray-400">We've sent a 6-digit code to <span className="font-semibold text-white">{formData.email}</span>. Please enter it below.</p>
+                </motion.div>
+              )}
+              
+              {authMode === 'otp' && (
+                <motion.div key="otp" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
+                   <p className="text-center text-sm text-gray-400">We've sent a 6-digit code to <span className="font-semibold text-white">{formData.email}</span>. Enter it to verify your identity.</p>
                    <OTPInput value={formData.otp} onChange={handleOTPChange} length={6} />
                    <OTPTimer initialTime={180} onExpire={() => setOtpExpired(true)} isActive={!otpExpired} />
-                   <motion.button type="submit" disabled={isLoading || formData.otp.length !== 6} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading ? "Verifying..." : "Verify Code"}</motion.button>
+                   <motion.button type="submit" disabled={isLoading || formData.otp.length !== 6} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading ? "Verifying..." : "Verify & Continue"}</motion.button>
                    <div className="text-center">
-                    {otpExpired ?
-                      <button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? "Sending..." : "Resend Code"}</button> :
-                      <p className="text-sm text-gray-500">Didn't receive the code?</p>}
+                    {otpExpired ? (
+                      <button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? "Sending..." : "Resend Code"}</button>
+                    ) : (
+                      <p className="text-sm text-gray-500">Didn't receive the code? Wait for timer to expire</p>
+                    )}
                    </div>
-              </motion.div>)}
-              {authMode === 'reset' && (<motion.div key="reset" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
-                  <p className="text-center text-sm text-gray-400">Create a new, strong password.</p>
+                </motion.div>
+              )}
+              
+              {authMode === 'reset' && (
+                <motion.div key="reset" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
+                  <p className="text-center text-sm text-gray-400">Create a new, strong password for your account.</p>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/>
                     <input type={showPassword?"text":"password"} ref={passwordRef} placeholder="New Password" required className="w-full pl-10 pr-10 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/>
@@ -376,7 +410,8 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
                   </div>
                   <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20}/><input type="password" ref={confirmPasswordRef} placeholder="Confirm New Password" required className="w-full pl-10 pr-4 py-3 bg-[#1f1f1f] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"/></div>
                   <motion.button type="submit" disabled={isLoading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading ? "Resetting..." : "Reset Password"}</motion.button>
-              </motion.div>)}
+                </motion.div>
+              )}
             </AnimatePresence>
 
             <div className="mt-6 space-y-4">
@@ -398,4 +433,3 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
 };
 
 export { LoginRegister, AuthCallback };
-
