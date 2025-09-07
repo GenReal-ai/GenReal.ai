@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-// Added Navigate for the ProtectedRoute component
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import useHashScroll from './components/useHashScroll';
 import { LoginRegister, AuthCallback } from "./components/LoginRegister";
+import { useAuth } from './components/hooks/useAuth';
+import ProtectedRoute from './components/protectedRoutes';
 
 // Import all the necessary components
 import Loader from './components/loader';
@@ -20,18 +21,6 @@ import Team from "./components/team";
 import LoginWidget from "./components/LoginWidget";
 import Dashboard from "./components/Dashboard";
 
-const ProtectedRoute = ({ isLoggedIn, children }) => {
-  const location = useLocation();
-
-  if (!isLoggedIn) {
-
-    return <Navigate to={`/login?redirect=${location.pathname}`} replace />;
-  }
-
-  return children;
-};
-
-
 const useActiveSection = (isLoaded) => {
  const [activeSection, setActiveSection] = useState('home');
 
@@ -42,13 +31,10 @@ const useActiveSection = (isLoaded) => {
    const sections = ['home', 'about', 'Products', 'news', 'faq', 'contact-us'];
    const scrollPosition = window.scrollY + 200; // Offset for navbar height
    
-
    for (let i = sections.length - 1; i >= 0; i--) {
     const element = document.getElementById(sections[i]);
     if (element) {
      const elementTop = element.offsetTop;
-     const elementHeight = element.offsetHeight;
-     
      
      if (elementTop <= scrollPosition) {
       if (activeSection !== sections[i]) {
@@ -131,64 +117,44 @@ const PageWrapper = ({ children }) => (
  </motion.div>
 );
 
+// AuthRedirect component to handle authenticated user redirects
+const AuthRedirect = ({ isLogin = true }) => {
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, loading } = useAuth();
+  
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#010c1f] via-[#01152b] to-[#00132d] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+          <p className="text-white mt-4">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If authenticated, redirect to the intended destination or home
+  if (isAuthenticated) {
+    const redirectUrl = searchParams.get('redirect') || '/';
+    return <Navigate to={decodeURIComponent(redirectUrl)} replace />;
+  }
+  
+  // If not authenticated, show login/register form
+  return (
+    <PageWrapper>
+      <LoginRegister isLogin={isLogin} />
+    </PageWrapper>
+  );
+};
+
 const AppContent = () => {
  const location = useLocation();
  const [isLoaded, setIsLoaded] = useState(false);
- const [isLoggedIn, setIsLoggedIn] = useState(false);
  const [faceModelLoaded, setFaceModelLoaded] = useState(false);
- const [isLogin, setIsLogin] = useState(location.pathname !== "/register");
+ const { isAuthenticated, logout } = useAuth();
  
  useHashScroll(isLoaded);
-
- // Check for existing authentication on app load
- useEffect(() => {
-  const checkAuthState = () => {
-   const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-   const user = localStorage.getItem("user");
-   
-   if (token && user) {
-    setIsLoggedIn(true);
-    console.log("User is already logged in");
-   } else {
-    setIsLoggedIn(false);
-    console.log("User is not logged in");
-   }
-  };
-
-  checkAuthState();
- }, []);
-
- // Listen for auth state changes (from login/register components)
- useEffect(() => {
-  const handleAuthStateChange = (event) => {
-   console.log("Auth state changed:", event.detail);
-   setIsLoggedIn(event.detail.isLoggedIn);
-  };
-
-  window.addEventListener('authStateChanged', handleAuthStateChange);
-
-  return () => {
-   window.removeEventListener('authStateChanged', handleAuthStateChange);
-  };
- }, []);
-
- // Handle route changes for login/register
- useEffect(() => {
-  if (location.pathname === "/register") setIsLogin(false);
-  else setIsLogin(true);
- }, [location.pathname]);
-
- // Handle OAuth callback token from URL (legacy support)
- useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-  if (token) {
-   localStorage.setItem("token", token);
-   localStorage.setItem("authToken", token);
-   setIsLoggedIn(true);
-   window.history.replaceState({}, "", "/");
-  }
- }, []);
 
  const handleFaceModelLoaded = () => {
   setFaceModelLoaded(true);
@@ -198,18 +164,9 @@ const AppContent = () => {
   setIsLoaded(true);
  };
 
- // Handle logout
- const handleLogout = () => {
-  console.log("Logging out user");
-  setIsLoggedIn(false);
-  // Clear storage
-  localStorage.removeItem("token");
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("user");
- };
-
+ // Handle scroll to top on route change
  useEffect(() => {
-  if (isLoaded && !location.hash) {
+  if (isLoaded && !location.hash && location.pathname !== '/') {
    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
  }, [isLoaded, location]);
@@ -226,11 +183,11 @@ const AppContent = () => {
 
    <AnimatePresence mode="wait">
     <Routes location={location} key={location.pathname}>
-     {/* Dashboard Route - NOW PROTECTED */}
+     {/* Protected Routes */}
      <Route
       path="/dashboard"
       element={
-       <ProtectedRoute isLoggedIn={isLoggedIn}>
+       <ProtectedRoute>
         <PageWrapper>
          <Dashboard />
         </PageWrapper>
@@ -238,11 +195,10 @@ const AppContent = () => {
       }
      />
 
-     {/* Deepfake Detection Route - NOW PROTECTED */}
      <Route
       path="/deepfake-detection"
       element={
-       <ProtectedRoute isLoggedIn={isLoggedIn}>
+       <ProtectedRoute requireCredits={1}>
         <PageWrapper>
          <DeepFakeUpload />
         </PageWrapper>
@@ -250,11 +206,10 @@ const AppContent = () => {
       }
      />
      
-     {/* Plagiarism Detection Route - NOW PROTECTED */}
      <Route
       path="/plagiarism-detection"
       element={
-       <ProtectedRoute isLoggedIn={isLoggedIn}>
+       <ProtectedRoute requireCredits={1}>
         <PageWrapper>
          <Plagiarism />
         </PageWrapper>
@@ -262,29 +217,23 @@ const AppContent = () => {
       }
      />
 
-     {/* Public Routes - Unchanged */}
+     {/* Public Routes with proper redirect handling */}
      <Route
       path="/login"
-      element={
-       <PageWrapper>
-        <LoginRegister isLogin={true} />
-       </PageWrapper>
-      }
+      element={<AuthRedirect isLogin={true} />}
      />
+     
      <Route
       path="/register"
-      element={
-       <PageWrapper>
-        <LoginRegister isLogin={false} />
-       </PageWrapper>
-      }
+      element={<AuthRedirect isLogin={false} />}
      />
 
      {/* OAuth callback route */}
      <Route path="/auth/callback" element={<AuthCallback />} />
 
+     {/* Home and 404 fallback */}
      <Route
-      path="*"
+      path="/"
       element={
        <PageWrapper>
         <Home
@@ -294,17 +243,23 @@ const AppContent = () => {
        </PageWrapper>
       }
      />
+
+     {/* 404 - redirect to home */}
+     <Route
+      path="*"
+      element={<Navigate to="/" replace />}
+     />
     </Routes>
    </AnimatePresence>
 
    {/* Login Widget - only show on home page when loaded */}
    {isLoaded && location.pathname === "/" && (
     <LoginWidget 
-     isLoggedIn={isLoggedIn} 
-     onLogout={handleLogout}
+     isLoggedIn={isAuthenticated} 
+     onLogout={logout}
     />
    )}
-  </div>
+  </div>  
  );
 };
 

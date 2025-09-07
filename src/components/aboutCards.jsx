@@ -1,40 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-const useAuth = () => ({ isAuthenticated: false }); // Mock hook for standalone example
-
+import { motion } from "framer-motion";
 import {
   Shield,
   FileSearch,
   Play,
-  Scan,
   CheckCircle,
   ArrowRight,
   Zap,
   Image,
   Video,
   Mic,
+  MousePointerClick,
 } from "lucide-react";
 
-// Cyan/Blue theme WITHOUT hover color changes
-const colorMap = {
-  cyan: {
-    border: "border-cyan-400/40",
-    text: "text-cyan-300",
-    accent: "text-cyan-400",
-    bgFrom: "from-cyan-900/60",
-    bgTo: "to-slate-900/80",
-    shadow: "shadow-cyan-500/25",
-    glow: "shadow-cyan-400/30",
-  },
-  blue: {
-    border: "border-blue-400/40",
-    text: "text-blue-300",
-    accent: "text-blue-400",
-    bgFrom: "from-blue-900/60",
-    bgTo: "to-slate-900/80",
-    shadow: "shadow-blue-500/25",
-    glow: "shadow-blue-400/30",
-  },
+// Mock hook for standalone example
+const useAuth = () => ({ isAuthenticated: false }); 
+
+// A single, professional color theme for both cards
+const cardTheme = {
+  border: "border-cyan-400/30",
+  text: "text-slate-200",
+  accent: "text-cyan-400",
+  bgFrom: "from-slate-900/95",
+  bgTo: "to-slate-950/95",
+  shadow: "shadow-cyan-500/15",
+  glow: "shadow-cyan-400/20",
 };
 
 const DeepfakeDetectionPlatform = () => {
@@ -71,7 +62,6 @@ const DeepfakeDetectionPlatform = () => {
       ],
       buttonLabel: "Try Detection Tool",
       path: "/deepfake-detection",
-      color: "cyan",
     },
     {
       icon: FileSearch,
@@ -87,7 +77,6 @@ const DeepfakeDetectionPlatform = () => {
       ],
       buttonLabel: "Try Plagiarism Tool",
       path: "/plagiarism-detection",
-      color: "blue",
     },
   ];
 
@@ -112,10 +101,11 @@ const DeepfakeDetectionPlatform = () => {
       </div>
 
       {/* Header */}
-      <div
-        className={`text-center mb-8 lg:mb-16 transition-all duration-1000 relative z-10 ${
-          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-        }`}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="text-center mb-8 lg:mb-16 relative z-10"
       >
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
@@ -126,7 +116,7 @@ const DeepfakeDetectionPlatform = () => {
         <p className="text-gray-300 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto">
           Advanced deepfake detection and plagiarism prevention tools for digital integrity.
         </p>
-      </div>
+      </motion.div>
 
       {/* Cards */}
       <div className="max-w-7xl mx-auto relative z-10">
@@ -134,19 +124,21 @@ const DeepfakeDetectionPlatform = () => {
           {services.map((service, index) => {
             const Icon = service.icon;
             const isFlipped = flippedCards.has(index);
-            const colors = colorMap[service.color];
+            const colors = cardTheme;
 
             return (
-              <div
+              <motion.div
                 key={index}
-                className={`group cursor-pointer transition-all duration-1000 ${
-                  isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
-                } w-full h-[460px] lg:h-[480px] xl:h-[500px]`}
+                className="cursor-pointer w-full h-[460px] lg:h-[480px] xl:h-[500px]"
                 onClick={() => toggleCard(index)}
                 style={{ perspective: "1200px" }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.15 }}
+                whileHover={{ y: -8, scale: 1.02 }}
               >
                 <div
-                  className={`relative w-full h-full transition-transform duration-[1000ms] ease-in-out`}
+                  className="relative w-full h-full transition-transform duration-[1000ms] ease-in-out"
                   style={{
                     transformStyle: "preserve-3d",
                     transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
@@ -156,7 +148,7 @@ const DeepfakeDetectionPlatform = () => {
                   <div
                     className={`absolute inset-0 w-full h-full rounded-2xl 
                       bg-gradient-to-br ${colors.bgFrom} ${colors.bgTo} 
-                      border-2 ${colors.border} shadow-2xl ${colors.shadow} 
+                      border ${colors.border} shadow-2xl ${colors.shadow} 
                       flex flex-col items-center justify-center p-6 text-center 
                       backdrop-blur-md transition-all duration-500 ease-in-out`}
                     style={{ backfaceVisibility: "hidden" }}
@@ -168,16 +160,15 @@ const DeepfakeDetectionPlatform = () => {
                     <p className="text-gray-200 text-sm lg:text-base max-w-xs drop-shadow-sm">
                       {service.subtitle}
                     </p>
-                    <div className="mt-6 text-gray-400 text-xs flex items-center gap-2 animate-pulse">
-                      <Scan className="w-4 h-4" />
+                    <div className="mt-6 text-gray-400 text-xs flex items-center gap-2">
+                      <MousePointerClick className="w-4 h-4" />
                       Click to explore features
                     </div>
                   </div>
 
-
-                  {/* Back */}
+                  {/* Back Side */}
                   <div
-                    className={`absolute inset-0 w-full h-full rounded-2xl border-2 ${colors.border} shadow-2xl ${colors.glow} p-4 sm:p-6 flex flex-col backdrop-blur-md bg-slate-900/80`}
+                    className={`absolute inset-0 w-full h-full rounded-2xl border ${colors.border} shadow-2xl ${colors.glow} p-4 sm:p-6 flex flex-col backdrop-blur-md bg-slate-900/95`}
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
@@ -209,7 +200,7 @@ const DeepfakeDetectionPlatform = () => {
                       })}
                     </div>
                     <button
-                      className={`w-full mt-4 py-3 px-6 rounded-xl bg-gradient-to-r ${colors.bgFrom} ${colors.bgTo} border-2 ${colors.border} text-white font-bold flex items-center justify-center gap-3 text-sm sm:text-base hover:shadow-2xl ${colors.glow} transition-all duration-500`}
+                      className={`w-full mt-4 py-3 px-6 rounded-xl bg-gradient-to-r from-cyan-500/10 to-slate-800/30 border-2 ${colors.border} text-white font-bold flex items-center justify-center gap-3 text-sm sm:text-base hover:shadow-2xl hover:border-cyan-400/60 ${colors.glow} transition-all duration-300`}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (isAuthenticated) {
@@ -225,7 +216,7 @@ const DeepfakeDetectionPlatform = () => {
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>

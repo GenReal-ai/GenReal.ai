@@ -8,7 +8,7 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   const [file, setFile] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [linkInput, setLinkInput] = useState('');
-  const [selectedType, setSelectedType] = useState('all'); // 'all', 'video', 'image', 'audio'
+  const [selectedType, setSelectedType] = useState('video'); // 'video', 'image', 'audio'
 
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
@@ -84,7 +84,7 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
       case 'audio':
         return 'audio/*';
       default:
-        return 'video/*,image/*,audio/*';
+        return 'video/*';
     }
   };
 
@@ -97,12 +97,11 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
       case 'audio':
         return 'MP3, WAV, M4A, AAC, OGG';
       default:
-        return 'Videos, Images, Audio files';
+        return 'MP4, AVI, MOV, MKV, WEBM';
     }
   };
 
   const fileTypeOptions = [
-    { id: 'all', label: 'All Types', icon: FiUploadCloud, color: 'cyan' },
     { id: 'video', label: 'Video', icon: FaVideo, color: 'blue' },
     { id: 'image', label: 'Image', icon: FaImage, color: 'green' },
     { id: 'audio', label: 'Audio', icon: FaVolumeUp, color: 'purple' },

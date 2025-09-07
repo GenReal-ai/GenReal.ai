@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import UploadModal from '../components/Upload';
 import Processing from '../components/processing';
 import UnifiedResult from '../components/DeepfakeResult';
-import api from '../utils/api'; // <-- import the API helper
+import api from '../components/utils/api'; 
 
 const DeepfakeUploadHandler = () => {
   const [currentStep, setCurrentStep] = useState('upload'); // 'upload', 'processing', 'result'
@@ -11,6 +11,7 @@ const DeepfakeUploadHandler = () => {
   const [uploadError, setUploadError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // --- File Type Helpers ---
   const getFileType = (file) => {
     if (file.type.startsWith('video/')) return 'video';
     if (file.type.startsWith('image/')) return 'image';
@@ -28,17 +29,18 @@ const DeepfakeUploadHandler = () => {
   const validateFile = (file) => {
     const fileType = getFileType(file);
     if (fileType === 'unknown') {
-      return {
-        valid: false,
-        error: `Unsupported file type: ${file.type || 'unknown'}`
+      return { 
+        valid: false, 
+        error: `Unsupported file type: ${file.type || 'unknown'}. Please upload video, image, or audio files only.` 
       };
     }
     if (file.size > 500 * 1024 * 1024) {
-      return { valid: false, error: 'File size too large. Max 500MB' };
+      return { valid: false, error: 'File size too large. Maximum 500MB allowed.' };
     }
     return { valid: true };
   };
 
+  // --- Upload Handler ---
   const handleFileUpload = async (file, linkInput) => {
     if (!file && !linkInput) {
       setUploadError('Please select a file or provide a link');
@@ -53,11 +55,16 @@ const DeepfakeUploadHandler = () => {
 
       // If link provided → download file
       if (linkInput && !file) {
-        const response = await fetch(linkInput);
-        if (!response.ok) throw new Error('Failed to fetch file from link');
-        const blob = await response.blob();
-        const filename = linkInput.split('/').pop() || 'downloaded-file';
-        fileToUpload = new File([blob], filename, { type: blob.type });
+        try {
+          const response = await fetch(linkInput);
+          if (!response.ok) throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+          
+          const blob = await response.blob();
+          const filename = linkInput.split('/').pop() || 'downloaded-file';
+          fileToUpload = new File([blob], filename, { type: blob.type });
+        } catch (linkError) {
+          throw new Error(`Invalid link or unable to download: ${linkError.message}`);
+        }
       }
 
       // Validate file
@@ -78,26 +85,73 @@ const DeepfakeUploadHandler = () => {
       formData.append('file', fileToUpload);
       formData.append('fileType', fileType);
 
-      // ✅ Use API helper (attaches JWT automatically)
+      console.log(`Uploading ${fileType} file: ${fileToUpload.name} (${(fileToUpload.size / (1024 * 1024)).toFixed(2)}MB)`);
+
+      // Use the unified analyze endpoint
       const response = await api.post('/api/analyze', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 360000, // 6 minutes timeout
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
       });
 
+      console.log('Analysis completed:', response.data);
+
+      // Set analysis result with additional metadata
       setAnalysisResult({
         ...response.data,
         detectedFileType: fileType,
-        originalFileName: fileToUpload.name
+        originalFileName: fileToUpload.name,
+        fileSize: fileToUpload.size
       });
+
+      // Auto transition to result after a short delay
+      setTimeout(() => {
+        setCurrentStep('result');
+      }, 1500);
+
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadError(error.response?.data?.error || error.message || 'Upload failed');
+      console.error('Upload/Analysis error:', error);
+      
+      let errorMessage = 'Upload failed. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error
+        const { status, data } = error.response;
+        if (status === 413) {
+          errorMessage = 'File too large. Maximum size is 500MB.';
+        } else if (status === 415) {
+          errorMessage = data.error || 'Unsupported file format.';
+        } else if (status === 429) {
+          errorMessage = 'Too many requests. Please try again later.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = data.error || data.details || `Error ${status}: ${error.message}`;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.code === 'ECONNABORTED') {
+        // Timeout error
+        errorMessage = 'Request timeout. The file may be too large or the server is busy.';
+      } else {
+        // Other errors
+        errorMessage = error.message || 'An unexpected error occurred.';
+      }
+
+      setUploadError(errorMessage);
       setCurrentStep('upload');
     } finally {
       setIsUploading(false);
     }
   };
 
+  // --- Step Handlers ---
   const handleProcessingComplete = () => setCurrentStep('result');
+  
   const handleReset = () => {
     setCurrentStep('upload');
     setUploadedFile(null);
@@ -111,21 +165,40 @@ const DeepfakeUploadHandler = () => {
     const fileType = getFileType(uploadedFile);
     const fileSizeMB = uploadedFile.size / (1024 * 1024);
     switch (fileType) {
-      case 'video': return Math.max(120, Math.min(300, fileSizeMB * 2));
-      case 'audio': return Math.max(60, Math.min(180, fileSizeMB * 1.5));
-      case 'image': return Math.max(30, Math.min(120, fileSizeMB * 1));
+      case 'video': return Math.max(120, Math.min(360, fileSizeMB * 2.5));
+      case 'audio': return Math.max(60, Math.min(240, fileSizeMB * 2));
+      case 'image': return Math.max(30, Math.min(120, fileSizeMB * 1.5));
       default: return 180;
     }
   };
 
+  // --- UI Renderer ---
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'upload':
-        return <UploadModal onFileUpload={handleFileUpload} uploadError={uploadError} isUploading={isUploading} />;
+        return (
+          <UploadModal
+            onFileUpload={handleFileUpload}
+            uploadError={uploadError}
+            isUploading={isUploading}
+          />
+        );
       case 'processing':
-        return <Processing uploadedFile={uploadedFile} analysisResult={analysisResult} onProcessingComplete={handleProcessingComplete} expectedDuration={getExpectedDuration()} />;
+        return (
+          <Processing
+            uploadedFile={uploadedFile}
+            analysisResult={analysisResult}
+            onProcessingComplete={handleProcessingComplete}
+            expectedDuration={getExpectedDuration()}
+          />
+        );
       case 'result':
-        return <UnifiedResult analysisResult={analysisResult} onReset={handleReset} />;
+        return (
+          <UnifiedResult
+            analysisResult={analysisResult}
+            onReset={handleReset}
+          />
+        );
       default:
         return <UploadModal onFileUpload={handleFileUpload} />;
     }
