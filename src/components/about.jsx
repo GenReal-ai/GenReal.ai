@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
@@ -7,17 +7,20 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
 const AboutUsSection = () => {
   const sectionRef = useRef(null);
-  const heroRef = useRef(null); // Ref for the entire first section
+  const heroRef = useRef(null);
   const deepfakeRef = useRef(null);
   const plagiarismRef = useRef(null);
   const floatingElementsRef = useRef([]);
   const particlesRef = useRef([]);
   const leftMotionRef = useRef(null);
   const rightMotionRef = useRef(null);
+  const rotatingCircleRef = useRef(null);
+  const codeBlockRef = useRef(null);
+  
+  const [currentImage, setCurrentImage] = useState('real');
 
   useEffect(() => {
     const createFloatingElements = () => {
-      // This function remains the same
       if (!sectionRef.current) return;
       for (let i = 0; i < 20; i++) {
         const element = document.createElement('div');
@@ -40,7 +43,6 @@ const AboutUsSection = () => {
     };
 
     const createParticles = () => {
-      // This function remains the same
       if (!sectionRef.current) return;
       for (let i = 0; i < 50; i++) {
         const particle = document.createElement('div');
@@ -65,7 +67,7 @@ const AboutUsSection = () => {
     createParticles();
 
     const ctx = gsap.context(() => {
-      // Background particle animations remain the same
+      // Background particle animations
       particlesRef.current.forEach((particle) => {
         gsap.to(particle, {
           y: -window.innerHeight - 100,
@@ -95,28 +97,26 @@ const AboutUsSection = () => {
         });
       });
 
-      // This animates the entire first section on scroll
-// This animates the entire first section on scroll
-if (heroRef.current) {
-  // We use .fromTo() to define the start and end states for scrubbing
-  gsap.fromTo(heroRef.current, 
-    { opacity: 0, y: 100 }, // FROM this state
-    {
-      opacity: 1,
-      y: 0,
-      ease: "none", // Use "none" for a linear scrub
-      scrollTrigger: {
-        trigger: heroRef.current,
-        start: "top 50%",   
-        end: "top 20%", // When the bottom of the element is 90% down the viewport
-        scrub: 1.5,           // KEY CHANGE: Links animation to scroll. The '1' adds a 1-second smoothing effect.
-        invalidateOnRefresh: true
+      // Hero section animation
+      if (heroRef.current) {
+        gsap.fromTo(heroRef.current, 
+          { opacity: 0, y: 100 },
+          {
+            opacity: 1,
+            y: 0,
+            ease: "none",
+            scrollTrigger: {
+              trigger: heroRef.current,
+              start: "top 50%",   
+              end: "top 20%",
+              scrub: 1.5,
+              invalidateOnRefresh: true
+            }
+          }
+        );
       }
-    }
-  );
-}
 
-      // Deepfake section - NO CHANGES
+      // Deepfake section
       const deepfakeTl = gsap.timeline({
         scrollTrigger: {
           trigger: deepfakeRef.current,
@@ -129,7 +129,17 @@ if (heroRef.current) {
         { x: -200, opacity: 0, scale: 0.8 },
         { x: 0, opacity: 1, scale: 1 });
 
-      // Plagiarism section - NO CHANGES
+      // Rotating circle animation
+      if (rotatingCircleRef.current) {
+        gsap.to(rotatingCircleRef.current, {
+          rotation: 360,
+          duration: 6,
+          repeat: -1,
+          ease: "none"
+        });
+      }
+
+      // Plagiarism section
       const plagiarismTl = gsap.timeline({
         scrollTrigger: {
           trigger: plagiarismRef.current,
@@ -142,7 +152,28 @@ if (heroRef.current) {
         { x: 200, opacity: 0, scale: 0.8 },
         { x: 0, opacity: 1, scale: 1 });
 
-      // Motion path animations - NO CHANGES
+      // Code block animation
+      if (codeBlockRef.current) {
+        const lines = codeBlockRef.current.querySelectorAll('.code-line');
+        gsap.set(lines, { opacity: 0, x: -50 });
+        
+        gsap.to(lines, {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          stagger: 0.2,
+          repeat: -1,
+          repeatDelay: 2,
+          yoyo: false,
+          scrollTrigger: {
+            trigger: plagiarismRef.current,
+            start: "top 60%",
+            toggleActions: "play none none reverse"
+          }
+        });
+      }
+
+      // Motion path animations
       if (leftMotionRef.current) {
         gsap.to(leftMotionRef.current, {
           motionPath: {
@@ -166,8 +197,14 @@ if (heroRef.current) {
 
     }, sectionRef);
 
+    // Image rotation timer
+    const imageTimer = setInterval(() => {
+      setCurrentImage(prev => prev === 'real' ? 'deepfake' : 'real');
+    }, 3000);
+
     return () => {
       ctx.revert();
+      clearInterval(imageTimer);
       floatingElementsRef.current.forEach(el => el.remove());
       particlesRef.current.forEach(el => el.remove());
     };
@@ -205,38 +242,60 @@ if (heroRef.current) {
   return (
     <div ref={sectionRef} className="bg-gradient-to-b from-black via-slate-900 to-slate-950 text-white font-sans relative overflow-hidden" id="about">
       
-      {/* Hero Section - Redesigned */}
+      {/* Hero Section */}
       <section ref={heroRef} className="min-h-screen flex items-center justify-center relative z-10 pt-24 opacity-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/5 via-transparent to-[#1E40AF]/5 animate-pulse"></div>
         <div className="container mx-auto px-6 lg:px-12 max-w-7xl relative z-20">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-6">
-              <h1 className="hero-title text-5xl lg:text-7xl font-extrabold mb-4 bg-gradient-to-r from-white via-cyan-400 to-white bg-clip-text text-transparent leading-tight">
-                Building a <br /> Safer Digital World
+              <h1 className="hero-title text-5xl lg:text-7xl font-extrabold mb-6 bg-gradient-to-r from-white via-cyan-400 to-white bg-clip-text text-transparent leading-tight">
+                Defending Truth in the Digital Age
               </h1>
-              <div className="hero-description">
+              <div className="hero-description space-y-4">
                 <p className="text-lg lg:text-xl leading-relaxed text-[#E6F3FF] font-medium">
-                  At GenReal.ai, our mission is to empower you with the tools to **trust the content you see**. We provide advanced AI solutions for deepfake detection and plagiarism prevention, creating a **safer, more reliable digital environment** for everyone.
+                  In a world where <span className="font-bold text-white">synthetic content threatens authenticity</span>, we stand as your digital guardian. AI-generated deepfakes and plagiarized content are flooding the internet, making it harder than ever to trust what you see and read.
+                </p>
+                <p className="text-lg lg:text-xl leading-relaxed text-[#E6F3FF] font-medium">
+                  <span className="font-bold text-[#00D1FF]">GenReal.ai</span> provides cutting-edge detection technology that <span className="font-bold text-white">identifies AI-generated content with 99.7% accuracy</span>. Our mission is simple: restore trust, verify authenticity, and protect the integrity of digital content across platforms worldwide.
                 </p>
               </div>
               <div className="flex flex-wrap gap-4 mt-8">
                 <button className="bg-gradient-to-r from-[#00D1FF] to-[#0099CC] text-black font-bold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-[#00D1FF]/30 transition-all duration-300 transform hover:scale-105">
-                  Explore Solutions
+                  Start Detection
                 </button>
                 <button className="border-2 border-[#00D1FF] text-[#00D1FF] font-bold px-8 py-4 rounded-full hover:bg-[#00D1FF]/10 transition-all duration-300">
-                  Contact Sales
+                  View Demo
                 </button>
+              </div>
+              <div className="grid grid-cols-3 gap-6 mt-8 pt-8 border-t border-gray-700">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#00D1FF]">99.7%</div>
+                  <div className="text-sm text-gray-400">Accuracy Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#00D1FF]">0.2s</div>
+                  <div className="text-sm text-gray-400">Detection Speed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#00D1FF]">24/7</div>
+                  <div className="text-sm text-gray-400">API Uptime</div>
+                </div>
               </div>
             </div>
             <div className="relative flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-xl h-[320px] sm:h-[400px] md:h-[480px] bg-gray-900 rounded-3xl overflow-hidden border-2 border-cyan-400/50 shadow-2xl shadow-cyan-500/20">
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-gray-900/80 backdrop-blur-sm">
-                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2">How It Works: Watch the Demo</h3>
-                  <p className="text-sm md:text-base text-gray-400 mb-6">See how easy it is to upload your content and get instant results.</p>
-                  <button className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-3 rounded-full transition-colors duration-300">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    Play Video
-                  </button>
+              <div className="relative w-full max-w-xl h-[320px] sm:h-[400px] md:h-[480px] bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl overflow-hidden border-2 border-cyan-400/50 shadow-2xl shadow-cyan-500/20">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                  <div className="w-20 h-20 mb-4 bg-gradient-to-r from-[#00D1FF] to-[#0099CC] rounded-full flex items-center justify-center">
+                    <svg className="w-10 h-10 text-black" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 10.95C16.16 26.74 22 22.55 22 17V7l-10-5z"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2">AI Detection Engine</h3>
+                  <p className="text-sm md:text-base text-gray-400 mb-6">Upload any content and get instant authenticity verification powered by advanced neural networks.</p>
+                  <div className="flex items-center gap-2 text-[#00D1FF] font-semibold">
+                    <div className="w-2 h-2 bg-[#00D1FF] rounded-full animate-pulse"></div>
+                    <span>Processing in real-time</span>
+                  </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400/10 to-transparent pointer-events-none"></div>
               </div>
@@ -245,9 +304,9 @@ if (heroRef.current) {
         </div>
       </section>
 
-      {/* Deepfake Detection Section - Diagonal Layout */}
+      {/* Deepfake Detection Section */}
       <section ref={deepfakeRef} className="min-h-screen flex items-center py-20 relative z-10">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#00D1FF]/5 to-transparent transform -skew-y-3"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#00D1FF]/5 to-transparent transform -skew-y-1"></div>
         <div ref={leftMotionRef} className="absolute left-10 top-1/2 w-8 h-8 bg-[#00D1FF] rounded-full opacity-60 shadow-lg shadow-[#00D1FF]/50 z-20"></div>
         <div className="content-wrapper max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-12 items-center z-10">
           <div>
@@ -256,9 +315,22 @@ if (heroRef.current) {
               Deepfake Detection
             </h2>
             <p className="text-lg md:text-xl text-[#C9D1D9] leading-relaxed mb-8">
-              Advanced AI-powered detection of manipulated visual and audio content. Our cutting-edge deep learning models
-              identify deepfakes with unprecedented accuracy, protecting your platform from synthetic media threats in real-time.
+              Our advanced neural networks analyze facial movements, voice patterns, and visual artifacts to identify AI-generated content. From social media posts to news footage, we protect platforms from malicious synthetic media with lightning-fast detection.
             </p>
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
+                <span className="text-[#E6F3FF]">Real-time video and audio analysis</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
+                <span className="text-[#E6F3FF]">Detection of latest deepfake techniques</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
+                <span className="text-[#E6F3FF]">Comprehensive confidence scoring</span>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-3">
               <span className="bg-gradient-to-r from-[#00D1FF]/20 to-[#00D1FF]/10 px-6 py-3 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold">
                 Real-time API
@@ -272,45 +344,97 @@ if (heroRef.current) {
             </div>
           </div>
           <div className="relative">
-            <div className="w-80 h-80 mx-auto relative animate-spin-x">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/30 to-transparent rounded-full animate-pulse"></div>
-              <div className="absolute inset-4 bg-gradient-to-br from-[#1E2A38] to-[#2A3441] rounded-full border border-[#00D1FF]/40"></div>
-              <div className="absolute inset-8 bg-gradient-to-br from-[#00D1FF]/10 to-transparent rounded-full"></div>
+            <div className="w-80 h-80 mx-auto relative" ref={rotatingCircleRef}>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/30 to-transparent rounded-full"></div>
+              <div className="absolute inset-4 bg-gradient-to-br from-[#1E2A38] to-[#2A3441] rounded-full border-2 border-[#00D1FF]/40 overflow-hidden">
+                <div className="w-full h-full flex">
+                  <div className="w-1/2 h-full bg-green-500/20 flex items-center justify-center border-r border-[#00D1FF]/30">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-2 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                        </svg>
+                      </div>
+                      <div className="text-green-400 font-bold text-sm">REAL</div>
+                    </div>
+                  </div>
+                  <div className="w-1/2 h-full bg-red-500/20 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-2 bg-red-500 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                      </div>
+                      <div className="text-red-400 font-bold text-sm">DEEPFAKE</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00D1FF]/10 to-transparent animate-pulse"></div>
+              </div>
+              <div className="absolute top-4 right-4 bg-black/80 px-3 py-1 rounded-full text-xs text-[#00D1FF] font-semibold">
+                Analyzing...
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Plagiarism Detection Section - Wave Design */}
+      {/* Code Plagiarism Detection Section */}
       <section ref={plagiarismRef} className="min-h-screen flex items-center py-20 relative z-10">
-        <div className="wave-bg absolute inset-0 bg-gradient-to-l from-[#00D1FF]/5 to-transparent transform skew-y-3"></div>
+        <div className="wave-bg absolute inset-0 bg-gradient-to-l from-[#00D1FF]/5 to-transparent transform skew-y-1"></div>
         <div ref={rightMotionRef} className="absolute right-10 top-1/2 w-6 h-6 bg-gradient-to-r from-[#00D1FF] to-[#00A8CC] rounded-full opacity-70 shadow-lg shadow-[#00D1FF]/50 z-20"></div>
         <div className="content-wrapper max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-12 items-center z-10">
           <div className="relative order-2 md:order-1">
-            <div className="w-80 h-80 mx-auto relative">
-              <div className="absolute inset-0 bg-gradient-to-bl from-[#00D1FF]/30 to-transparent rounded-lg rotate-12"></div>
-              <div className="absolute inset-4 bg-gradient-to-bl from-[#1E2A38] to-[#2A3441] rounded-lg border border-[#00D1FF]/40 rotate-6"></div>
-              <div className="absolute inset-8 bg-gradient-to-bl from-[#00D1FF]/10 to-transparent rounded-lg"></div>
+            <div className="w-80 h-80 mx-auto relative bg-gray-900 rounded-lg border border-[#00D1FF]/30 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/5 to-transparent"></div>
+              <div ref={codeBlockRef} className="p-4 font-mono text-sm leading-relaxed">
+                <div className="code-line text-gray-500">// Original Code</div>
+                <div className="code-line text-blue-400">function <span className="text-yellow-400">calculateSum</span><span className="text-orange-400">(a, b)</span> {'{'}</div>
+                <div className="code-line text-white ml-4">return a + b;</div>
+                <div className="code-line text-blue-400">{'}'}</div>
+                <div className="code-line text-gray-500 mt-2">// Detected Plagiarism</div>
+                <div className="code-line text-red-400">function <span className="text-yellow-400">addNumbers</span><span className="text-orange-400">(x, y)</span> {'{'}</div>
+                <div className="code-line text-white ml-4">return x + y;</div>
+                <div className="code-line text-red-400">{'}'}</div>
+                <div className="code-line text-[#00D1FF] mt-2 font-bold">// 95% Similarity Detected ⚠️</div>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-transparent h-8"></div>
+              <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold animate-pulse">
+                PLAGIARISM DETECTED
+              </div>
             </div>
           </div>
           <div className="order-1 md:order-2">
             <PlagiarismIcon />
             <h2 className="text-5xl md:text-7xl font-bold mb-8 bg-gradient-to-l from-[#00D1FF] to-white bg-clip-text text-transparent">
-              Plagiarism Detection
+              Code Plagiarism Detection
             </h2>
             <p className="text-lg md:text-xl text-[#C9D1D9] leading-relaxed mb-8">
-              Comprehensive content verification and originality checking across multiple formats. Our intelligent system
-              detects copied content, paraphrasing, and ensures academic and professional integrity with lightning-fast analysis.
+              Advanced semantic analysis detects code plagiarism beyond simple copying. Our AI understands programming patterns, identifies subtle modifications, and catches sophisticated attempts to disguise copied code across multiple programming languages.
             </p>
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
+                <span className="text-[#E6F3FF]">Multi-language support (50+ languages)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
+                <span className="text-[#E6F3FF]">Semantic similarity detection</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
+                <span className="text-[#E6F3FF]">Repository-wide scanning</span>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-3">
               <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-6 py-3 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold">
-                Multi-format Support
+                GitHub Integration
               </span>
               <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-6 py-3 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold">
-                Instant Results
+                IDE Plugins
               </span>
               <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-6 py-3 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold">
-                Academic Focus
+                Educational Focus
               </span>
             </div>
           </div>
