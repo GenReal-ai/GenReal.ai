@@ -3,17 +3,17 @@ import { motion } from 'framer-motion';
 import { 
   Home, 
   AlertTriangle, 
-  ShieldCheck, 
   FileVideo, 
   FileImage, 
   FileAudio,
-  RotateCw,
   Users,
   Radio,
   Bot,
   Cpu,
   Waves,
-  AreaChart
+  AreaChart,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 // ================== HELPER FUNCTIONS ==================
@@ -31,25 +31,11 @@ const formatPercentage = (num) => {
 
 // ================== BACKGROUND COMPONENTS ==================
 
-const NetworkBackground = () => (
-  <div className="fixed inset-0 overflow-hidden pointer-events-none">
-    {/* Animated grid lines */}
-    <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-          <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(6, 182, 212, 0.3)" strokeWidth="1"/>
-        </pattern>
-        <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(6, 182, 212, 0.15)" strokeWidth="0.5"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#smallGrid)" />
-      <rect width="100%" height="100%" fill="url(#grid)" />
-    </svg>
-
-    {/* Floating cyan blobs */}
-    <motion.div
-      className="absolute top-20 left-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-xl"
+const CleanBackground = () => (
+  <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+    {/* Subtle floating blobs */}
+    <motion.div 
+      className="absolute top-20 left-20 w-32 h-32 bg-cyan-400/5 rounded-full blur-xl"
       animate={{ 
         x: [0, 30, 0], 
         y: [0, -20, 0],
@@ -57,8 +43,8 @@ const NetworkBackground = () => (
       }}
       transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
     />
-    <motion.div
-      className="absolute top-40 right-20 w-24 h-24 bg-cyan-400/15 rounded-full blur-lg"
+    <motion.div 
+      className="absolute bottom-32 right-32 w-48 h-48 bg-blue-400/5 rounded-full blur-xl"
       animate={{ 
         x: [0, -40, 0], 
         y: [0, 30, 0],
@@ -66,46 +52,9 @@ const NetworkBackground = () => (
       }}
       transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
     />
-    <motion.div
-      className="absolute bottom-32 left-1/4 w-40 h-40 bg-cyan-600/8 rounded-full blur-2xl"
-      animate={{ 
-        x: [0, 50, 0], 
-        y: [0, -40, 0],
-        scale: [1, 1.2, 1]
-      }}
-      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-    />
-    <motion.div
-      className="absolute bottom-20 right-1/3 w-28 h-28 bg-cyan-500/12 rounded-full blur-xl"
-      animate={{ 
-        x: [0, -30, 0], 
-        y: [0, 25, 0],
-        scale: [1, 0.8, 1]
-      }}
-      transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-    />
     
-    {/* Diagonal network lines */}
-    <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-      <motion.path
-        d="M0,100 Q200,50 400,100 T800,100 L800,200 Q600,150 400,200 T0,200 Z"
-        fill="none"
-        stroke="rgba(6, 182, 212, 0.4)"
-        strokeWidth="1"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 3, ease: "easeInOut" }}
-      />
-      <motion.path
-        d="M0,300 Q300,250 600,300 T1200,300"
-        fill="none"
-        stroke="rgba(8, 145, 178, 0.3)"
-        strokeWidth="1"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 4, ease: "easeInOut", delay: 1 }}
-      />
-    </svg>
+    {/* Subtle grid */}
+    <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
   </div>
 );
 
@@ -224,8 +173,8 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
 
   if (!processedResult) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-        <NetworkBackground />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+        <CleanBackground />
         <CompanyLogo onClick={handleHomeClick} />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center relative z-10">
@@ -245,27 +194,20 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
   
   const { type, overallPrediction, deepfakeProbability, metadata } = processedResult;
 
-  const getThreatDetails = (probability) => {
-    if (probability > 95) return {
-        level: 'Critical',
-        colors: { primary: '#dc2626', text: 'text-red-500', bg: 'bg-red-900/30', border: 'border-red-600/50' }
-    };
-    if (probability > 75) return {
-        level: 'High',
-        colors: { primary: '#f97316', text: 'text-orange-500', bg: 'bg-orange-900/30', border: 'border-orange-600/50' }
-    };
-    if (probability > 30) return {
-        level: 'Medium',
-        colors: { primary: '#facc15', text: 'text-yellow-400', bg: 'bg-yellow-900/30', border: 'border-yellow-600/50' }
-    };
-    return {
-        level: 'Low',
-        colors: { primary: '#22c55e', text: 'text-green-500', bg: 'bg-green-900/30', border: 'border-green-600/50' }
-    };
+  const getThreatLevel = (probability) => {
+    if (probability > 80) return 'High Risk';
+    if (probability > 50) return 'Medium Risk';
+    if (probability > 20) return 'Low Risk';
+    return 'Minimal Risk';
+  };
+
+  const getThreatColor = (probability) => {
+    if (probability > 80) return 'text-red-500';
+    if (probability > 50) return 'text-orange-500';
+    if (probability > 20) return 'text-yellow-500';
+    return 'text-green-500';
   };
   
-  const threat = getThreatDetails(deepfakeProbability);
-  const { colors } = threat;
   const isClassifiedAsFake = overallPrediction === 'FAKE';
   const MainIcon = { video: FileVideo, image: FileImage, audio: FileAudio }[type];
 
@@ -276,44 +218,55 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
     
     return (
         <motion.div
-            initial={{ opacity: 0, x: 20 }} 
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/40 rounded-xl p-4 space-y-3 hover:bg-slate-800/40 transition-all duration-300"
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/5 border border-slate-600/40 rounded-lg p-5 space-y-4 hover:bg-white/10 transition-all duration-300"
         >
-            <div className="flex justify-between items-center">
-                <p className="font-semibold text-cyan-200 flex items-center gap-2">
-                    <Icon size={16} /> {item.name}
-                </p>
-                <span className={`px-3 py-1 text-xs font-bold rounded-full border ${itemIsFake ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-green-500/20 text-green-300 border-green-500/30'}`}>
-                    {item.prediction}
-                </span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-                <div className="text-green-400 text-center">
-                    <span className="text-slate-400 block text-xs mb-1">Authentic</span>
-                    <span className="font-mono font-bold">{formatPercentage(item.probabilities?.real * 100)}%</span>
-                </div>
-                <div className="flex-1 px-4">
-                    <div className="w-full bg-slate-700/50 rounded-full h-3 relative overflow-hidden border border-slate-600/30">
-                        <div className="absolute inset-0 flex">
-                            <motion.div 
-                                className="bg-gradient-to-r from-green-500 to-green-400 h-full" 
-                                initial={{ width: 0 }}
-                                animate={{ width: `${item.probabilities?.real * 100}%` }}
-                                transition={{ duration: 1, ease: "easeOut" }}
-                            />
-                            <motion.div 
-                                className="bg-gradient-to-r from-red-500 to-red-400 h-full" 
-                                initial={{ width: 0 }}
-                                animate={{ width: `${item.probabilities?.fake * 100}%` }}
-                                transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-                            />
-                        </div>
+            <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                    <Icon size={20} className="text-cyan-400" />
+                    <div>
+                        <h4 className="font-medium text-white">{item.name}</h4>
+                        <p className="text-sm text-slate-400">Analysis Result</p>
                     </div>
                 </div>
-                <div className="text-red-400 text-center">
-                    <span className="text-slate-400 block text-xs mb-1">Deepfake</span>
-                    <span className="font-mono font-bold">{formatPercentage(item.probabilities?.fake * 100)}%</span>
+                <div className="flex items-center gap-2">
+                    {itemIsFake ? (
+                        <XCircle size={18} className="text-red-400" />
+                    ) : (
+                        <CheckCircle size={18} className="text-green-400" />
+                    )}
+                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${itemIsFake ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
+                        {item.prediction}
+                    </span>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Authentic</span>
+                    <span className="text-green-400 font-medium">{formatPercentage(item.probabilities?.real * 100)}%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                    <motion.div 
+                        className="bg-green-500 h-2 rounded-full" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.probabilities?.real * 100}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Deepfake</span>
+                    <span className="text-red-400 font-medium">{formatPercentage(item.probabilities?.fake * 100)}%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                    <motion.div 
+                        className="bg-red-500 h-2 rounded-full" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.probabilities?.fake * 100}%` }}
+                        transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                    />
                 </div>
             </div>
         </motion.div>
@@ -322,164 +275,153 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
 
   const InfoCard = ({ icon: Icon, title, children }) => (
     <motion.div 
-      initial={{ opacity: 0, x: 20 }} 
-      animate={{ opacity: 1, x: 0 }}
-      className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/40 rounded-xl p-4 hover:bg-slate-800/40 transition-all duration-300"
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/5 border border-slate-600/40 rounded-lg p-5 hover:bg-white/10 transition-all duration-300"
     >
         <div className="flex items-center gap-3 mb-3">
             <Icon className="w-5 h-5 text-cyan-400" />
-            <h4 className="font-semibold text-cyan-200">{title}</h4>
+            <h4 className="font-medium text-white">{title}</h4>
         </div>
         <p className="text-sm text-slate-400 leading-relaxed">{children}</p>
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-200 relative overflow-hidden">
-      <NetworkBackground />
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-200 relative overflow-hidden">
+      <CleanBackground />
       <CompanyLogo onClick={handleHomeClick} />
       
       <div className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 pt-20">
         <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full h-full max-w-7xl bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-cyan-500/20 shadow-2xl shadow-cyan-500/10 overflow-hidden flex flex-col relative z-10"
+            className="w-full max-w-7xl bg-slate-800/30 backdrop-blur-xl rounded-xl border border-slate-600/30 shadow-2xl overflow-hidden relative z-10"
         >
-            <header className="flex-shrink-0 p-4 sm:p-6 border-b border-slate-700/40 flex justify-between items-center backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-cyan-500/20 rounded-lg">
-                        <MainIcon className="w-6 h-6 text-cyan-400" />
+            {/* Header */}
+            <div className="p-6 border-b border-slate-600/30">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-cyan-500/20 rounded-lg">
+                            <MainIcon className="w-6 h-6 text-cyan-400" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">
+                                Analysis Complete
+                            </h1>
+                            <p className="text-slate-400">
+                                {type.charAt(0).toUpperCase() + type.slice(1)} Detection Report
+                            </p>
+                        </div>
                     </div>
-                    <h1 className="text-lg sm:text-xl font-bold text-white">
-                        {type.charAt(0).toUpperCase() + type.slice(1)} Analysis Report
-                    </h1>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => { window.location.href = '/plagiarism-detection'; }} 
+                            className="px-4 py-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white transition-all duration-300 text-sm font-medium"
+                        >
+                            Try Code Plagiarism
+                        </button>
+                        <button 
+                            onClick={() => { window.location.href = '/deepfake-detection'; }} 
+                            className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition-all duration-300 text-sm font-medium"
+                        >
+                            Try Another
+                        </button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button 
-                        onClick={() => { window.location.href = '/plagiarism-upload'; }} 
-                        className="px-4 py-2 rounded-lg bg-slate-800/50 text-slate-300 hover:bg-cyan-500/20 hover:text-cyan-400 transition-all duration-300 border border-slate-700/50 hover:border-cyan-500/30 text-sm font-medium"
-                    >
-                        Try Code Plagiarism
-                    </button>
-                    <button 
-                        onClick={() => { window.location.href = '/deepfake-detection'; }} 
-                        className="px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 hover:text-cyan-300 transition-all duration-300 border border-cyan-500/30 hover:border-cyan-500/50 text-sm font-medium"
-                    >
-                        Try Another
-                    </button>
-                </div>
-            </header>
+            </div>
 
-            <main className="flex-grow p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-5 gap-8 overflow-y-auto">
-                <div className="lg:col-span-2 flex flex-col items-center text-center space-y-6">
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column - Summary */}
+                <div className="lg:col-span-1 space-y-6">
+                    {/* Overall Result */}
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-white/5 border border-slate-600/40 rounded-lg p-6 text-center"
+                    >
+                        <div className="mb-4">
+                            {isClassifiedAsFake ? (
+                                <XCircle className="w-16 h-16 text-red-400 mx-auto mb-3" />
+                            ) : (
+                                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-3" />
+                            )}
+                            <h3 className="text-2xl font-bold text-white mb-2">
+                                {overallPrediction}
+                            </h3>
+                            <p className={`text-lg font-medium ${getThreatColor(deepfakeProbability)}`}>
+                                {getThreatLevel(deepfakeProbability)}
+                            </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Deepfake Confidence</span>
+                                <span className="text-white font-medium">{formatPercentage(deepfakeProbability)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-700 rounded-full h-3">
+                                <motion.div 
+                                    className={`h-3 rounded-full ${isClassifiedAsFake ? 'bg-red-500' : 'bg-green-500'}`}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${deepfakeProbability}%` }}
+                                    transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* File Info */}
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${colors.bg} ${colors.border} border backdrop-blur-sm`}
+                        className="bg-white/5 border border-slate-600/40 rounded-lg p-5"
                     >
-                        <AlertTriangle className={`w-4 h-4 ${colors.text}`} />
-                        <span className={`${colors.text} text-xs font-bold uppercase tracking-wider`}>
-                            {threat.level} Threat Level
-                        </span>
-                    </motion.div>
-
-                    <motion.div 
-                        className="relative w-52 h-52"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4, duration: 0.6 }}
-                    >
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="42" fill="none" strokeWidth="4" stroke="rgba(51, 65, 85, 0.3)" />
-                            <motion.circle 
-                                cx="50" cy="50" r="42" fill="none" strokeWidth="4" 
-                                stroke={colors.primary} strokeLinecap="round"
-                                strokeDasharray={`${2 * Math.PI * 42}`}
-                                initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                                animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - deepfakeProbability / 100) }}
-                                transition={{ delay: 0.8, duration: 2, ease: "circOut" }}
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <motion.span 
-                                className={`text-5xl font-bold font-mono ${colors.text}`}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 1.2 }}
-                            >
-                                {formatPercentage(deepfakeProbability)}%
-                            </motion.span>
-                            <p className="text-sm font-semibold text-slate-400 mt-2">Deepfake Probability</p>
-                        </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 }}
-                        className={`p-6 rounded-xl w-full ${isClassifiedAsFake ? 'bg-red-900/20 border border-red-500/30' : 'bg-green-900/20 border border-green-500/30'} backdrop-blur-sm`}
-                    >
-                        <p className="text-sm uppercase tracking-wider text-slate-400 mb-2">Final Verdict</p>
-                        <p className={`text-3xl font-bold ${isClassifiedAsFake ? 'text-red-400' : 'text-green-400'}`}>
-                            {overallPrediction}
-                        </p>
-                    </motion.div>
-
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7 }}
-                        className="w-full text-left bg-slate-800/30 backdrop-blur-sm p-5 rounded-xl border border-slate-700/40"
-                    >
-                        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                        <h3 className="font-medium text-white mb-4 flex items-center gap-2">
                             <Cpu size={18} className="text-cyan-400"/> 
-                            File Information
+                            File Details
                         </h3>
-                        <div className="space-y-3 text-sm text-slate-400">
-                            <div className="flex justify-between items-center">
-                                <span className="font-medium">File:</span> 
-                                <span className="truncate max-w-[150px] sm:max-w-xs text-right text-cyan-300" title={metadata.fileName}>
+                        <div className="space-y-3 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-slate-400">File:</span> 
+                                <span className="text-white truncate max-w-[150px]" title={metadata.fileName}>
                                     {metadata.fileName}
                                 </span>
                             </div>
                             {metadata.fileSize && 
                                 <div className="flex justify-between">
-                                    <span className="font-medium">Size:</span> 
-                                    <span className="text-slate-300">{metadata.fileSize} MB</span>
+                                    <span className="text-slate-400">Size:</span> 
+                                    <span className="text-white">{metadata.fileSize} MB</span>
                                 </div>
                             }
                             {metadata.processingTime && 
                                 <div className="flex justify-between">
-                                    <span className="font-medium">Processing Time:</span> 
-                                    <span className="text-slate-300">{metadata.processingTime}s</span>
+                                    <span className="text-slate-400">Processing Time:</span> 
+                                    <span className="text-white">{metadata.processingTime}s</span>
                                 </div>
                             }
                         </div>
                     </motion.div>
                 </div>
 
-                <div className="lg:col-span-3">
-                    <motion.h3 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="text-xl font-bold text-white mb-6 flex items-center gap-2"
-                    >
+                {/* Right Column - Detailed Results */}
+                <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                         <AreaChart className="w-6 h-6 text-cyan-400" />
-                        Detailed Analysis Breakdown
-                    </motion.h3>
-                    <div className="space-y-4 max-h-[65vh] lg:max-h-full overflow-y-auto pr-2 custom-scrollbar">
+                        Detailed Analysis
+                    </h3>
+                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                         {type === 'video' && (
                             <>
                                 <DetailCard item={processedResult.audioAnalysis}/>
                                 {processedResult.personAnalyses.map((person, index) => 
                                     <motion.div
                                         key={person.id}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.8 + index * 0.1 }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4 + index * 0.1 }}
                                     >
                                         <DetailCard item={person} />
                                     </motion.div>
@@ -489,9 +431,9 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
                         {type === 'image' && processedResult.details.map((item, index) => 
                             <motion.div
                                 key={item.id}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.8 + index * 0.1 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 + index * 0.1 }}
                             >
                                 <DetailCard item={item} />
                             </motion.div>
@@ -501,36 +443,36 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
                                 {processedResult.details.map((item, index) => 
                                     <motion.div
                                         key={item.id}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.8 + index * 0.1 }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4 + index * 0.1 }}
                                     >
                                         <DetailCard item={item} />
                                     </motion.div>
                                 )}
                                 <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 1.0 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.6 }}
                                 >
-                                    <InfoCard icon={Waves} title="Waveform Consistency Analysis">
-                                        This involves checking for unnatural silences, abrupt cuts, or a non-uniform noise floor, which are often byproducts of audio splicing or generation.
+                                    <InfoCard icon={Waves} title="Waveform Analysis">
+                                        Examines audio patterns for unnatural silences, abrupt cuts, or inconsistent noise floors that indicate artificial generation or manipulation.
                                     </InfoCard>
                                 </motion.div>
                                 <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 1.1 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.7 }}
                                 >
-                                    <InfoCard icon={AreaChart} title="Spectrogram Anomaly Detection">
-                                        AI models analyze the audio's frequency spectrum over time to find artifacts, unnatural harmonics, or patterns inconsistent with human speech or natural sounds.
+                                    <InfoCard icon={AreaChart} title="Spectral Analysis">
+                                        Analyzes frequency spectrum patterns to detect artifacts and anomalies inconsistent with natural speech or audio.
                                     </InfoCard>
                                 </motion.div>
                             </>
                         }
                     </div>
                 </div>
-            </main>
+            </div>
         </motion.div>
       </div>
 
