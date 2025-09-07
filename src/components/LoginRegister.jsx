@@ -1,10 +1,62 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext, useContext, useMemo } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { X, Mail, Lock, User, Eye, EyeOff, Clock, ArrowLeft } from "lucide-react";
-import { useAuth } from './hooks/useAuth';
 
-const API_BASE_URL = "http://localhost:3001";
+// ================== Auth Context & Hook (Fix for missing file) ==================
+
+// 1. Create the Auth Context
+const AuthContext = createContext(null);
+
+// 2. Create the AuthProvider component
+// This component should wrap your application's router to provide auth state.
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(() => {
+        try {
+            const storedUser = localStorage.getItem('user');
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch {
+            return null;
+        }
+    });
+    const [token, setToken] = useState(() => localStorage.getItem('token'));
+
+    const login = (newToken, userData) => {
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setToken(newToken);
+        setUser(userData);
+    };
+
+    const logout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
+    };
+
+    const value = useMemo(() => ({
+        token,
+        user,
+        login,
+        logout
+    }), [token, user]);
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+// 3. Create the useAuth hook for easy consumption of the context
+const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
+
+
+// Use environment variable for the API URL, with a fallback for safety.
+const API_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL;
 
 // Simple inline SVG for Google Icon to remove dependency
 const GoogleIcon = () => (
@@ -232,26 +284,26 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
   };
   
   const handleResendOtp = async () => {
-     setIsLoading(true);
-     setError("");
-     try {
-       const res = await fetch(`${API_BASE_URL}/api/auth/send-password-reset-otp`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ email: formData.email }),
-       });
-       const data = await res.json();
-       if (data.success) {
-         setSuccess("A new OTP has been sent.");
-         setOtpExpired(false);
-       } else {
-         setError(data.message || 'Failed to resend OTP.');
-       }
-     } catch (err) {
-       setError("Network error. Please try again.");
-     } finally {
-       setIsLoading(false);
-     }
+    setIsLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-password-reset-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess("A new OTP has been sent.");
+        setOtpExpired(false);
+      } else {
+        setError(data.message || 'Failed to resend OTP.');
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -386,17 +438,17 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
               
               {authMode === 'otp' && (
                 <motion.div key="otp" custom={animationDirection} variants={formVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
-                   <p className="text-center text-sm text-gray-400">We've sent a 6-digit code to <span className="font-semibold text-white">{formData.email}</span>. Enter it to verify your identity.</p>
-                   <OTPInput value={formData.otp} onChange={handleOTPChange} length={6} />
-                   <OTPTimer initialTime={180} onExpire={() => setOtpExpired(true)} isActive={!otpExpired} />
-                   <motion.button type="submit" disabled={isLoading || formData.otp.length !== 6} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading ? "Verifying..." : "Verify & Continue"}</motion.button>
-                   <div className="text-center">
-                    {otpExpired ? (
-                      <button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? "Sending..." : "Resend Code"}</button>
-                    ) : (
-                      <p className="text-sm text-gray-500">Didn't receive the code? Wait for timer to expire</p>
-                    )}
-                   </div>
+                    <p className="text-center text-sm text-gray-400">We've sent a 6-digit code to <span className="font-semibold text-white">{formData.email}</span>. Enter it to verify your identity.</p>
+                    <OTPInput value={formData.otp} onChange={handleOTPChange} length={6} />
+                    <OTPTimer initialTime={180} onExpire={() => setOtpExpired(true)} isActive={!otpExpired} />
+                    <motion.button type="submit" disabled={isLoading || formData.otp.length !== 6} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-900/50 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">{isLoading ? "Verifying..." : "Verify & Continue"}</motion.button>
+                    <div className="text-center">
+                     {otpExpired ? (
+                        <button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? "Sending..." : "Resend Code"}</button>
+                      ) : (
+                        <p className="text-sm text-gray-500">Didn't receive the code? Wait for timer to expire</p>
+                      )}
+                    </div>
                 </motion.div>
               )}
               
