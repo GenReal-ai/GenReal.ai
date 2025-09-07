@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaInfoCircle, FaTimes, FaEye } from 'react-icons/fa';
+import { FaInfoCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import DeepfakeQuiz from './Quiz';
 
@@ -127,10 +127,6 @@ const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expect
     return formatTime(remaining);
   };
 
-  const handleSeeResults = () => {
-    onProcessingComplete();
-  };
-
   const handleCloseQuiz = () => {
     setShowQuiz(false);
   };
@@ -235,7 +231,6 @@ const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expect
             </p>
             <div className="text-right">
               <p className="text-xs text-slate-400">ETA: {getEstimatedTimeRemaining()}</p>
-              <p className="text-xs text-slate-500">Elapsed: {formatTime(timeElapsed)}</p>
             </div>
           </div>
         </motion.div>
@@ -258,26 +253,6 @@ const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expect
             </p>
           </div>
         </motion.div>
-
-        {/* See Results Button */}
-        {processingComplete && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
-            className="mb-4 sm:mb-8"
-          >
-            <motion.button
-              onClick={handleSeeResults}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold text-sm sm:text-base px-6 py-3 sm:px-10 sm:py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform hover:scale-105 border border-cyan-400/20"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FaEye className="text-base sm:text-lg" />
-              View Results
-            </motion.button>
-          </motion.div>
-        )}
       </div>
 
       {/* Notification */}
