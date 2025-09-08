@@ -232,17 +232,18 @@ const AppContent = () => {
      <Route path="/auth/callback" element={<AuthCallback />} />
 
      {/* Home and 404 fallback */}
-     <Route
-      path="/"
-      element={
-       <PageWrapper>
-        <Home
-         isLoaded={isLoaded}
-         onFaceModelLoaded={handleFaceModelLoaded}
-        />
-       </PageWrapper>
-      }
-     />
+      <Route
+        path="/"
+        element={
+          <PageWrapper>
+            <Home
+              isLoaded={isLoaded}
+              onFaceModelLoaded={handleFaceModelLoaded}
+            />
+          </PageWrapper>
+        }
+      />
+
 
      {/* 404 - redirect to home */}
      <Route
