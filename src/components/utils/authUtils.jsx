@@ -88,7 +88,7 @@ export class AuthUtils {
   static async refreshToken() {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/auth/refresh-token",
+        "https://backendgenreal-authservice.onrender.com/api/auth/refresh-token",
         {
           method: "POST",
           credentials: "include", // send cookie
@@ -112,7 +112,7 @@ export class AuthUtils {
 
   static async logout() {
     try {
-      await fetch("http://localhost:3001/api/auth/logout", {
+      await fetch("https://backendgenreal-authservice.onrender.com/api/auth/logout", {
         method: "POST",
         credentials: "include",
         headers: this.getAuthHeaders(),
@@ -134,7 +134,7 @@ export class AuthUtils {
   static async checkCredits(requiredCredits = 1) {
     try {
       const response = await this.authenticatedFetch(
-        "http://localhost:3001/api/auth/credits"
+        "https://backendgenreal-authservice.onrender.com/api/auth/credits"
       );
       const data = await response.json();
 
@@ -151,7 +151,7 @@ export class AuthUtils {
   static async validateToken() {
     try {
       const response = await this.authenticatedFetch(
-        "http://localhost:3001/api/auth/validate"
+        "https://backendgenreal-authservice.onrender.com/api/auth/validate"
       );
       const data = await response.json();
 
