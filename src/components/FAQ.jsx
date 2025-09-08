@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronRight, HelpCircle, Video, FileCheck, Shield, Users, Target } from 'lucide-react';
+import { HelpCircle, Video, FileCheck, Shield } from 'lucide-react';
 
 // Hook to check if we're on mobile
 function useIsMobile(breakpoint = 1024) {
@@ -24,66 +24,54 @@ const DynamicFAQ = () => {
   const itemsRef = useRef([]);
   const contentRef = useRef(null);
 
-  // New FAQ data focused on Video & Plagiarism detection products
+  // New, more technical FAQ data
   const faqData = [
     {
       id: 1,
       number: "01",
-      title: "WHAT DO YOUR PRODUCTS DO?",
-      subtitle: "An overview of our core services",
+      title: "What are your core detection technologies?",
+      subtitle: "Overview of our analysis engines",
       icon: HelpCircle,
       content: {
-        description: "We provide two primary AI-powered services: state-of-the-art Deepfake Video Detection to identify manipulated video content, and a next-generation AI Plagiarism Detector that spots both copied text and AI-written content.",
-        keyPoints: ["Detects manipulated videos", "Identifies AI-generated text", "Ensures content authenticity", "For creators, educators, and businesses"],
+        description: "We provide two core services: a multi-modal Deepfake Detector for video, image, and audio content, and an advanced Code Plagiarism engine that identifies semantic similarities and AI-generated code.",
+        keyPoints: ["Deepfake Video/Image/Audio analysis", "Code Plagiarism & AI-Code detection", "API-first for easy integration", "High-accuracy neural network models"],
         color: "from-cyan-500 to-blue-400",
       }
     },
     {
       id: 2,
       number: "02",
-      title: "HOW DOES VIDEO DETECTION WORK?",
-      subtitle: "The tech behind our video analysis",
+      title: "How does your Deepfake Detector analyze content?",
+      subtitle: "Technical breakdown of our media analysis",
       icon: Video,
       content: {
-        description: "Our system analyzes videos frame-by-frame, using advanced computer vision models to detect subtle artifacts, unnatural facial movements, and other inconsistencies that are hallmarks of deepfakes.",
-        keyPoints: ["Frame-by-Frame Analysis", "Facial Landmark Tracking", "Inconsistency Detection", "Real-time & file-based scanning"],
+        description: "Our system deconstructs media into its core components. For video/images, we analyze for GAN-generated artifacts and inconsistent lighting. For audio, we perform spectral analysis to detect frequency manipulation and synthetic voice patterns.",
+        keyPoints: ["GAN artifact detection", "Facial landmark inconsistency", "Spectral audio frequency analysis", "Voice cloning pattern recognition"],
         color: "from-emerald-500 to-teal-400",
       }
     },
     {
       id: 3,
       number: "03",
-      title: "WHAT MAKES YOUR PLAGIARISM CHECKER DIFFERENT?",
-      subtitle: "Beyond traditional plagiarism checks",
+      title: "How does the Plagiarism Detector identify AI-generated code?",
+      subtitle: "Beyond simple text matching",
       icon: FileCheck,
       content: {
-        description: "Unlike traditional tools that only check for copied text, our AI detector analyzes writing style, sentence structure, and linguistic patterns to accurately determine if content was written by an AI like GPT-4, not just copied.",
-        keyPoints: ["Detects AI-written content", "Traditional copy-paste checking", "Provides detailed source reports", "Ideal for academic integrity"],
+        description: "Our engine parses code into Abstract Syntax Trees (AST) to compare its structural and logical flow, not just the text. It detects semantic equivalence (different code, same function) and uses stylometric analysis to identify patterns common in AI-generated code.",
+        keyPoints: ["Abstract Syntax Tree (AST) analysis", "Detects semantic equivalence", "Stylometric analysis for AI patterns", "Supports 50+ programming languages"],
         color: "from-purple-500 to-pink-400",
       }
     },
     {
       id: 4,
       number: "04",
-      title: "HOW ACCURATE ARE THE MODELS?",
-      subtitle: "Reliability and performance metrics",
-      icon: Target,
-      content: {
-        description: "Our models are continuously trained on massive datasets, achieving industry-leading accuracy. For our video detection, we report a 99.7% success rate in identifying known manipulation techniques. The AI text detector is benchmarked against the latest language models.",
-        keyPoints: ["99.7% video detection accuracy", "Constantly updated models", "Low false-positive rate", "Transparent performance reports"],
-        color: "from-orange-500 to-red-400",
-      }
-    },
-    {
-      id: 5,
-      number: "05",
-      title: "IS MY UPLOADED DATA SECURE?",
-      subtitle: "Our commitment to data privacy",
+      title: "What is the technical reliability & data handling protocol?",
+      subtitle: "Accuracy metrics and security measures",
       icon: Shield,
       content: {
-        description: "Absolutely. We prioritize your privacy and data security. All uploaded files are encrypted, processed in a secure environment, and are never used for training our models. Data is automatically deleted from our servers after 24 hours.",
-        keyPoints: ["End-to-end encryption", "Secure, isolated processing", "No data used for training", "24-hour data deletion policy"],
-        color: "from-rose-500 to-fuchsia-400",
+        description: "Our models achieve a 99.7% accuracy rate with a minimal false-positive ratio, benchmarked on diverse datasets. All submissions are processed in secure, ephemeral containers with end-to-end encryption and are purged permanently after analysis.",
+        keyPoints: ["99.7% detection accuracy", "Low false-positive rate", "End-to-end encryption (E2EE)", "Ephemeral containers & data purging"],
+        color: "from-orange-500 to-red-400",
       }
     }
   ];
@@ -165,11 +153,11 @@ const DynamicFAQ = () => {
   };
 
   const currentItem = faqData[activeIndex];
-  const isMobile = useIsMobile(); // ADD THIS LINE
+  const isMobile = useIsMobile();
 
 
   return (
-    <div className="min-h-screen bg-black text-gray-200 relative overflow-hidden pt-30" id="faq">
+    <div className="min-h-screen bg-black text-gray-200 relative overflow-hidden pt-20" id="faq">
       {/* Background effects */}
       <div className="absolute inset-0 z-0">
         <div
@@ -212,70 +200,70 @@ const DynamicFAQ = () => {
 
           <div className="space-y-4">
             {faqData.map((item, index) => {
-  const Icon = item.icon;
-  const isActive = index === activeIndex;
+              const Icon = item.icon;
+              const isActive = index === activeIndex;
 
-  return (
-    <div key={item.id} className="relative">
-      {/* FAQ Tile */}
-      <div
-        ref={el => itemsRef.current[index] = el}
-        onClick={() => handleItemClick(index)}
-        className={`
-          group cursor-pointer p-6 rounded-lg border transition-all duration-300
-          ${isActive
-            ? 'bg-cyan-900/50 border-cyan-400 shadow-lg shadow-cyan-400/20'
-            : 'bg-gray-900/30 border-gray-700 hover:border-cyan-500/50 hover:bg-gray-800/50'
-          }
-        `}
-      >
-        <div className="flex items-center space-x-4">
-          <div className={`
-            w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
-            ${isActive ? 'bg-cyan-400/20 text-cyan-300' : 'bg-gray-700/50 text-gray-400 group-hover:bg-cyan-400/10 group-hover:text-cyan-400'}
-          `}>
-            <Icon className="w-6 h-6" />
-          </div>
+              return (
+                <div key={item.id} className="relative">
+                  {/* FAQ Tile */}
+                  <div
+                    ref={el => itemsRef.current[index] = el}
+                    onClick={() => handleItemClick(index)}
+                    className={`
+                      group cursor-pointer p-6 rounded-lg border transition-all duration-300
+                      ${isActive
+                        ? 'bg-cyan-900/50 border-cyan-400 shadow-lg shadow-cyan-400/20'
+                        : 'bg-gray-900/30 border-gray-700 hover:border-cyan-500/50 hover:bg-gray-800/50'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`
+                        w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
+                        ${isActive ? 'bg-cyan-400/20 text-cyan-300' : 'bg-gray-700/50 text-gray-400 group-hover:bg-cyan-400/10 group-hover:text-cyan-400'}
+                      `}>
+                        <Icon className="w-6 h-6" />
+                      </div>
 
-          <div className="flex-1 min-w-0">
-            <h3 className={`
-              font-bold text-lg truncate transition-colors duration-300
-              ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}
-            `}>
-              {item.title}
-            </h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`
+                          font-bold text-lg truncate transition-colors duration-300
+                          ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}
+                        `}>
+                          {item.title}
+                        </h3>
 
-            <p className={`
-              text-sm truncate transition-colors duration-300
-              ${isActive ? 'text-cyan-200' : 'text-gray-500 group-hover:text-gray-400'}
-            `}>
-              {item.subtitle}
-            </p>
-          </div>
-        </div>
-      </div>
+                        <p className={`
+                          text-sm truncate transition-colors duration-300
+                          ${isActive ? 'text-cyan-200' : 'text-gray-500 group-hover:text-gray-400'}
+                        `}>
+                          {item.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-      {/* MOBILE DROPDOWN (only when active) */}
-      {isMobile && isActive && (
-        <div className="mt-4 bg-black/30 backdrop-blur border border-cyan-400/20 p-4 rounded-xl">
-          <h3 className="text-cyan-400 font-bold mb-2 text-md uppercase">Answer</h3>
-          <p className="text-gray-300 text-sm leading-relaxed">{item.content.description}</p>
+                  {/* MOBILE DROPDOWN (only when active) */}
+                  {isMobile && isActive && (
+                    <div className="mt-4 bg-black/30 backdrop-blur border border-cyan-400/20 p-4 rounded-xl">
+                      <h3 className="text-cyan-400 font-bold mb-2 text-md uppercase">Answer</h3>
+                      <p className="text-gray-300 text-sm leading-relaxed">{item.content.description}</p>
 
-          <h3 className="text-cyan-400 font-bold mt-4 mb-2 text-md uppercase">Key Points</h3>
-          <ul className="list-disc ml-5 text-gray-200 text-sm space-y-1">
-            {item.content.keyPoints.map((point, i) => (
-              <li key={i}>{point}</li>
-            ))}
-          </ul>
+                      <h3 className="text-cyan-400 font-bold mt-4 mb-2 text-md uppercase">Key Points</h3>
+                      <ul className="list-disc ml-5 text-gray-200 text-sm space-y-1">
+                        {item.content.keyPoints.map((point, i) => (
+                          <li key={i}>{point}</li>
+                        ))}
+                      </ul>
 
-          <button className="mt-4 px-4 py-2 rounded bg-cyan-600 text-white text-sm font-semibold hover:scale-105 transition">
-            Contact Support →
-          </button>
-        </div>
-      )}
-    </div>
-  );
-})}
+                      <button className="mt-4 px-4 py-2 rounded bg-cyan-600 text-white text-sm font-semibold hover:scale-105 transition">
+                        Contact Support →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
           </div>
         </div>
@@ -345,7 +333,7 @@ const DynamicFAQ = () => {
       </div>
 
       <style>
-      {`
+        {`
         @keyframes scan {
           0% { transform: translateY(-100%); }
           100% { transform: translateY(100vh); }
@@ -367,7 +355,7 @@ const DynamicFAQ = () => {
           z-index: 1;
         }
       `}
-    </style>
+      </style>
 
     </div>
   );
