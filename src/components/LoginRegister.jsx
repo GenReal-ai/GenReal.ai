@@ -19,87 +19,114 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ================== Auth Callback (Updated) ==================
+// ================== Auth Callback (Fixed) ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const userId = searchParams.get("userId");
-    const error = searchParams.get("error");
-    const redirect = searchParams.get("redirect") || "/";
+    const processCallback = async () => {
+      try {
+        const token = searchParams.get("token");
+        const userId = searchParams.get("userId");
+        const error = searchParams.get("error");
+        const redirect = searchParams.get("redirect") || "/";
 
-    if (error) {
-      console.error("OAuth error:", error);
-      const errorMessages = {
-        'oauth_failed': 'Google authentication failed. Please try again.',
-        'oauth_error': 'Authentication error occurred. Please try again.',
-        'missing_token': 'Authentication failed. Missing token.',
-        'validation_failed': 'Token validation failed. Please try again.',
-        'network': 'Network error. Please check your connection.',
-        'fetch_failed': 'Authentication service unavailable.'
-      };
-      const errorMessage = errorMessages[error] || 'Authentication failed. Please try again.';
-      navigate(`/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
-      return;
-    }
+        console.log('AuthCallback params:', { token: !!token, userId, error, redirect });
 
-    if (!token) {
-      navigate(`/login?error=${encodeURIComponent('Authentication failed. Missing token.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
-      return;
-    }
+        if (error) {
+          console.error("OAuth error:", error);
+          const errorMessages = {
+            'oauth_failed': 'Google authentication failed. Please try again.',
+            'oauth_error': 'Authentication error occurred. Please try again.',
+            'missing_token': 'Authentication failed. Missing token.',
+            'validation_failed': 'Token validation failed. Please try again.',
+            'network': 'Network error. Please check your connection.',
+            'fetch_failed': 'Authentication service unavailable.'
+          };
+          const errorMessage = errorMessages[error] || 'Authentication failed. Please try again.';
+          
+          // Use window.location for more reliable navigation
+          window.location.href = `/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`;
+          return;
+        }
 
-    // For Google OAuth, we get userId directly, so we need to fetch user profile
-    if (userId) {
-      // Fetch user profile with the token
-      fetch(`${API_BASE_URL}/api/auth/validate`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.user) {
-            // Use the auth hook's login method
-            login(token, data.user);
-            navigate(decodeURIComponent(redirect), { replace: true });
-          } else {
-            navigate(`/login?error=${encodeURIComponent('User validation failed.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
-          }
-        })
-        .catch(() => {
-          navigate(`/login?error=${encodeURIComponent('Network error occurred.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
+        if (!token) {
+          console.error("No token provided");
+          window.location.href = `/login?error=${encodeURIComponent('Authentication failed. Missing token.')}&redirect=${encodeURIComponent(redirect)}`;
+          return;
+        }
+
+        // Validate token and get user data
+        const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
         });
-    } else {
-      // Fallback validation
-      fetch(`${API_BASE_URL}/api/auth/validate`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.user) {
-            login(token, data.user);
-            navigate(decodeURIComponent(redirect), { replace: true });
-          } else {
-            navigate(`/login?error=${encodeURIComponent('Token validation failed.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
-          }
-        })
-        .catch(() => {
-          navigate(`/login?error=${encodeURIComponent('Network error occurred.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
-        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success || !data.user) {
+          throw new Error(data.message || 'User validation failed.');
+        }
+
+        console.log('User validated successfully:', data.user);
+
+        // Use the auth hook's login method
+        login(token, data.user);
+
+        // Small delay to ensure auth state is updated
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Decode and navigate to the redirect URL
+        let finalRedirect = decodeURIComponent(redirect);
+        
+        // Ensure the redirect is a valid path
+        if (!finalRedirect.startsWith('/')) {
+          finalRedirect = '/';
+        }
+
+        console.log('Redirecting to:', finalRedirect);
+
+        // Use window.location for more reliable navigation
+        window.location.href = finalRedirect;
+
+      } catch (error) {
+        console.error('AuthCallback error:', error);
+        const redirect = searchParams.get("redirect") || "/";
+        const errorMessage = error.message || 'Authentication process failed.';
+        
+        // Use window.location for error navigation too
+        window.location.href = `/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`;
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    if (isProcessing) {
+      processCallback();
     }
-  }, [navigate, searchParams, login]);
+  }, [searchParams, login, navigate, isProcessing]);
 
   return (
     <div className="h-screen w-full bg-[#111] flex items-center justify-center text-white">
       <div className="text-center">
         <div className="w-12 h-12 border-b-2 border-indigo-500 rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-300">Finalizing authentication...</p>
+        <p className="mt-4 text-gray-300">
+          {isProcessing ? "Finalizing authentication..." : "Redirecting..."}
+        </p>
       </div>
     </div>
   );
 };
-
 // ================== OTP Timer Component ==================
 const OTPTimer = ({ initialTime, onExpire, isActive }) => {
   const [timeLeft, setTimeLeft] = useState(initialTime);
