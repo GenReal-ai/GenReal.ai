@@ -20,6 +20,7 @@ const GoogleIcon = () => (
 );
 
 // ================== Improved Auth Callback ==================
+// ================== Improved Auth Callback - FIXED FOR VERCEL URL LIMITS ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -117,12 +118,12 @@ const AuthCallback = () => {
           return;
         }
 
-        // Validate token with retry logic
+        // FIXED: Validate token and fetch user data from API (not from URL params)
         const data = await validateTokenWithRetry(token);
         
         console.log('User validated successfully:', data.user);
 
-        // Use the auth hook's login method
+        // Use the auth hook's login method with fetched user data
         login(token, data.user);
 
         setStatusMessage("Authentication successful! Redirecting...");
@@ -187,14 +188,14 @@ const AuthCallback = () => {
         {retryCount > 0 && !error && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
             <p className="text-blue-300 text-sm">
-              🔄 Retrying authentication (attempt {retryCount}/{MAX_RETRIES})
+              Retrying authentication (attempt {retryCount}/{MAX_RETRIES})
             </p>
           </div>
         )}
         
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-            <p className="text-red-300 text-sm">❌ {error}</p>
+            <p className="text-red-300 text-sm">{error}</p>
             <p className="text-red-200 text-xs mt-2">
               Redirecting to login page in a few seconds...
             </p>
@@ -214,6 +215,7 @@ const AuthCallback = () => {
     </div>
   );
 };
+
 
 // ================== OTP Timer Component ==================
 const OTPTimer = ({ initialTime, onExpire, isActive }) => {
@@ -318,37 +320,13 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
 
   // Handle OAuth success directly in URL parameters
   useEffect(() => {
-    const oauthSuccess = searchParams.get("oauth_success");
-    const token = searchParams.get("token");
-    const userStr = searchParams.get("user");
-    const redirectError = searchParams.get("error");
+      const redirectError = searchParams.get("error");
 
-    if (redirectError) {
-      setError(decodeURIComponent(redirectError));
-      return;
-    }
-
-    if (oauthSuccess === "true" && token && userStr) {
-      try {
-        const userData = JSON.parse(decodeURIComponent(userStr));
-        console.log('OAuth success detected, logging in:', userData);
-        
-        // Use the auth hook's login method directly
-        login(token, userData);
-        setSuccess("Google authentication successful!");
-        
-        // Redirect after successful login
-        setTimeout(() => {
-          const finalRedirect = decodeURIComponent(redirectUrl);
-          navigate(finalRedirect.startsWith('/') ? finalRedirect : '/', { replace: true });
-        }, 1000);
-        
-      } catch (error) {
-        console.error('OAuth success handling error:', error);
-        setError('Failed to process Google authentication. Please try again.');
+      if (redirectError) {
+        setError(decodeURIComponent(redirectError));
+        return;
       }
-    }
-  }, [searchParams, login, navigate, redirectUrl]);
+    }, [searchParams]);
  
   const handleInputChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
