@@ -188,58 +188,61 @@ const AppContent = () => {
     />
    )}
 
-   <AnimatePresence mode="wait">
-    <Routes location={location} key={location.pathname}>
-     {/* OAuth callback route - must be first and unprotected */}
-     <Route path="/auth/callback" element={<AuthCallback />} />
+// src/App.jsx - UPDATED ROUTES SECTION (Replace the Routes section in your App.jsx)
 
-     {/* Protected Routes */}
-     <Route
+<AnimatePresence mode="wait">
+  <Routes location={location} key={location.pathname}>
+    {/* OAuth callback route - ONLY for email/password flows and API-based OAuth failures */}
+    {/* Google OAuth now redirects directly to /login with success parameters */}
+    <Route path="/auth/callback" element={<AuthCallback />} />
+
+    {/* Protected Routes */}
+    <Route
       path="/dashboard"
       element={
-       <ProtectedRoute>
-        <PageWrapper>
-         <Dashboard />
-        </PageWrapper>
-       </ProtectedRoute>
+        <ProtectedRoute>
+          <PageWrapper>
+            <Dashboard />
+          </PageWrapper>
+        </ProtectedRoute>
       }
-     />
+    />
 
-     <Route
+    <Route
       path="/deepfake-detection"
       element={
-       <ProtectedRoute requireCredits={1}>
-        <PageWrapper>
-         <DeepFakeUpload />
-        </PageWrapper>
-       </ProtectedRoute>
+        <ProtectedRoute requireCredits={1}>
+          <PageWrapper>
+            <DeepFakeUpload />
+          </PageWrapper>
+        </ProtectedRoute>
       }
-     />
-     
-     <Route
+    />
+    
+    <Route
       path="/plagiarism-detection"
       element={
-       <ProtectedRoute requireCredits={1}>
-        <PageWrapper>
-         <Plagiarism />
-        </PageWrapper>
-       </ProtectedRoute>
+        <ProtectedRoute requireCredits={1}>
+          <PageWrapper>
+            <Plagiarism />
+          </PageWrapper>
+        </ProtectedRoute>
       }
-     />
+    />
 
-     {/* Public Routes with proper redirect handling */}
-     <Route
+    {/* Public Routes with proper redirect handling */}
+    <Route
       path="/login"
       element={<AuthRedirect isLogin={true} />}
-     />
-     
-     <Route
+    />
+    
+    <Route
       path="/register"
       element={<AuthRedirect isLogin={false} />}
-     />
+    />
 
-     {/* Home route - always public, no authentication check needed */}
-     <Route
+    {/* Home route - always public, no authentication check needed */}
+    <Route
        path="/"
        element={
          <PageWrapper>
@@ -251,13 +254,13 @@ const AppContent = () => {
        }
      />
 
-     {/* 404 - redirect to home */}
-     <Route
+    {/* 404 - redirect to home */}
+    <Route
       path="*"
       element={<Navigate to="/" replace />}
-     />
-    </Routes>
-   </AnimatePresence>
+    />
+  </Routes>
+</AnimatePresence>
 
    {/* Login Widget - only show on home page when loaded */}
    {isLoaded && location.pathname === "/" && !loading && (
