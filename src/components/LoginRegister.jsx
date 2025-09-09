@@ -20,12 +20,73 @@ const GoogleIcon = () => (
 );
 
 // ================== Auth Callback (FIXED) ==================
+// ================== Robust Auth Callback Component ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [statusMessage, setStatusMessage] = useState("Processing authentication...");
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
+
+  const validateTokenWithRetry = async (token, attempt = 1) => {
+    try {
+      setStatusMessage(attempt === 1 
+        ? "Validating authentication..." 
+        : `Backend is starting up... Attempt ${attempt}/${MAX_RETRIES + 1}`
+      );
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success || !data.user) {
+        throw new Error(data.message || 'User validation failed.');
+      }
+
+      return data;
+
+    } catch (error) {
+      console.error(`Token validation attempt ${attempt} failed:`, error);
+      
+      // Check if it's a network/timeout error that might be due to cold start
+      const isNetworkError = error.name === 'AbortError' || 
+                            error.message.includes('fetch') ||
+                            error.message.includes('network') ||
+                            error.message.includes('timeout') ||
+                            error.message.includes('Failed to fetch');
+
+      if (isNetworkError && attempt <= MAX_RETRIES) {
+        setRetryCount(attempt);
+        setStatusMessage(`Backend is starting up... Retrying in ${RETRY_DELAY/1000} seconds...`);
+        
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return validateTokenWithRetry(token, attempt + 1);
+      }
+      
+      throw error;
+    }
+  };
 
   useEffect(() => {
     const processCallback = async () => {
@@ -50,7 +111,6 @@ const AuthCallback = () => {
           };
           const errorMessage = errorMessages[error] || 'Authentication failed. Please try again.';
           
-          // Navigate to login with error using React Router
           navigate(`/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
           return;
         }
@@ -62,36 +122,22 @@ const AuthCallback = () => {
           return;
         }
 
-        // Validate token and get user data
-        const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
-          method: 'GET',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        // Validate token with retry logic for cold starts
+        const data = await validateTokenWithRetry(token);
         
-        if (!data.success || !data.user) {
-          throw new Error(data.message || 'User validation failed.');
-        }
-
         console.log('User validated successfully:', data.user);
 
         // Use the auth hook's login method
         login(token, data.user);
 
+        setStatusMessage("Authentication successful! Redirecting...");
+
         // Wait a bit for auth state to update
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         console.log('Redirecting to:', redirect);
 
-        // Use React Router navigate instead of window.location
+        // Navigate using React Router
         let finalRedirect = decodeURIComponent(redirect);
         
         // Ensure the redirect is a valid path
@@ -99,20 +145,27 @@ const AuthCallback = () => {
           finalRedirect = '/';
         }
 
-        // Navigate using React Router
         navigate(finalRedirect, { replace: true });
 
       } catch (error) {
         console.error('AuthCallback error:', error);
         const redirect = searchParams.get("redirect") || "/";
-        const errorMessage = error.message || 'Authentication process failed.';
+        
+        let errorMessage;
+        if (error.message.includes('HTTP 401') || error.message.includes('HTTP 403')) {
+          errorMessage = 'Authentication token is invalid. Please try logging in again.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error occurred. Please check your connection and try again.';
+        } else {
+          errorMessage = error.message || 'Authentication process failed.';
+        }
         
         setError(errorMessage);
         
-        // Navigate to login with error using React Router
+        // Navigate to login with error
         setTimeout(() => {
           navigate(`/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
-        }, 2000);
+        }, 3000);
       } finally {
         setIsProcessing(false);
       }
@@ -124,16 +177,48 @@ const AuthCallback = () => {
   }, [searchParams, login, navigate, isProcessing]);
 
   return (
-    <div className="h-screen w-full bg-[#111] flex items-center justify-center text-white">
-      <div className="text-center">
-        <div className="w-12 h-12 border-b-2 border-indigo-500 rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-300">
-          {error ? `Error: ${error}` : isProcessing ? "Finalizing authentication..." : "Redirecting..."}
+    <div className="h-screen w-full bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a] flex items-center justify-center text-white">
+      <div className="text-center max-w-md mx-auto p-8">
+        <div className="w-16 h-16 mx-auto mb-6">
+          <div className="w-full h-full border-4 border-transparent border-t-indigo-500 border-r-indigo-500 rounded-full animate-spin"></div>
+        </div>
+        
+        <h2 className="text-xl font-semibold text-white mb-4">
+          {error ? "Authentication Error" : "Authenticating"}
+        </h2>
+        
+        <p className="text-gray-300 mb-4">
+          {error || statusMessage}
         </p>
+        
+        {retryCount > 0 && !error && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
+            <p className="text-blue-300 text-sm">
+              🔄 Backend service is starting up (attempt {retryCount}/{MAX_RETRIES})
+            </p>
+            <p className="text-blue-200 text-xs mt-1">
+              This may take up to 60 seconds for the first request
+            </p>
+          </div>
+        )}
+        
         {error && (
-          <p className="mt-2 text-sm text-gray-500">
-            Redirecting to login page...
-          </p>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+            <p className="text-red-300 text-sm">❌ {error}</p>
+            <p className="text-red-200 text-xs mt-2">
+              Redirecting to login page in a few seconds...
+            </p>
+          </div>
+        )}
+
+        {!error && (
+          <div className="flex items-center justify-center space-x-2 text-sm text-gray-400">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
         )}
       </div>
     </div>
