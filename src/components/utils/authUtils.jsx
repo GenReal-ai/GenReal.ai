@@ -1,4 +1,4 @@
-// utils/authUtils.js - Frontend authentication utilities
+// utils/authUtils.js - Frontend authentication utilities with cold start handling
 export class AuthUtils {
   // --- Token + User Management ---
   static getToken() {
@@ -33,7 +33,7 @@ export class AuthUtils {
     return !!(this.getToken() && this.getUser());
   }
 
-  // --- Request Helpers ---
+  // --- Request Helpers with Cold Start Handling ---
   static getAuthHeaders() {
     const token = this.getToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -46,10 +46,10 @@ export class AuthUtils {
       ...options.headers,
     };
 
-    let response = await fetch(url, {
+    let response = await this.fetchWithRetry(url, {
       ...options,
       headers,
-      credentials: "include", // include refresh token cookie
+      credentials: "include",
     });
 
     if (response.status === 401) {
@@ -68,7 +68,7 @@ export class AuthUtils {
             ...this.getAuthHeaders(),
             ...options.headers,
           };
-          response = await fetch(url, {
+          response = await this.fetchWithRetry(url, {
             ...options,
             headers: newHeaders,
             credentials: "include",
@@ -84,14 +84,66 @@ export class AuthUtils {
     return response;
   }
 
+  // Fetch with retry logic for handling cold starts
+  static async fetchWithRetry(url, options = {}, maxRetries = 2) {
+    const delays = [0, 2000, 5000]; // 0ms, 2s, 5s delays
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`Retry attempt ${attempt} for ${url} after ${delays[attempt]}ms delay`);
+          await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), attempt === 0 ? 10000 : 30000);
+
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        // If we get a response (even error codes), return it
+        if (response.status < 500 || attempt === maxRetries) {
+          return response;
+        }
+
+        // For 5xx errors, retry
+        throw new Error(`Server error: ${response.status}`);
+
+      } catch (error) {
+        console.error(`Fetch attempt ${attempt + 1} failed:`, error);
+        
+        // Don't retry on the last attempt
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Check if it's a retryable error
+        const isRetryable = error.name === 'AbortError' || 
+                           error.message.includes('fetch') ||
+                           error.message.includes('network') ||
+                           error.message.includes('timeout') ||
+                           error.message.includes('Server error') ||
+                           error.message.includes('Failed to fetch');
+
+        if (!isRetryable) {
+          throw error;
+        }
+      }
+    }
+  }
+
   // --- Auth Flow ---
   static async refreshToken() {
     try {
-      const response = await fetch(
+      const response = await this.fetchWithRetry(
         "https://backendgenreal-authservice.onrender.com/api/auth/refresh-token",
         {
           method: "POST",
-          credentials: "include", // send cookie
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
         }
       );
@@ -112,7 +164,7 @@ export class AuthUtils {
 
   static async logout() {
     try {
-      await fetch("https://backendgenreal-authservice.onrender.com/api/auth/logout", {
+      await this.fetchWithRetry("https://backendgenreal-authservice.onrender.com/api/auth/logout", {
         method: "POST",
         credentials: "include",
         headers: this.getAuthHeaders(),
@@ -153,6 +205,11 @@ export class AuthUtils {
       const response = await this.authenticatedFetch(
         "https://backendgenreal-authservice.onrender.com/api/auth/validate"
       );
+      
+      if (!response.ok) {
+        return false;
+      }
+      
       const data = await response.json();
 
       if (data.success) {
@@ -163,6 +220,22 @@ export class AuthUtils {
     } catch (error) {
       console.error("Token validation error:", error);
       return false;
+    }
+  }
+
+  // Ping backend to wake it up (call this on app load)
+  static async wakeUpBackend() {
+    try {
+      console.log('Pinging backend to wake it up...');
+      await this.fetchWithRetry(
+        "https://backendgenreal-authservice.onrender.com/health",
+        { method: "GET" },
+        1 // Only retry once for wake-up
+      );
+      console.log('Backend is awake');
+    } catch (error) {
+      console.log('Backend wake-up failed, but continuing:', error);
+      // Don't throw error, just log it
     }
   }
 }

@@ -144,6 +144,11 @@ export const useAuth = () => {
     
     const performCheck = async () => {
       if (mounted) {
+        // Wake up backend service first
+        AuthUtils.wakeUpBackend().catch(() => {
+          // Ignore wake-up errors
+        });
+        
         await checkAuth();
       }
     };
