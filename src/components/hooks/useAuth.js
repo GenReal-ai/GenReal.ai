@@ -1,4 +1,4 @@
-// hooks/useAuth.js
+// hooks/useAuth.js - FIXED VERSION
 import { useState, useEffect, useCallback } from 'react';
 import { AuthUtils } from '../utils/authUtils';
 
@@ -13,6 +13,7 @@ export const useAuth = () => {
       const token = AuthUtils.getToken();
       const storedUser = AuthUtils.getUser();
 
+      // If no token or user, set unauthenticated immediately
       if (!token || !storedUser) {
         setIsAuthenticated(false);
         setUser(null);
@@ -20,31 +21,60 @@ export const useAuth = () => {
         return;
       }
 
-      // Validate token with backend
-      const isValid = await AuthUtils.validateToken();
-      
-      if (isValid) {
-        setIsAuthenticated(true);
-        setUser(AuthUtils.getUser());
-      } else {
-        // Token invalid, clear auth state
+      // Set authenticated state immediately with stored data
+      setIsAuthenticated(true);
+      setUser(storedUser);
+      setLoading(false);
+
+      // Validate token in background (don't wait for this)
+      AuthUtils.validateToken().then(isValid => {
+        if (!isValid) {
+          // Token invalid, clear auth state
+          AuthUtils.removeToken();
+          setIsAuthenticated(false);
+          setUser(null);
+          
+          // Dispatch global auth state change
+          window.dispatchEvent(
+            new CustomEvent('authStateChanged', {
+              detail: { isLoggedIn: false, user: null }
+            })
+          );
+        } else {
+          // Update user data if validation returned new data
+          const updatedUser = AuthUtils.getUser();
+          if (updatedUser) {
+            setUser(updatedUser);
+          }
+        }
+      }).catch(error => {
+        console.error('Token validation failed:', error);
+        // On validation error, clear auth state
         AuthUtils.removeToken();
         setIsAuthenticated(false);
         setUser(null);
-      }
+        
+        window.dispatchEvent(
+          new CustomEvent('authStateChanged', {
+            detail: { isLoggedIn: false, user: null }
+          })
+        );
+      });
+
     } catch (error) {
       console.error('Auth check failed:', error);
       // On error, clear auth state
       AuthUtils.removeToken();
       setIsAuthenticated(false);
       setUser(null);
-    } finally {
       setLoading(false);
     }
   }, []);
 
   // Login function
   const login = useCallback((token, userData) => {
+    console.log('useAuth: Login called with:', { token: !!token, user: userData });
+    
     AuthUtils.setToken(token);
     AuthUtils.setUser(userData);
     setIsAuthenticated(true);
@@ -56,6 +86,8 @@ export const useAuth = () => {
         detail: { isLoggedIn: true, user: userData }
       })
     );
+    
+    console.log('useAuth: Login completed, auth state updated');
   }, []);
 
   // Logout function
@@ -70,6 +102,13 @@ export const useAuth = () => {
       AuthUtils.removeToken();
       setIsAuthenticated(false);
       setUser(null);
+      
+      // Dispatch global auth state change
+      window.dispatchEvent(
+        new CustomEvent('authStateChanged', {
+          detail: { isLoggedIn: false, user: null }
+        })
+      );
     }
   }, []);
 
@@ -99,10 +138,22 @@ export const useAuth = () => {
     };
   }, []);
 
-  // Initial auth check on mount
+  // Initial auth check on mount - only run once
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    let mounted = true;
+    
+    const performCheck = async () => {
+      if (mounted) {
+        await checkAuth();
+      }
+    };
+    
+    performCheck();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []); // Empty dependency array - only run once
 
   return {
     isAuthenticated,
