@@ -1,4 +1,4 @@
-// Updated LoginRegister Component - Fix Google OAuth URL and callback handling
+// src/components/LoginRegister.jsx - UPDATED TO HANDLE DIRECT OAUTH SUCCESS
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
@@ -19,8 +19,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ================== Auth Callback (FIXED) ==================
-// ================== Robust Auth Callback Component ==================
+// ================== Improved Auth Callback ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -30,18 +29,18 @@ const AuthCallback = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [statusMessage, setStatusMessage] = useState("Processing authentication...");
 
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000; // 2 seconds
+  const MAX_RETRIES = 2; // Reduced retries
+  const RETRY_DELAY = 3000; // 3 seconds
 
   const validateTokenWithRetry = async (token, attempt = 1) => {
     try {
       setStatusMessage(attempt === 1 
         ? "Validating authentication..." 
-        : `Backend is starting up... Attempt ${attempt}/${MAX_RETRIES + 1}`
+        : `Retrying... Attempt ${attempt}/${MAX_RETRIES + 1}`
       );
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
       const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
         method: 'GET',
@@ -69,7 +68,6 @@ const AuthCallback = () => {
     } catch (error) {
       console.error(`Token validation attempt ${attempt} failed:`, error);
       
-      // Check if it's a network/timeout error that might be due to cold start
       const isNetworkError = error.name === 'AbortError' || 
                             error.message.includes('fetch') ||
                             error.message.includes('network') ||
@@ -78,7 +76,7 @@ const AuthCallback = () => {
 
       if (isNetworkError && attempt <= MAX_RETRIES) {
         setRetryCount(attempt);
-        setStatusMessage(`Backend is starting up... Retrying in ${RETRY_DELAY/1000} seconds...`);
+        setStatusMessage(`Network issue detected... Retrying in ${RETRY_DELAY/1000} seconds...`);
         
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
         return validateTokenWithRetry(token, attempt + 1);
@@ -92,11 +90,10 @@ const AuthCallback = () => {
     const processCallback = async () => {
       try {
         const token = searchParams.get("token");
-        const userId = searchParams.get("userId");
         const error = searchParams.get("error");
         const redirect = searchParams.get("redirect") || "/";
 
-        console.log('AuthCallback params:', { token: !!token, userId, error, redirect });
+        console.log('AuthCallback params:', { token: !!token, error, redirect });
 
         // Handle OAuth error
         if (error) {
@@ -106,8 +103,6 @@ const AuthCallback = () => {
             'oauth_error': 'Authentication error occurred. Please try again.',
             'missing_token': 'Authentication failed. Missing token.',
             'validation_failed': 'Token validation failed. Please try again.',
-            'network': 'Network error. Please check your connection.',
-            'fetch_failed': 'Authentication service unavailable.'
           };
           const errorMessage = errorMessages[error] || 'Authentication failed. Please try again.';
           
@@ -122,7 +117,7 @@ const AuthCallback = () => {
           return;
         }
 
-        // Validate token with retry logic for cold starts
+        // Validate token with retry logic
         const data = await validateTokenWithRetry(token);
         
         console.log('User validated successfully:', data.user);
@@ -140,7 +135,6 @@ const AuthCallback = () => {
         // Navigate using React Router
         let finalRedirect = decodeURIComponent(redirect);
         
-        // Ensure the redirect is a valid path
         if (!finalRedirect.startsWith('/')) {
           finalRedirect = '/';
         }
@@ -162,7 +156,6 @@ const AuthCallback = () => {
         
         setError(errorMessage);
         
-        // Navigate to login with error
         setTimeout(() => {
           navigate(`/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
         }, 3000);
@@ -194,10 +187,7 @@ const AuthCallback = () => {
         {retryCount > 0 && !error && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
             <p className="text-blue-300 text-sm">
-              🔄 Backend service is starting up (attempt {retryCount}/{MAX_RETRIES})
-            </p>
-            <p className="text-blue-200 text-xs mt-1">
-              This may take up to 60 seconds for the first request
+              🔄 Retrying authentication (attempt {retryCount}/{MAX_RETRIES})
             </p>
           </div>
         )}
@@ -306,7 +296,7 @@ const OTPInput = ({ value, onChange, length = 6 }) => {
   );
 };
 
-// ================== Login/Register Component (Updated) ==================
+// ================== Login/Register Component (Updated with Direct OAuth Success) ==================
 const LoginRegister = ({ isLogin: initialLogin = true }) => {
   const [authMode, setAuthMode] = useState(initialLogin ? "login" : "register");
   const [formData, setFormData] = useState({ name: "", email: "", otp: "" });
@@ -324,15 +314,41 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
 
-  // Get redirect URL from search params
   const redirectUrl = searchParams.get("redirect") || "/";
 
+  // Handle OAuth success directly in URL parameters
   useEffect(() => {
+    const oauthSuccess = searchParams.get("oauth_success");
+    const token = searchParams.get("token");
+    const userStr = searchParams.get("user");
     const redirectError = searchParams.get("error");
+
     if (redirectError) {
       setError(decodeURIComponent(redirectError));
+      return;
     }
-  }, [searchParams]);
+
+    if (oauthSuccess === "true" && token && userStr) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userStr));
+        console.log('OAuth success detected, logging in:', userData);
+        
+        // Use the auth hook's login method directly
+        login(token, userData);
+        setSuccess("Google authentication successful!");
+        
+        // Redirect after successful login
+        setTimeout(() => {
+          const finalRedirect = decodeURIComponent(redirectUrl);
+          navigate(finalRedirect.startsWith('/') ? finalRedirect : '/', { replace: true });
+        }, 1000);
+        
+      } catch (error) {
+        console.error('OAuth success handling error:', error);
+        setError('Failed to process Google authentication. Please try again.');
+      }
+    }
+  }, [searchParams, login, navigate, redirectUrl]);
  
   const handleInputChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -347,11 +363,9 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
 
   const handleAuthSuccess = (data) => {
     if (data.token && data.user) {
-      // Use the auth hook's login method
       login(data.token, data.user);
       setSuccess(authMode === "login" ? "Login successful!" : "Account created!");
      
-      // Redirect to the original destination or home
       setTimeout(() => {
         navigate(decodeURIComponent(redirectUrl), { replace: true });
       }, 1000);
@@ -379,16 +393,17 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
     return "Welcome Back";
   };
 
-  // FIXED: Google OAuth handler with proper URL and redirect
+  // Google OAuth handler - same as before
   const handleGoogleOAuth = () => {
-    // Get current window location for redirect
     const currentUrl = window.location.origin;
     const googleAuthUrl = `${API_BASE_URL}/api/auth/google?redirect=${encodeURIComponent(redirectUrl)}&frontend=${encodeURIComponent(currentUrl)}`;
     
-    console.log('Google OAuth URL:', googleAuthUrl); // Debug log
+    console.log('Google OAuth URL:', googleAuthUrl);
     window.location.href = googleAuthUrl;
   };
- 
+
+  // ... (rest of the component remains the same - handleResendOtp, handleSubmit, etc.)
+  
   const handleResendOtp = async () => {
      setIsLoading(true);
      setError("");
@@ -438,7 +453,6 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
         payload = { email: formData.email };
        
       } else if (authMode === "otp") {
-        // For OTP verification only, we don't reset password yet
         endpoint = "/api/auth/verify-password-reset-otp";
         payload = { email: formData.email, otp: formData.otp };
        
@@ -462,14 +476,12 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
         throw new Error(data.message || `An error occurred during ${authMode}`);
       }
      
-      // Handle success based on mode
       if (authMode === 'login' || authMode === 'register') {
         handleAuthSuccess(data);
       } else if (authMode === 'forgot') {
         setSuccess(data.message || 'OTP sent successfully!');
         switchMode('otp');
       } else if (authMode === 'otp') {
-        // For OTP mode, we just verified the OTP, now go to reset
         setSuccess('OTP verified successfully!');
         switchMode('reset');
       } else if (authMode === 'reset') {
