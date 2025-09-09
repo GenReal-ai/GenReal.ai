@@ -19,12 +19,13 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ================== Auth Callback (Fixed) ==================
+// ================== Auth Callback (FIXED) ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const processCallback = async () => {
@@ -36,6 +37,7 @@ const AuthCallback = () => {
 
         console.log('AuthCallback params:', { token: !!token, userId, error, redirect });
 
+        // Handle OAuth error
         if (error) {
           console.error("OAuth error:", error);
           const errorMessages = {
@@ -48,14 +50,15 @@ const AuthCallback = () => {
           };
           const errorMessage = errorMessages[error] || 'Authentication failed. Please try again.';
           
-          // Use window.location for more reliable navigation
-          window.location.href = `/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`;
+          // Navigate to login with error using React Router
+          navigate(`/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
           return;
         }
 
+        // Check for token
         if (!token) {
           console.error("No token provided");
-          window.location.href = `/login?error=${encodeURIComponent('Authentication failed. Missing token.')}&redirect=${encodeURIComponent(redirect)}`;
+          navigate(`/login?error=${encodeURIComponent('Authentication failed. Missing token.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
           return;
         }
 
@@ -83,10 +86,12 @@ const AuthCallback = () => {
         // Use the auth hook's login method
         login(token, data.user);
 
-        // Small delay to ensure auth state is updated
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait a bit for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Decode and navigate to the redirect URL
+        console.log('Redirecting to:', redirect);
+
+        // Use React Router navigate instead of window.location
         let finalRedirect = decodeURIComponent(redirect);
         
         // Ensure the redirect is a valid path
@@ -94,18 +99,20 @@ const AuthCallback = () => {
           finalRedirect = '/';
         }
 
-        console.log('Redirecting to:', finalRedirect);
-
-        // Use window.location for more reliable navigation
-        window.location.href = finalRedirect;
+        // Navigate using React Router
+        navigate(finalRedirect, { replace: true });
 
       } catch (error) {
         console.error('AuthCallback error:', error);
         const redirect = searchParams.get("redirect") || "/";
         const errorMessage = error.message || 'Authentication process failed.';
         
-        // Use window.location for error navigation too
-        window.location.href = `/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`;
+        setError(errorMessage);
+        
+        // Navigate to login with error using React Router
+        setTimeout(() => {
+          navigate(`/login?error=${encodeURIComponent(errorMessage)}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
+        }, 2000);
       } finally {
         setIsProcessing(false);
       }
@@ -121,12 +128,18 @@ const AuthCallback = () => {
       <div className="text-center">
         <div className="w-12 h-12 border-b-2 border-indigo-500 rounded-full animate-spin"></div>
         <p className="mt-4 text-gray-300">
-          {isProcessing ? "Finalizing authentication..." : "Redirecting..."}
+          {error ? `Error: ${error}` : isProcessing ? "Finalizing authentication..." : "Redirecting..."}
         </p>
+        {error && (
+          <p className="mt-2 text-sm text-gray-500">
+            Redirecting to login page...
+          </p>
+        )}
       </div>
     </div>
   );
 };
+
 // ================== OTP Timer Component ==================
 const OTPTimer = ({ initialTime, onExpire, isActive }) => {
   const [timeLeft, setTimeLeft] = useState(initialTime);

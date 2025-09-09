@@ -152,7 +152,7 @@ const AppContent = () => {
  const location = useLocation();
  const [isLoaded, setIsLoaded] = useState(false);
  const [faceModelLoaded, setFaceModelLoaded] = useState(false);
- const { isAuthenticated, logout } = useAuth();
+ const { isAuthenticated, logout, loading } = useAuth();
  
  useHashScroll(isLoaded);
 
@@ -171,6 +171,13 @@ const AppContent = () => {
   }
  }, [isLoaded, location]);
 
+ // Skip loader for non-home routes
+ useEffect(() => {
+  if (location.pathname !== "/" && !isLoaded) {
+   setIsLoaded(true);
+  }
+ }, [location.pathname, isLoaded]);
+
  return (
   <div className="relative bg-black overflow-hidden">
    {/* Loader only on home */}
@@ -183,6 +190,9 @@ const AppContent = () => {
 
    <AnimatePresence mode="wait">
     <Routes location={location} key={location.pathname}>
+     {/* OAuth callback route - must be first and unprotected */}
+     <Route path="/auth/callback" element={<AuthCallback />} />
+
      {/* Protected Routes */}
      <Route
       path="/dashboard"
@@ -228,22 +238,18 @@ const AppContent = () => {
       element={<AuthRedirect isLogin={false} />}
      />
 
-     {/* OAuth callback route */}
-     <Route path="/auth/callback" element={<AuthCallback />} />
-
-     {/* Home and 404 fallback */}
-      <Route
-        path="/"
-        element={
-          <PageWrapper>
-            <Home
-              isLoaded={isLoaded}
-              onFaceModelLoaded={handleFaceModelLoaded}
-            />
-          </PageWrapper>
-        }
-      />
-
+     {/* Home route - always public, no authentication check needed */}
+     <Route
+       path="/"
+       element={
+         <PageWrapper>
+           <Home
+             isLoaded={isLoaded}
+             onFaceModelLoaded={handleFaceModelLoaded}
+           />
+         </PageWrapper>
+       }
+     />
 
      {/* 404 - redirect to home */}
      <Route
@@ -254,7 +260,7 @@ const AppContent = () => {
    </AnimatePresence>
 
    {/* Login Widget - only show on home page when loaded */}
-   {isLoaded && location.pathname === "/" && (
+   {isLoaded && location.pathname === "/" && !loading && (
     <LoginWidget 
      isLoggedIn={isAuthenticated} 
      onLogout={logout}
