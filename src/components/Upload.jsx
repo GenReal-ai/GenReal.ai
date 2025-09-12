@@ -257,44 +257,45 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
         </div>
 
         {/* Dropzone or File Preview */}
-        {file ? (
-          <div className="border-2 border-dashed border-cyan-400/50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 bg-slate-700/30">
-            {renderFilePreview()}
-          </div>
-        ) : (
           <div
+            className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 flex flex-col items-center justify-center
+              ${file ? 'border-cyan-400/50 bg-slate-700/20 max-h-[350px]' : dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'}
+            `}
             onDrop={handleDrop}
             onDragOver={(e) => {
               e.preventDefault();
               setDragging(true);
             }}
             onDragLeave={() => setDragging(false)}
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 ${
-              dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'
-            }`}
           >
-            <label htmlFor="file-upload" className="cursor-pointer block">
-              <div className="mb-3 sm:mb-4">
-                <UploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
-              </div>
-              <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
-                {`Drag and drop ${selectedType} files here`}
-              </p>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Supported formats: {getFileTypeDescription()} <br />
-                <span className="text-cyan-400">Max file size: 500MB</span>
-              </p>
-            </label>
-            <input
-              id="file-upload"
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept={getAcceptString()}
-              onChange={handleFileSelect}
-            />
+            {file ? (
+              renderFilePreview()
+            ) : (
+              <>
+                <label htmlFor="file-upload" className="cursor-pointer block">
+                  <div className="mb-3 sm:mb-4">
+                    <UploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
+                  </div>
+                  <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
+                    {`Drag and drop ${selectedType} files here`}
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    Supported formats: {getFileTypeDescription()} <br />
+                    <span className="text-cyan-400">Max file size: 500MB</span>
+                  </p>
+                </label>
+                <input
+                  id="file-upload"
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept={getAcceptString()}
+                  onChange={handleFileSelect}
+                />
+              </>
+            )}
           </div>
-        )}
+
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 sm:gap-4">
