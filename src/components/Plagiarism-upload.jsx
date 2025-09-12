@@ -364,11 +364,14 @@ export default function AIPlagiarismChecker() {
         const formData = new FormData();
         formData.append("file", new Blob([codeInput], { type: "text/plain" }), "code.js");
         formData.append("language", language.toLowerCase());
+
+        const apiUrl = import.meta.env.VITE_PRODUCT_API_URL;
         
-        const response = await fetch("https://backendgenreal-product-service.onrender.com/api/plagiarism/check", {
+        const response = await fetch(`${apiUrl}/api/plagiarism/check`, {
           method: "POST",
           body: formData,
         });
+
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
@@ -494,7 +497,7 @@ export default function AIPlagiarismChecker() {
                         <div className="hidden lg:flex w-2/5 bg-slate-900/50 border-l border-cyan-400/20 flex-col">
                             <div className="bg-slate-800/60 border-b border-cyan-400/20 p-4">
                                 <h3 className="font-semibold text-slate-300 flex items-center gap-2">
-                                    <span>📊</span> Analysis Results
+                                    <span></span> Analysis Results
                                 </h3>
                             </div>
                             
