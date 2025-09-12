@@ -7,7 +7,7 @@ import { X, Mail, Lock, User, Eye, EyeOff, Clock, ArrowLeft } from "lucide-react
 import { useAuth } from './hooks/useAuth';
 
 // Use the correct auth service URL from your env
-const API_BASE_URL = "https://backendgenreal-authservice.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_AUTH_API_URL;
 
 // Simple inline SVG for Google Icon
 const GoogleIcon = () => (
@@ -19,7 +19,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ================== Improved Auth Callback ==================
 // ================== Improved Auth Callback - FIXED FOR VERCEL URL LIMITS ==================
 const AuthCallback = () => {
   const navigate = useNavigate();

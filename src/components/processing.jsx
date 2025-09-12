@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { FaInfoCircle } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import DeepfakeQuiz from './Quiz';
 
 const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expectedDuration = 180 }) => {
-  const [progress, setProgress] = useState(0);
+  // --- State for UI elements and timers ---
   const [showNotification, setShowNotification] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [processingComplete, setProcessingComplete] = useState(false);
   const [currentStage, setCurrentStage] = useState('Upload');
   const [timeElapsed, setTimeElapsed] = useState(0);
+
+  // --- Refactored for smooth animation with Framer Motion ---
+  const progress = useMotionValue(0);
+  const roundedProgress = useTransform(progress, (latest) => Math.floor(latest));
 
   // Progress stages for display messages
   const stages = [
@@ -28,71 +32,67 @@ const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expect
     return 'content';
   };
 
-  // Main effect for progress bar simulation and completion
+  // --- Main Animation Effect ---
   useEffect(() => {
-    const interval = setInterval(() => {
-      // If the result has arrived, the top priority is to complete the bar.
-      if (analysisResult) {
-        setProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          // Fast increment to finish the animation
-          return Math.min(100, prev + 2.5); 
-        });
-      } else {
-        // Otherwise, run the new realistic simulation
-        setProgress(prev => {
-          let newProgress;
-          if (prev < 15) {
-            newProgress = prev + 0.75; // Phase 1: Fast to 15%
-          } else if (prev < 75) {
-            newProgress = prev + 0.2;  // Phase 2: Slower to 75%
-          } else {
-            newProgress = prev + 0.05; // Phase 3: Very Slow to 85%
-          }
-          // Cap the simulation at 85% until the result is received
-          return Math.min(85, newProgress); 
-        });
-      }
-    }, 100); // Update every 100ms for a smooth animation
+    // Start the realistic progress simulation on mount
+    const simulationControls = animate(progress, 85, {
+      duration: expectedDuration, 
+      ease: [0.1, 0.5, 0.7, 0.9], 
+    });
 
-    return () => clearInterval(interval);
-  }, [analysisResult]);
+    // When the component unmounts, stop any running animation
+    return () => {
+      simulationControls.stop();
+    };
+  }, [expectedDuration]);
+
+  // Effect to handle when the analysis result arrives from the backend
+  useEffect(() => {
+    if (analysisResult) {
+      progress.stop(); 
+      
+      // Start a new, fast animation to 100%
+      animate(progress, 100, {
+        duration: 1.8, 
+        ease: 'easeOut',
+        onComplete: () => {
+          // Once the bar hits 100%, mark processing as complete
+          setProcessingComplete(true);
+        }
+      });
+    }
+  }, [analysisResult, progress]);
 
   // Effect to track elapsed time and update the current stage message
   useEffect(() => {
-      const timer = setInterval(() => {
-          setTimeElapsed(prev => prev + 1);
-          const currentStageObj = stages.find(stage => progress < stage.threshold) || stages[stages.length - 1];
-          setCurrentStage(currentStageObj.name);
-      }, 1000);
+    const timer = setInterval(() => {
+      setTimeElapsed(prev => prev + 1);
+    }, 1000);
 
-      // Show the quiz notification after a few seconds
-      const notificationTimeout = setTimeout(() => {
-        if (!processingComplete) {
-            setShowNotification(true);
-        }
-      }, 5000);
+    // Show the quiz notification after a few seconds
+    const notificationTimeout = setTimeout(() => {
+      if (!processingComplete) {
+        setShowNotification(true);
+      }
+    }, 5000);
 
-      return () => {
-          clearInterval(timer);
-          clearTimeout(notificationTimeout);
-      };
+    // Subscribe to changes in the motion value to update the stage text
+    const unsubscribeProgress = progress.onChange(latest => {
+        const currentStageObj = stages.find(stage => latest < stage.threshold) || stages[stages.length - 1];
+        setCurrentStage(currentStageObj.name);
+    });
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(notificationTimeout);
+      unsubscribeProgress();
+    };
   }, [progress, processingComplete]);
   
-  // Effect to detect when processing is fully complete
-  useEffect(() => {
-    if (progress >= 100 && analysisResult) {
-      setProcessingComplete(true);
-      setShowNotification(false); // Hide notification on complete
-    }
-  }, [progress, analysisResult]);
-
   // Handle the automatic transition to the results page
   useEffect(() => {
     if (processingComplete) {
+      setShowNotification(false); // Hide notification on complete
       const completeTimeout = setTimeout(() => {
         onProcessingComplete();
       }, 1500); // Wait 1.5s on the "Complete!" screen before transitioning
@@ -185,11 +185,13 @@ const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expect
           <div className="flex justify-center items-center flex-wrap gap-2 sm:gap-4 mb-6 sm:mb-8 text-center">
             {stages.map((stage, i) => (
               <div className="flex items-center gap-1 sm:gap-2" key={stage.name}>
-                <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-colors duration-500 ${
-                  progress >= stage.threshold ? 
-                    (stage.name === 'Complete' && processingComplete ? 'bg-green-400 animate-pulse' : 'bg-cyan-400') : 
-                    'bg-slate-600'
-                }`}></div>
+                <motion.div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-colors duration-500"
+                   animate={{
+                    backgroundColor: progress.get() >= stage.threshold 
+                      ? (stage.name === 'Complete' && processingComplete ? '#22c55e' : '#22d3ee')
+                      : '#475569'
+                  }}
+                />
                 <span className="text-xs text-slate-400">{stage.name}</span>
                 {i < stages.length - 1 && <div className="w-4 sm:w-8 h-0.5 bg-slate-600"></div>}
               </div>
@@ -207,15 +209,19 @@ const Processing = ({ uploadedFile, analysisResult, onProcessingComplete, expect
           <div className="relative mb-4">
             <div className="w-full h-2 sm:h-3 bg-slate-700 rounded-full overflow-hidden shadow-inner">
               <motion.div
-                className={`h-full rounded-full shadow-lg ${processingComplete ? 'bg-green-500' : 'bg-gradient-to-r from-cyan-500 to-blue-500'}`}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3, ease: "linear" }}
+                className={`h-full rounded-full shadow-lg bg-gradient-to-r from-cyan-500 to-blue-500`}
+                style={{
+                  scaleX: useTransform(progress, val => val / 100),
+                  originX: 0
+                }}
               />
             </div>
+
             <div className="absolute -top-6 sm:-top-8 left-0 right-0 text-center">
-              <span className={`text-lg sm:text-xl md:text-2xl font-bold ${processingComplete ? 'text-green-400' : 'text-cyan-400'}`}>
-                {Math.floor(progress)}%
-              </span>
+              <motion.span className={`text-lg sm:text-xl md:text-2xl font-bold ${processingComplete ? 'text-green-400' : 'text-cyan-400'}`}>
+                {roundedProgress}
+              </motion.span>
+              <span className={`text-lg sm:text-xl md:text-2xl font-bold ${processingComplete ? 'text-green-400' : 'text-cyan-400'}`}>%</span>
             </div>
           </div>
           <div className="flex justify-between items-center">
