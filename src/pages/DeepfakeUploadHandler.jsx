@@ -28,6 +28,8 @@ const DeepfakeUploadHandler = () => {
 
   const validateFile = (file) => {
     const fileType = getFileType(file);
+    console.log("Base URL:", import.meta.env.VITE_API_URL);
+
     if (fileType === 'unknown') {
       return { 
         valid: false, 

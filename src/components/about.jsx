@@ -21,16 +21,14 @@ const AboutUsSection = () => {
 
   // Navigate to products page
   const handleStartDetection = () => {
-    // In a real app, you would use React Router or Next.js router
-    // For demo purposes, we'll just scroll or show an alert
     alert("Navigating to Products page...");
-    // Example: navigate('/products') or window.location.href = '/products'
   };
 
   useEffect(() => {
     const createFloatingElements = () => {
       if (!sectionRef.current) return;
-      for (let i = 0; i < 15; i++) { // Reduced from 20 to 15
+      // Reduced from 5 to 3 elements
+      for (let i = 0; i < 3; i++) { 
         const element = document.createElement('div');
         element.className = 'floating-element';
         element.style.cssText = `
@@ -44,6 +42,8 @@ const AboutUsSection = () => {
           top: ${Math.random() * 100}%;
           pointer-events: none;
           z-index: 0;
+          will-change: transform, opacity;
+          transform: translate3d(0, 0, 0);
         `;
         sectionRef.current.appendChild(element);
         floatingElementsRef.current.push(element);
@@ -52,7 +52,8 @@ const AboutUsSection = () => {
 
     const createParticles = () => {
       if (!sectionRef.current) return;
-      for (let i = 0; i < 30; i++) { // Reduced from 50 to 30
+      // Reduced from 30 to 10 particles
+      for (let i = 0; i < 10; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
         particle.style.cssText = `
@@ -65,6 +66,8 @@ const AboutUsSection = () => {
           top: 100%;
           pointer-events: none;
           z-index: 0;
+          will-change: transform, opacity;
+          transform: translate3d(0, 0, 0);
         `;
         sectionRef.current.appendChild(particle);
         particlesRef.current.push(particle);
@@ -75,21 +78,23 @@ const AboutUsSection = () => {
     createParticles();
 
     const ctx = gsap.context(() => {
-      // Background particle animations
+      // Optimized background particle animations using transform3d
       particlesRef.current.forEach((particle) => {
         gsap.to(particle, {
           y: -window.innerHeight - 100,
           duration: Math.random() * 10 + 8,
           repeat: -1,
           delay: Math.random() * 5,
-          ease: "none"
+          ease: "none",
+          force3D: true // Force GPU acceleration
         });
         gsap.to(particle, {
           x: `+=${Math.random() * 200 - 100}`,
           duration: Math.random() * 8 + 6,
           repeat: -1,
           yoyo: true,
-          ease: "power1.inOut"
+          ease: "power1.inOut",
+          force3D: true // Force GPU acceleration
         });
       });
 
@@ -101,41 +106,47 @@ const AboutUsSection = () => {
           repeat: -1,
           yoyo: true,
           ease: "power1.inOut",
-          delay: Math.random() * 2
+          delay: Math.random() * 2,
+          force3D: true // Force GPU acceleration
         });
       });
 
-      // Hero section animation
+      // Hero section animation - using toggleActions instead of scrub
       if (heroRef.current) {
         gsap.fromTo(heroRef.current, 
           { opacity: 0, y: 100 },
           {
             opacity: 1,
             y: 0,
-            ease: "none",
+            duration: 1,
+            ease: "power2.out",
             scrollTrigger: {
               trigger: heroRef.current,
-              start: "top 50%",  
-              end: "top 20%",
-              scrub: 1.5,
-              invalidateOnRefresh: true
+              start: "top 80%",
+              toggleActions: "play none none reverse"
             }
           }
         );
       }
 
-      // Deepfake section
-      const deepfakeTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: deepfakeRef.current,
-          start: "top 90%",
-          end: "top 20%",
-          scrub: 1.3,
-        }
-      });
-      deepfakeTl.fromTo(deepfakeRef.current.querySelector('.content-wrapper'),
-        { x: -200, opacity: 0, scale: 0.8 },
-        { x: 0, opacity: 1, scale: 1 });
+      // Deepfake section - using toggleActions
+      if (deepfakeRef.current) {
+        gsap.fromTo(deepfakeRef.current.querySelector('.content-wrapper'),
+          { x: -200, opacity: 0, scale: 0.8 },
+          { 
+            x: 0, 
+            opacity: 1, 
+            scale: 1,
+            duration: 1.2,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: deepfakeRef.current,
+              start: "top 90%",
+              toggleActions: "play none none reverse"
+            }
+          }
+        );
+      }
 
       // **UPDATED: 180-degree rotation with 3-second pause**
       if (rotatingCircleRef.current) {
@@ -143,7 +154,8 @@ const AboutUsSection = () => {
         tl.to(rotatingCircleRef.current, {
           rotationY: 180,
           duration: 1.5,
-          ease: "power2.inOut"
+          ease: "power2.inOut",
+          force3D: true
         })
         .to(rotatingCircleRef.current, {
           rotationY: 180,
@@ -153,7 +165,8 @@ const AboutUsSection = () => {
         .to(rotatingCircleRef.current, {
           rotationY: 360,
           duration: 1.5,
-          ease: "power2.inOut"
+          ease: "power2.inOut",
+          force3D: true
         })
         .to(rotatingCircleRef.current, {
           rotationY: 360,
@@ -163,22 +176,28 @@ const AboutUsSection = () => {
         .set(rotatingCircleRef.current, { rotationY: 0 }); // Reset for loop
       }
 
-      // Plagiarism section
-      const plagiarismTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: plagiarismRef.current,
-          start: "top 90%",
-          end: "top 35%",
-          scrub: 1.5,
-        }
-      });
-      plagiarismTl.fromTo(plagiarismRef.current.querySelector('.content-wrapper'),
-        { x: -200, opacity: 0, scale: 0.8 }, // Changed from x: 200 to x: -200
-        { x: 0, opacity: 1, scale: 1 });
+      // Plagiarism section - using toggleActions
+      if (plagiarismRef.current) {
+        gsap.fromTo(plagiarismRef.current.querySelector('.content-wrapper'),
+          { x: -200, opacity: 0, scale: 0.8 },
+          { 
+            x: 0, 
+            opacity: 1, 
+            scale: 1,
+            duration: 1.2,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: plagiarismRef.current,
+              start: "top 90%",
+              toggleActions: "play none none reverse"
+            }
+          }
+        );
+      }
 
-      // Code block animation
+      // Batched code block animation - single staggered tween
       if (codeBlockRef.current) {
-        const lines = codeBlockRef.current.querySelectorAll('.code-line');
+        const lines = gsap.utils.toArray(codeBlockRef.current.querySelectorAll('.code-line'));
         gsap.set(lines, { opacity: 0, x: -50 });
         
         gsap.to(lines, {
@@ -189,6 +208,7 @@ const AboutUsSection = () => {
           repeat: -1,
           repeatDelay: 2,
           yoyo: false,
+          force3D: true,
           scrollTrigger: {
             trigger: plagiarismRef.current,
             start: "top 60%",
@@ -197,7 +217,7 @@ const AboutUsSection = () => {
         });
       }
 
-      // Motion path animations
+      // Motion path animations with GPU acceleration
       if (leftMotionRef.current) {
         gsap.to(leftMotionRef.current, {
           motionPath: {
@@ -205,7 +225,10 @@ const AboutUsSection = () => {
             curviness: 2,
             autoRotate: true,
           },
-          duration: 15, repeat: -1, ease: "none"
+          duration: 15, 
+          repeat: -1, 
+          ease: "none",
+          force3D: true
         });
       }
       if (rightMotionRef.current) {
@@ -215,7 +238,11 @@ const AboutUsSection = () => {
             curviness: 2,
             autoRotate: true,
           },
-          duration: 12, repeat: -1, ease: "none", delay: 2
+          duration: 12, 
+          repeat: -1, 
+          ease: "none", 
+          delay: 2,
+          force3D: true
         });
       }
 
@@ -441,7 +468,7 @@ const AboutUsSection = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>  
       </section>
       
     </div>

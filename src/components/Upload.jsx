@@ -1,24 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
-import gsap from 'gsap';
-import { FiUploadCloud } from 'react-icons/fi';
+import { UploadCloud } from 'lucide-react';
 import { FaVideo, FaImage, FaVolumeUp } from 'react-icons/fa';
 
 const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
-  const [linkInput, setLinkInput] = useState('');
-  const [selectedType, setSelectedType] = useState('video'); // 'video', 'image', 'audio'
+  const [selectedType, setSelectedType] = useState('video');
 
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
 
   useEffect(() => {
-    gsap.fromTo(
-      modalRef.current,
-      { x: 200, opacity: 0 },
-      { x: 0, opacity: 1, duration: 1.8, ease: 'power3.out' }
-    );
+    // Animation for modal entrance (simulated since we don't have gsap)
+    if (modalRef.current) {
+      modalRef.current.style.transform = 'translateX(200px)';
+      modalRef.current.style.opacity = '0';
+      setTimeout(() => {
+        modalRef.current.style.transform = 'translateX(0)';
+        modalRef.current.style.opacity = '1';
+        modalRef.current.style.transition = 'all 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      }, 100);
+    }
   }, []);
 
   // Show error toast when uploadError changes
@@ -28,6 +32,19 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
       setTimeout(() => setToastMessage(null), 5000);
     }
   }, [uploadError]);
+
+  // Generate file preview when file changes
+  useEffect(() => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFilePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  }, [file]);
 
   // Paste file from clipboard
   useEffect(() => {
@@ -66,13 +83,21 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   };
 
   const handleConfirm = async () => {
-    if (!file && !linkInput.trim()) {
-      setToastMessage("❌ Please select a file or provide a link");
+    if (!file) {
+      setToastMessage("❌ Please select a file");
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
-    await onFileUpload(file, linkInput.trim());
+    await onFileUpload(file, '');
+  };
+
+  const handleChangeFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const getAcceptString = () => {
@@ -107,17 +132,90 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
     { id: 'audio', label: 'Audio', icon: FaVolumeUp, color: 'purple' },
   ];
 
+  const colorClasses = {
+  blue: "border-blue-400 bg-blue-400/10 text-blue-400",
+  green: "border-green-400 bg-green-400/10 text-green-400",
+  purple: "border-purple-400 bg-purple-400/10 text-purple-400",
+};
+
+
+  const renderFilePreview = () => {
+    if (!file || !filePreview) return null;
+
+    const fileType = file.type;
+    
+    if (fileType.startsWith('image/')) {
+      return (
+        <div className="text-center">
+          <img 
+            src={filePreview} 
+            alt="Preview" 
+            className="max-w-full max-h-48 mx-auto rounded-xl shadow-lg border border-cyan-400/30 mb-4"
+          />
+          <p className="font-semibold text-sm sm:text-base mb-2">{file.name}</p>
+          <button
+            onClick={handleChangeFile}
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300"
+          >
+            Change File
+          </button>
+        </div>
+      );
+    } else if (fileType.startsWith('video/')) {
+      return (
+        <div className="text-center">
+          <video 
+            src={filePreview} 
+            controls 
+            className="max-w-full max-h-48 mx-auto rounded-xl shadow-lg border border-cyan-400/30 mb-4"
+          />
+          <p className="font-semibold text-sm sm:text-base mb-2">{file.name}</p>
+          <button
+            onClick={handleChangeFile}
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300"
+          >
+            Change File
+          </button>
+        </div>
+      );
+    } else if (fileType.startsWith('audio/')) {
+      return (
+        <div className="text-center">
+          <div className="bg-slate-700/50 p-4 rounded-xl border border-cyan-400/30 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <FaVolumeUp className="text-purple-400 text-xl" />
+              <span className="text-white text-sm font-medium">{file.name}</span>
+            </div>
+            <audio 
+              src={filePreview} 
+              controls 
+              className="w-full"
+            />
+          </div>
+          <button
+            onClick={handleChangeFile}
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300"
+          >
+            Change File
+          </button>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
-    <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative font-exo text-white overflow-hidden p-4">
+    <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative text-white overflow-hidden p-4">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-400/10 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-32 right-32 w-48 h-48 bg-blue-400/10 rounded-full blur-xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-teal-400/10 rounded-full blur-xl animate-pulse delay-2000"></div>
+        <div className="absolute bottom-32 right-32 w-48 h-48 bg-blue-400/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-teal-400/10 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
       </div>
 
-      {/* Modal */}
+      {/* Modal - Back to original size */}
       <div
         ref={modalRef}
         className="relative bg-slate-800/90 backdrop-blur-sm border border-cyan-400/30 rounded-3xl px-4 sm:px-6 md:px-8 py-6 w-full max-w-2xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
@@ -133,84 +231,70 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
           Upload your content
         </h2>
 
-        {/* File Type Selector */}
-        <div className="grid grid-cols-4 gap-2 mb-4 sm:mb-6">
-          {fileTypeOptions.map((option) => {
-            const Icon = option.icon;
-            const isSelected = selectedType === option.id;
-            return (
-              <button
-                key={option.id}
-                onClick={() => setSelectedType(option.id)}
-                className={`p-2 sm:p-3 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2 ${
+        {/* File Type Selector - Centered */}
+        <div className="flex justify-center mb-4 sm:mb-6">
+          <div className="flex gap-3 sm:gap-4">
+            {fileTypeOptions.map((option) => {
+              const Icon = option.icon;
+              const isSelected = selectedType === option.id;  
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => setSelectedType(option.id)}
+                className={`min-w-[120px] px-4 py-3 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
                   isSelected 
-                    ? `border-${option.color}-400 bg-${option.color}-400/10 text-${option.color}-400` 
-                    : 'border-slate-600 bg-slate-700/30 text-slate-400 hover:border-slate-500'
+                    ? colorClasses[option.color] 
+                    : "border-slate-600 bg-slate-700/30 text-slate-400 hover:border-slate-500"
                 }`}
-              >
-                <Icon className="text-sm sm:text-lg" />
-                <span className="text-xs sm:text-sm font-medium">{option.label}</span>
-              </button>
-            );
-          })}
-        </div>
 
-        {/* Dropzone */}
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 font-inter ${
-            dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'
-          }`}
-        >
-          <label htmlFor="file-upload" className="cursor-pointer block">
-            <div className="mb-3 sm:mb-4">
-              <FiUploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
-            </div>
-            <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
-              {file ? file.name : `Drag and drop ${selectedType === 'all' ? 'media files' : selectedType + ' files'} here`}
-            </p>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Supported formats: {getFileTypeDescription()} <br />
-              <span className="text-cyan-400">Max file size: 500MB</span>
-            </p>
-          </label>
-          <input
-            id="file-upload"
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept={getAcceptString()}
-            onChange={handleFileSelect}
-          />
-        </div>
-
-        {/* Separator */}
-        <div className="text-center text-slate-400 mb-4 sm:mb-6 relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-600"></div>
+                >
+                  <Icon className="text-sm sm:text-lg" />
+                  <span className="text-sm sm:text-base md:text-lg font-medium">{option.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <div className="relative bg-slate-800 px-4 text-xs sm:text-sm">or paste a media link</div>
         </div>
 
-        {/* Link input field */}
-        <div className="mb-6 sm:mb-8">
-          <label htmlFor="link-input" className="block mb-2 text-xs sm:text-sm font-semibold text-slate-300">
-            Paste a media link here
-          </label>
-          <input
-            type="text"
-            id="link-input"
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl bg-slate-700/50 text-white placeholder-slate-400 border border-cyan-400/30 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base"
-            placeholder="https://example.com/media.mp4"
-            value={linkInput}
-            onChange={(e) => setLinkInput(e.target.value)}
-          />
-        </div>
+        {/* Dropzone or File Preview */}
+        {file ? (
+          <div className="border-2 border-dashed border-cyan-400/50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 bg-slate-700/30">
+            {renderFilePreview()}
+          </div>
+        ) : (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 ${
+              dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'
+            }`}
+          >
+            <label htmlFor="file-upload" className="cursor-pointer block">
+              <div className="mb-3 sm:mb-4">
+                <UploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
+              </div>
+              <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
+                {`Drag and drop ${selectedType} files here`}
+              </p>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Supported formats: {getFileTypeDescription()} <br />
+                <span className="text-cyan-400">Max file size: 500MB</span>
+              </p>
+            </label>
+            <input
+              id="file-upload"
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept={getAcceptString()}
+              onChange={handleFileSelect}
+            />
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 sm:gap-4">
@@ -244,7 +328,7 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
 
       {/* Toast */}
       {toastMessage && (
-        <div className={`fixed bottom-4 sm:bottom-6 right-4 sm:right-6 px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-2xl animate-fade-in-out z-50 backdrop-blur-sm border text-sm sm:text-base ${
+        <div className={`fixed bottom-4 sm:bottom-6 right-4 sm:right-6 px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-2xl z-50 backdrop-blur-sm border text-sm sm:text-base transition-all duration-300 ${
           toastMessage.includes('❌') 
             ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-400/30' 
             : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400/30'

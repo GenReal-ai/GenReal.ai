@@ -19,7 +19,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ================== Improved Auth Callback ==================
 // ================== Improved Auth Callback - FIXED FOR VERCEL URL LIMITS ==================
 const AuthCallback = () => {
   const navigate = useNavigate();
