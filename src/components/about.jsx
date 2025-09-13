@@ -14,20 +14,21 @@ const AboutUsSection = () => {
   const particlesRef = useRef([]);
   const leftMotionRef = useRef(null);
   const rightMotionRef = useRef(null);
-  const rotatingCircleRef = useRef(null);
-  const codeBlockRef = useRef(null);
+  const deepfakeProgressRef = useRef(null);
+  const codeBlockRef = useRef(null); 
   
-  const [currentImage, setCurrentImage] = useState('real');
+ 
 
-  // Navigate to products page
-  const handleStartDetection = () => {
-    alert("Navigating to Products page...");
-  };
+const handleStartDetection = () => {
+  const element = document.getElementById("products");
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth" });
+  }
+};
 
   useEffect(() => {
     const createFloatingElements = () => {
       if (!sectionRef.current) return;
-      // Reduced from 5 to 3 elements
       for (let i = 0; i < 3; i++) { 
         const element = document.createElement('div');
         element.className = 'floating-element';
@@ -52,7 +53,6 @@ const AboutUsSection = () => {
 
     const createParticles = () => {
       if (!sectionRef.current) return;
-      // Reduced from 30 to 10 particles
       for (let i = 0; i < 10; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
@@ -78,7 +78,7 @@ const AboutUsSection = () => {
     createParticles();
 
     const ctx = gsap.context(() => {
-      // Optimized background particle animations using transform3d
+      // Background particles
       particlesRef.current.forEach((particle) => {
         gsap.to(particle, {
           y: -window.innerHeight - 100,
@@ -86,7 +86,7 @@ const AboutUsSection = () => {
           repeat: -1,
           delay: Math.random() * 5,
           ease: "none",
-          force3D: true // Force GPU acceleration
+          force3D: true
         });
         gsap.to(particle, {
           x: `+=${Math.random() * 200 - 100}`,
@@ -94,7 +94,7 @@ const AboutUsSection = () => {
           repeat: -1,
           yoyo: true,
           ease: "power1.inOut",
-          force3D: true // Force GPU acceleration
+          force3D: true
         });
       });
 
@@ -107,11 +107,11 @@ const AboutUsSection = () => {
           yoyo: true,
           ease: "power1.inOut",
           delay: Math.random() * 2,
-          force3D: true // Force GPU acceleration
+          force3D: true
         });
       });
 
-      // Hero section animation - using toggleActions instead of scrub
+      // Hero section animation
       if (heroRef.current) {
         gsap.fromTo(heroRef.current, 
           { opacity: 0, y: 100 },
@@ -129,7 +129,7 @@ const AboutUsSection = () => {
         );
       }
 
-      // Deepfake section - using toggleActions
+      // Deepfake section
       if (deepfakeRef.current) {
         gsap.fromTo(deepfakeRef.current.querySelector('.content-wrapper'),
           { x: -200, opacity: 0, scale: 0.8 },
@@ -148,35 +148,66 @@ const AboutUsSection = () => {
         );
       }
 
-      // **UPDATED: 180-degree rotation with 3-second pause**
-      if (rotatingCircleRef.current) {
-        const tl = gsap.timeline({ repeat: -1 });
-        tl.to(rotatingCircleRef.current, {
-          rotationY: 180,
-          duration: 1.5,
-          ease: "power2.inOut",
-          force3D: true
-        })
-        .to(rotatingCircleRef.current, {
-          rotationY: 180,
-          duration: 3, // 3-second pause
-          ease: "none"
-        })
-        .to(rotatingCircleRef.current, {
-          rotationY: 360,
-          duration: 1.5,
-          ease: "power2.inOut",
-          force3D: true
-        })
-        .to(rotatingCircleRef.current, {
-          rotationY: 360,
-          duration: 3, // 3-second pause
-          ease: "none"
-        })
-        .set(rotatingCircleRef.current, { rotationY: 0 }); // Reset for loop
+      // Deepfake Progress Animation
+      if (deepfakeProgressRef.current) {
+        const progressBars = deepfakeProgressRef.current.querySelectorAll('.progress-bar');
+        const percentageTexts = deepfakeProgressRef.current.querySelectorAll('.percentage-text');
+        const statusTexts = deepfakeProgressRef.current.querySelectorAll('.status-text');
+        
+        gsap.set(progressBars, { width: "0%" });
+        gsap.set(percentageTexts, { textContent: "0%" });
+        
+        const tl = gsap.timeline({ 
+          repeat: -1, 
+          repeatDelay: 3,
+          scrollTrigger: {
+            trigger: deepfakeRef.current,
+            start: "top 60%",
+            toggleActions: "play none none restart"
+          }
+        });
+
+        tl.to(statusTexts[0], { opacity: 1, duration: 0.3 })
+          .to(progressBars[0], { 
+            width: "100%", 
+            duration: 2, 
+            ease: "power2.out",
+            onUpdate: function() {
+              const progress = Math.round(this.progress() * 100);
+              percentageTexts[0].textContent = progress + "%";
+            }
+          })
+          .to(statusTexts[0], { opacity: 0.5, duration: 0.3 })
+          .to(statusTexts[1], { opacity: 1, duration: 0.3 }, "-=0.2")
+          .to(progressBars[1], { 
+            width: "100%", 
+            duration: 1.8, 
+            ease: "power2.out",
+            onUpdate: function() {
+              const progress = Math.round(this.progress() * 100);
+              percentageTexts[1].textContent = progress + "%";
+            }
+          })
+          .to(statusTexts[1], { opacity: 0.5, duration: 0.3 })
+          .to(statusTexts[2], { opacity: 1, duration: 0.3 }, "-=0.2")
+          .to(progressBars[2], { 
+            width: "87%", 
+            duration: 2.2, 
+            ease: "power2.out",
+            onUpdate: function() {
+              const progress = Math.round(this.progress() * 87);
+              percentageTexts[2].textContent = progress + "%";
+            }
+          })
+          .to(".final-result", { 
+            opacity: 1, 
+            scale: 1,
+            duration: 0.5,
+            ease: "back.out(1.7)"
+          }, "-=0.5");
       }
 
-      // Plagiarism section - using toggleActions
+      // Plagiarism section
       if (plagiarismRef.current) {
         gsap.fromTo(plagiarismRef.current.querySelector('.content-wrapper'),
           { x: -200, opacity: 0, scale: 0.8 },
@@ -195,7 +226,7 @@ const AboutUsSection = () => {
         );
       }
 
-      // Batched code block animation - single staggered tween
+      // --- NEW Plagiarism Code Block Animation ---
       if (codeBlockRef.current) {
         const lines = gsap.utils.toArray(codeBlockRef.current.querySelectorAll('.code-line'));
         gsap.set(lines, { opacity: 0, x: -50 });
@@ -217,7 +248,7 @@ const AboutUsSection = () => {
         });
       }
 
-      // Motion path animations with GPU acceleration
+      // Motion path animations
       if (leftMotionRef.current) {
         gsap.to(leftMotionRef.current, {
           motionPath: {
@@ -261,41 +292,12 @@ const AboutUsSection = () => {
     };
   }, []);
 
-  const DetectionIcon = () => (
-    <div className="icon-wrapper w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 relative">
-      <svg viewBox="0 0 64 64" className="w-full h-full text-[#00D1FF]">
-        <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.2"/>
-        <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.6"/>
-        <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" strokeWidth="3"/>
-        <circle cx="32" cy="32" r="4" fill="currentColor"/>
-        <path d="M32 4 L36 12 L32 20 L28 12 Z" fill="currentColor" opacity="0.8"/>
-        <path d="M60 32 L52 36 L44 32 L52 28 Z" fill="currentColor" opacity="0.8"/>
-        <path d="M32 60 L28 52 L32 44 L36 52 Z" fill="currentColor" opacity="0.8"/>
-        <path d="M4 32 L12 28 L20 32 L12 36 Z" fill="currentColor" opacity="0.8"/>
-      </svg>
-    </div>
-  );
-
-  const PlagiarismIcon = () => (
-    <div className="icon-wrapper w-12 h-12 md:w-16 md:h-16 mx-auto mb-4">
-      <svg viewBox="0 0 64 64" className="w-full h-full text-[#00D1FF]">
-        <rect x="8" y="8" width="48" height="48" rx="6" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.3"/>
-        <rect x="12" y="12" width="40" height="40" rx="4" fill="currentColor" opacity="0.1"/>
-        <line x1="18" y1="22" x2="46" y2="22" stroke="currentColor" strokeWidth="2"/>
-        <line x1="18" y1="30" x2="46" y2="30" stroke="currentColor" strokeWidth="2"/>
-        <line x1="18" y1="38" x2="38" y2="38" stroke="currentColor" strokeWidth="2"/>
-        <circle cx="50" cy="14" r="10" fill="currentColor"/>
-        <path d="M45 14 L48 17 L55 10" stroke="#0A0F1F" strokeWidth="2" fill="none"/>
-      </svg>
-    </div>
-  );
-
   return (
     <div ref={sectionRef} className="bg-gradient-to-b from-black via-slate-900 to-slate-950 text-white font-sans relative overflow-hidden" id="about">
       
       {/* Hero Section */}
       <section ref={heroRef} className="min-h-screen flex items-center justify-center relative z-10 py-12 px-4 opacity-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/5 via-transparent to-[#1E40AF]/5 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/2 via-transparent to-[#1E40AF]/2"></div>
         <div className="container mx-auto max-w-6xl relative z-20">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="space-y-4 text-center lg:text-left">
@@ -311,15 +313,21 @@ const AboutUsSection = () => {
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+                {/* Primary Button */}
                 <button 
                   onClick={handleStartDetection}
-                  className="bg-gradient-to-r from-[#00D1FF] to-[#0099CC] text-black font-bold px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:shadow-lg hover:shadow-[#00D1FF]/30 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3 px-7 rounded-full shadow-lg hover:from-cyan-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-300"
                 >
-                  Start Detection
+                  Read More
                 </button>
-                <button className="border-2 border-[#00D1FF] text-[#00D1FF] font-bold px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:bg-[#00D1FF]/10 transition-all duration-300 text-sm sm:text-base">
+
+                {/* Secondary Button */}
+                <button 
+                  className="bg-cyan-600/20 border-2 border-cyan-400 text-cyan-400 font-semibold py-3 px-7 rounded-full shadow-sm hover:bg-cyan-500/20 hover:shadow-md transform hover:scale-105 transition-all duration-300"
+                >
                   View Demo
                 </button>
+
               </div>
             </div>
             <div className="relative flex justify-center lg:justify-end">
@@ -346,108 +354,130 @@ const AboutUsSection = () => {
 
       {/* Deepfake Detection Section */}
       <section ref={deepfakeRef} className="min-h-screen flex items-center py-12 relative z-10 px-4">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#00D1FF]/5 to-transparent transform -skew-y-1"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 to-slate-950/50"></div>
         <div ref={leftMotionRef} className="absolute left-6 top-1/2 w-6 h-6 bg-[#00D1FF] rounded-full opacity-60 shadow-lg shadow-[#00D1FF]/50 z-20"></div>
         <div className="content-wrapper max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-8 lg:gap-12 items-center z-10">
           <div className="text-center md:text-left">
-            <DetectionIcon />
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#00D1FF] to-white bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-6 bg-gradient-to-r from-white via-[#00D1FF] to-white bg-clip-text text-transparent leading-tight">
               Deepfake Detection
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-[#C9D1D9] leading-relaxed mb-6 max-w-xl mx-auto md:mx-0">
-              Our advanced neural networks analyze facial movements, voice patterns, and visual artifacts to identify AI-generated content. From social media posts to news footage, we protect platforms from malicious synthetic media.
-            </p>
-            <div className="space-y-3 mb-6 inline-block text-left">
+            <div className="space-y-3">
+              <p className="text-sm sm:text-base md:text-lg leading-relaxed text-[#E6F3FF] font-medium max-w-xl mx-auto md:mx-0">
+                Our <span className="font-bold text-white">advanced neural networks</span> analyze facial movements, voice patterns, and visual artifacts to identify AI-generated content. From social media posts to news footage, we protect platforms from <span className="font-bold text-[#00D1FF]">malicious synthetic media</span>.
+              </p>
+              <p className="text-sm sm:text-base md:text-lg leading-relaxed text-[#E6F3FF] font-medium max-w-xl mx-auto md:mx-0">
+                <span className="font-bold text-white">Real-time analysis</span> with comprehensive confidence scoring ensures you can trust the authenticity of digital content across all platforms.
+              </p>
+            </div>
+            <div className="space-y-3 mb-6 mt-6 inline-block text-left">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm">Real-time video and audio analysis</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Real-time video and audio analysis</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm">Detection of latest deepfake techniques</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Detection of latest deepfake techniques</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm">Comprehensive confidence scoring</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Comprehensive confidence scoring</span>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-              <span className="bg-gradient-to-r from-[#00D1FF]/20 to-[#00D1FF]/10 px-4 py-2 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold text-xs sm:text-sm">
+              <span className="bg-gradient-to-r from-[#00D1FF]/20 to-[#00D1FF]/10 px-4 py-2 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-bold text-xs sm:text-sm">
                 Real-time API
               </span>
             </div>
           </div>
-          <div className="relative [perspective:1000px] flex justify-center items-center">
-            <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 mx-auto relative [transform-style:preserve-3d]" ref={rotatingCircleRef}>
-              <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/30 to-transparent rounded-full"></div>
-              <div className="absolute inset-3 bg-gradient-to-br from-[#1E2A38] to-[#2A3441] rounded-full border-2 border-[#00D1FF]/40 overflow-hidden">
-                <div className="w-full h-full flex">
-                  <div className="w-1/2 h-full bg-green-500/20 flex items-center justify-center border-r border-[#00D1FF]/30">
-                    <div className="text-center">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
-                        </svg>
-                      </div>
-                      <div className="text-green-400 font-bold text-xs">REAL</div>
-                    </div>
+          <div className="relative flex justify-center items-center">
+            <div className="w-80 max-w-full mx-auto relative" ref={deepfakeProgressRef}>
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border-2 border-cyan-400/50 shadow-2xl shadow-cyan-500/20">
+                <h3 className="text-lg font-bold text-white mb-6 text-center">Deepfake Analysis</h3>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="status-text text-sm text-gray-400 opacity-50">Processing Video...</span>
+                    <span className="percentage-text text-sm text-[#00D1FF] font-bold">0%</span>
                   </div>
-                  <div className="w-1/2 h-full bg-red-500/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-red-500 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                        </svg>
-                      </div>
-                      <div className="text-red-400 font-bold text-xs">DEEPFAKE</div>
-                    </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="progress-bar bg-gradient-to-r from-[#00D1FF] to-[#0099CC] h-2 rounded-full" style={{width: '0%'}}></div>
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00D1FF]/10 to-transparent animate-pulse"></div>
+
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="status-text text-sm text-gray-400 opacity-50">Face Detection...</span>
+                    <span className="percentage-text text-sm text-[#00D1FF] font-bold">0%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="progress-bar bg-gradient-to-r from-[#00D1FF] to-[#0099CC] h-2 rounded-full" style={{width: '0%'}}></div>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="status-text text-sm text-gray-400 opacity-50">AI Analysis...</span>
+                    <span className="percentage-text text-sm text-[#00D1FF] font-bold">0%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="progress-bar bg-gradient-to-r from-[#00D1FF] to-[#0099CC] h-2 rounded-full" style={{width: '0%'}}></div>
+                  </div>
+                </div>
+
+                <div className="final-result text-center opacity-0 scale-0">
+                  <div className="bg-red-500/20 border border-red-500 rounded-lg p-4">
+                    <h4 className="text-red-400 font-bold text-lg mb-2">DEEPFAKE DETECTED</h4>
+                    <p className="text-white text-sm">87% confidence - Synthetic content identified</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Code Plagiarism Detection Section - SWITCHED LAYOUT */}
+      {/* Code Plagiarism Detection Section */}
       <section ref={plagiarismRef} className="min-h-screen flex items-center py-12 relative z-10 px-4">
-        <div className="wave-bg absolute inset-0 bg-gradient-to-l from-[#00D1FF]/5 to-transparent transform skew-y-1"></div>
+        <div className="absolute inset-0 bg-gradient-to-bl from-gray-900/50 to-slate-950/50"></div>
         <div ref={rightMotionRef} className="absolute right-6 top-1/2 w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-[#00D1FF] to-[#00A8CC] rounded-full opacity-70 shadow-lg shadow-[#00D1FF]/50 z-20"></div>
         <div className="content-wrapper max-w-6xl mx-auto grid md:grid-cols-2 gap-8 lg:gap-12 items-center z-10">
-          {/* CONTENT NOW ON LEFT */}
           <div className="text-center md:text-left">
-            <PlagiarismIcon />
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-l from-[#00D1FF] to-white bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-6 bg-gradient-to-l from-white via-[#00D1FF] to-white bg-clip-text text-transparent leading-tight">
               Code Plagiarism Detection
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-[#C9D1D9] leading-relaxed mb-6 max-w-xl mx-auto md:mx-0">
-              Advanced semantic analysis detects code plagiarism beyond simple copying. Our AI understands programming patterns, identifies subtle modifications, and catches sophisticated attempts to disguise copied code.
-            </p>
-            <div className="space-y-3 mb-6 inline-block text-left">
+            <div className="space-y-3">
+              <p className="text-sm sm:text-base md:text-lg leading-relaxed text-[#E6F3FF] font-medium max-w-xl mx-auto md:mx-0">
+                <span className="font-bold text-white">Advanced semantic analysis</span> detects code plagiarism beyond simple copying. Our AI understands programming patterns, identifies subtle modifications, and catches <span className="font-bold text-[#00D1FF]">sophisticated attempts</span> to disguise copied code.
+              </p>
+              <p className="text-sm sm:text-base md:text-lg leading-relaxed text-[#E6F3FF] font-medium max-w-xl mx-auto md:mx-0">
+                <span className="font-bold text-white">Repository-wide scanning</span> with multi-language support ensures comprehensive code integrity verification across your entire codebase.
+              </p>
+            </div>
+            <div className="space-y-3 mb-6 mt-6 inline-block text-left">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm">Multi-language support (50+ languages)</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Multi-language support (7+ languages)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm">Semantic similarity detection</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Semantic similarity detection</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm">Repository-wide scanning</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Repository-wide scanning</span>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-              <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-3 py-2 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold text-xs sm:text-sm">
+              <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-3 py-2 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-bold text-xs sm:text-sm">
                 GitHub Integration
               </span>
-              <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-3 py-2 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-semibold text-xs sm:text-sm">
+              <span className="bg-gradient-to-l from-[#00D1FF]/20 to-[#00D1FF]/10 px-3 py-2 rounded-full border border-[#00D1FF]/30 text-[#00D1FF] font-bold text-xs sm:text-sm">
                 IDE Plugins
               </span>
             </div>
           </div>
-          {/* ANIMATION NOW ON RIGHT */}
+          
+          {/* --- NEW ANIMATION --- */}
           <div className="relative flex justify-center">
             <div className="w-full max-w-sm sm:max-w-md h-48 sm:h-56 md:h-64 mx-auto relative bg-gray-900 rounded-lg border border-[#00D1FF]/30 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-[#00D1FF]/5 to-transparent"></div>
@@ -468,7 +498,8 @@ const AboutUsSection = () => {
               </div>
             </div>
           </div>
-        </div>  
+
+        </div> 
       </section>
       
     </div>
