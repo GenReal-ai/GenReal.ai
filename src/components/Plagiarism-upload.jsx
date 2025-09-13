@@ -1,17 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 
-// Monaco Editor component with improved loading - LOGIC UNCHANGED
-const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFullscreen }) => {
+// --- Cyan Netted Background ---
+const NetworkBackground = () => (
+  <div className="absolute inset-0 z-0 overflow-hidden bg-slate-900">
+    {/* Animated gradient orbs for atmospheric effect */}
+    <div className="absolute top-10 -left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
+    <div className="absolute bottom-10 -right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    
+    {/* SVG Grid Pattern for the "net" effect */}
+    <svg width="100%" height="100%" className="absolute inset-0">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 220, 255, 0.07)" strokeWidth="0.5"/>
+        </pattern>
+        <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+           <circle cx="2" cy="2" r="0.5" fill="rgba(0, 220, 255, 0.1)"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect width="100%" height="100%" fill="url(#dots)" />
+    </svg>
+  </div>
+);
+
+
+// --- Monaco Editor with Enhanced Fullscreen Functionality ---
+const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFullscreen, isReadOnly, onLockedAttempt }) => {
   const containerRef = useRef(null);
   const monacoInstance = useRef(null);
   const [isEditorLoading, setIsEditorLoading] = useState(true);
 
   useEffect(() => {
-    // Function to initialize the editor
     function initializeEditor() {
       if (typeof window.require === 'undefined') {
-        setTimeout(initializeEditor, 100); // Retry if loader is not ready
+        setTimeout(initializeEditor, 100);
         return;
       }
       window.require.config({ 
@@ -40,12 +63,11 @@ const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFul
             onChange(monacoInstance.current.getValue());
           });
           
-          setIsEditorLoading(false); // Editor is ready
+          setIsEditorLoading(false);
         }
       });
     }
 
-    // Load the Monaco script
     if (!window.monaco) {
       if (!document.getElementById('monaco-loader-script')) {
         const script = document.createElement('script');
@@ -64,9 +86,8 @@ const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFul
         monacoInstance.current = null;
       }
     };
-  }, []); // Runs only once
+  }, []);
 
-  // Update language when it changes
   useEffect(() => {
     if (monacoInstance.current && language) {
       const languageMap = {
@@ -79,12 +100,21 @@ const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFul
     }
   }, [language]);
 
-  // Update value when it changes from props
   useEffect(() => {
     if (monacoInstance.current && value !== monacoInstance.current.getValue()) {
-      monacoInstance.current.setValue(value || '');
+        setTimeout(() => {
+             if (monacoInstance.current) {
+                monacoInstance.current.setValue(value || '');
+             }
+        }, 100);
     }
   }, [value]);
+
+  useEffect(() => {
+    if (monacoInstance.current) {
+      monacoInstance.current.updateOptions({ readOnly: isReadOnly });
+    }
+  }, [isReadOnly]);
 
   const FullscreenIcon = ({ isFullscreen }) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -97,11 +127,18 @@ const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFul
   );
 
   return (
-    <div className={`flex flex-col bg-slate-900 rounded-xl border border-cyan-400/20 overflow-hidden shadow-2xl ${
-      isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
+    <div className={`relative flex flex-col bg-slate-900 rounded-xl border border-cyan-400/20 overflow-hidden shadow-2xl ${
+      isFullscreen ? 'fixed inset-2 sm:inset-4 z-[60]' : 'h-full'
     }`}>
-      {/* Header is now always visible */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-cyan-400/20">
+      {isReadOnly && (
+        <div 
+          className="absolute inset-0 z-20 cursor-not-allowed"
+          title="Please clear results to edit the code"
+          onClick={onLockedAttempt}
+        ></div>
+      )}
+
+      <div className="relative z-30 flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-cyan-400/20">
         <div className="flex items-center gap-3">
           <div className="flex gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -121,7 +158,6 @@ const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFul
         </button>
       </div>
       
-      {/* Editor container with loading overlay */}
       <div className="relative flex-1 min-h-0">
         {isEditorLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
@@ -138,7 +174,57 @@ const MonacoCodeEditor = ({ language, value, onChange, onToggleFullscreen, isFul
   );
 };
 
-// Feedback Form Component - LOGIC UNCHANGED
+// --- Home Icon Component ---
+const HomeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9,22 9,12 15,12 15,22"/>
+  </svg>
+);
+
+// --- Dialog for Locked Editor ---
+const LockedEditorDialog = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+  
+    return (
+      <AnimatePresence>
+        {isOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+              onClick={onClose}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="bg-slate-800/95 border border-cyan-400/20 rounded-2xl w-full max-w-md shadow-2xl p-6 sm:p-8 text-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                  <div className="text-yellow-400 text-4xl mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-yellow-400/10 rounded-full border-2 border-yellow-400/30">
+                      !
+                  </div>
+                  <h2 className="text-xl font-bold text-white mb-2">Editor is Locked</h2>
+                  <p className="text-slate-400 mb-6">
+                      To make changes, please clear the current results by clicking the "Try another" button first.
+                  </p>
+                  <button
+                      onClick={onClose}
+                      className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-2 px-8 rounded-lg transition-all transform hover:scale-105"
+                  >
+                      Got it
+                  </button>
+              </motion.div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+    );
+};
+
+// --- Feedback Form Component ---
 const FeedbackForm = ({ isOpen, onClose }) => {
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
@@ -185,7 +271,7 @@ const FeedbackForm = ({ isOpen, onClose }) => {
             </button>
             
             {isSubmitted ? (
-              <div className="p-6 text-center">
+              <div className="p-8 text-center">
                 <motion.div 
                   initial={{ scale: 0.5, opacity: 0 }} 
                   animate={{ scale: 1, opacity: 1 }}
@@ -197,7 +283,7 @@ const FeedbackForm = ({ isOpen, onClose }) => {
                 <p className="text-slate-400 mt-2">Your feedback has been submitted successfully.</p>
               </div>
             ) : (
-              <div className="p-6">
+              <div className="p-6 sm:p-8">
                 <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
                   Share Your Feedback
                 </h2>
@@ -245,9 +331,9 @@ const FeedbackForm = ({ isOpen, onClose }) => {
         </motion.div>
       </AnimatePresence>
     );
-  };
+};
 
-// Results Component - LOGIC UNCHANGED
+// --- Results Component ---
 const PlagiarismResults = ({ prediction, label, confidence, probabilities, inputLength }) => {
     const isOriginal = prediction === 0 || label === 'HUMAN_GENERATED';
     const predictionText = isOriginal ? 'Likely Human-Written' : 'Likely AI-Generated';
@@ -318,30 +404,31 @@ const PlagiarismResults = ({ prediction, label, confidence, probabilities, input
         </div>
       </div>
     );
-  };
-  
-// Main Component - LOGIC UNCHANGED
+};
+
+// --- Main Component ---
 export default function AIPlagiarismChecker() {
+    const languageTemplates = {
+      "Python": `print("Hello, World!")`,
+      "JavaScript": `console.log("Hello, World!");`,
+      "Java": `public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
+      "C++": `#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}`,
+      "C": `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`
+    };
+    
     const [language, setLanguage] = useState("Python");
-    const [codeInput, setCodeInput] = useState('');
+    const [codeInput, setCodeInput] = useState(languageTemplates["Python"]);
     const [isChecking, setIsChecking] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
-    const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
     const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false);
     const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+    const [isEditorLocked, setIsEditorLocked] = useState(false);
+    const [showLockedEditorDialog, setShowLockedEditorDialog] = useState(false);
+    const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   
     const SUPPORTED_LANGUAGES = ["Python", "JavaScript", "Java", "C++", "C"];
     
-    // Simplified Templates
-    const languageTemplates = {
-        "Python": `print("Hello, World!")`,
-        "JavaScript": `console.log("Hello, World!");`,
-        "Java": `public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
-        "C++": `#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}`,
-        "C": `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`
-    };
-
     useEffect(() => {
         if (language && languageTemplates[language]) {
             setCodeInput(languageTemplates[language]);
@@ -352,27 +439,29 @@ export default function AIPlagiarismChecker() {
         setLanguage(lang);
         setResults(null); 
         setError(null);
+        setIsEditorLocked(false);
     };
 
+    // --- API CALL LOGIC USING FormData ---
     const handleCheckPlagiarism = async () => {
       if (!codeInput.trim() || !language) return;
       setIsChecking(true);
       setResults(null);
       setError(null);
+      setShowFeedbackPopup(false);
       
       try {
         const formData = new FormData();
         formData.append("file", new Blob([codeInput], { type: "text/plain" }), "code.js");
         formData.append("language", language.toLowerCase());
 
-        const apiUrl = import.meta.env.VITE_PRODUCT_API_URL;
+        const apiUrl = `${import.meta.env.VITE_PRODUCT_API_URL}/api/plagiarism/check`;
         
-        const response = await fetch(`${apiUrl}/api/plagiarism/check`, {
+        const response = await fetch(apiUrl, {
           method: "POST",
           body: formData,
         });
 
-        
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data = await response.json();
@@ -385,7 +474,8 @@ export default function AIPlagiarismChecker() {
           inputLength: data.input_length || codeInput.length
         });
         
-        setShowFeedbackPopup(true);
+        setIsEditorLocked(true);
+        setShowFeedbackPopup(true); // Show feedback prompt on success
       } catch (err) {
         console.error('Error checking code:', err);
         setError('Failed to analyze code. Please check the server and try again.');
@@ -398,6 +488,7 @@ export default function AIPlagiarismChecker() {
       setResults(null);
       setError(null);
       setIsChecking(false);
+      setIsEditorLocked(false);
       setShowFeedbackPopup(false);
       setCodeInput(languageTemplates[language] || '');
     };
@@ -407,140 +498,139 @@ export default function AIPlagiarismChecker() {
     };
   
     return (
-      <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
+      <div className="h-screen bg-slate-900 text-white relative overflow-hidden flex flex-col">
         
-        {/* Background Effects */}
-        <div className="absolute inset-0 z-0">
-            <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
-        </div>
+        <NetworkBackground />
 
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-sm border-b border-cyan-400/20">
+        <header className="relative z-40 bg-slate-900/80 backdrop-blur-sm border-b border-cyan-400/20 flex-shrink-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <a href="/" className="flex items-center gap-3">
-              <img 
-                src="/logoGenReal.png" 
-                alt="Logo" 
-                className="h-10 object-contain" 
-              />
+              <img src="logoGenReal.png" alt="Logo" className="h-10 object-contain" />
               <h1 className="text-lg font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                 Code Plagiarism
               </h1>
             </a>
-            <a
-              href="/deepfake-detection"
-              className="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 border border-cyan-400/20 rounded-lg text-cyan-300 hover:text-cyan-200 text-sm font-medium transition-all"
-            >
-              Try Deepfake Detection
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href="/"
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-800/80 border border-cyan-400/30 hover:bg-slate-700/80 hover:border-cyan-400/50 text-cyan-300 hover:text-cyan-200 font-medium rounded-lg transition-all transform hover:scale-105"
+              >
+                <HomeIcon />
+                Home
+              </a>
+              <a
+                href="/deepfake-detection"
+                className="px-4 py-2.5 bg-gradient-to-r from-cyan-500/90 to-blue-600/90 hover:from-cyan-500 hover:to-blue-600 text-white font-medium rounded-lg shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105 border border-cyan-400/20"
+              >
+                Deepfake Detection
+              </a>
+            </div>
           </div>
         </header>
 
-
-
-        {/* Main Content Wrapper */}
-        <main className="relative z-10 p-4 flex items-center justify-center" style={{ height: 'calc(100vh - 65px)' }}>
-            <div className="w-full max-w-7xl bg-slate-800/60 backdrop-blur-sm rounded-2xl overflow-hidden border border-cyan-400/20 shadow-2xl" style={{ height: '80vh' }}>
-                <div className="flex h-full">
-                    {/* Editor Panel */}
-                    <div className={`transition-all duration-300 ease-in-out ${isEditorFullscreen ? 'w-full' : 'w-full lg:w-3/5'} flex flex-col`}>
-                        <div className="bg-slate-800/60 border-b border-cyan-400/20 p-4">
-                            <div className="flex items-center gap-3 flex-wrap">
-                                <span className="text-sm font-medium text-slate-300">Language:</span>
-                                {SUPPORTED_LANGUAGES.map((lang) => (
-                                    <button
-                                        key={lang}
-                                        onClick={() => handleLanguageSelect(lang)}
-                                        className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                                        language === lang
-                                            ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20"
-                                            : "bg-slate-700/50 border border-cyan-400/20 text-slate-300 hover:bg-slate-600/50 hover:text-cyan-300"
-                                        }`}
-                                    >
-                                        {lang}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div className="flex-1 p-4 lg:p-6 min-h-0">
-                            <MonacoCodeEditor
-                                language={language}
-                                value={codeInput}
-                                onChange={setCodeInput}
-                                isFullscreen={isEditorFullscreen}
-                                onToggleFullscreen={() => setIsEditorFullscreen(!isEditorFullscreen)}
-                            />
-                        </div>
-                        
-                        <div className="bg-slate-800/60 border-t border-cyan-400/20 p-4">
-                            <button
-                                onClick={handleMainButtonAction}
-                                disabled={!codeInput.trim() || isChecking || !language}
-                                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed py-3 px-6 rounded-lg font-semibold transition-all shadow-lg hover:shadow-cyan-500/25 flex items-center justify-center gap-3"
-                            >
-                                {isChecking ? (
-                                    <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Analyzing Code...</>
-                                ) : results ? (
-                                    <><span>🔄</span> Try another </>
-                                ) : (
-                                    <><span>🚀</span> Analyse </>
-                                )}
-                            </button>
+        <main className="relative z-10 flex-1 p-4 sm:p-6 md:p-8 flex flex-col items-center min-h-0">
+            <div className="w-full max-w-7xl h-full bg-slate-800/60 backdrop-blur-sm rounded-2xl overflow-hidden border border-cyan-400/20 shadow-2xl flex">
+                <div className={`transition-all duration-300 ease-in-out ${isEditorFullscreen ? 'w-full' : 'w-full lg:w-3/5'} flex flex-col min-h-0`}>
+                    <div className="bg-slate-800/60 border-b border-cyan-400/20 p-4 flex-shrink-0">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-sm font-medium text-slate-300">Language:</span>
+                            {SUPPORTED_LANGUAGES.map((lang) => (
+                                <button
+                                    key={lang}
+                                    onClick={() => handleLanguageSelect(lang)}
+                                    className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-xs sm:text-sm ${
+                                    language === lang
+                                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20"
+                                        : "bg-slate-700/50 border border-cyan-400/20 text-slate-300 hover:bg-slate-600/50 hover:text-cyan-300"
+                                    }`}
+                                >
+                                    {lang}
+                                </button>
+                            ))}
                         </div>
                     </div>
-
-                    {/* Results Panel */}
-                    {!isEditorFullscreen && (
-                        <div className="hidden lg:flex w-2/5 bg-slate-900/50 border-l border-cyan-400/20 flex-col">
-                            <div className="bg-slate-800/60 border-b border-cyan-400/20 p-4">
-                                <h3 className="font-semibold text-slate-300 flex items-center gap-2">
-                                    <span></span> Analysis Results
-                                </h3>
-                            </div>
-                            
-                            <div className="flex-1 flex items-center justify-center">
-                                <AnimatePresence mode="wait">
-                                    {!results && !isChecking && !error && (
-                                        <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-slate-400 p-8">
-                                            <div className="text-5xl mb-4 opacity-50">🔍</div>
-                                            <p className="font-medium mb-2">Ready to Analyze</p>
-                                            <p className="text-sm">Your results will appear here.</p>
-                                        </motion.div>
-                                    )}
-                                    {isChecking && (
-                                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-cyan-400 p-8">
-                                            <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-slate-700 border-t-cyan-400 animate-spin"></div>
-                                            <p className="font-medium">Analyzing...</p>
-                                        </motion.div>
-                                    )}
-                                    {error && (
-                                        <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-red-400 p-8">
-                                            <div className="text-5xl mb-4">❌</div>
-                                            <p className="font-semibold mb-2">Analysis Failed</p>
-                                            <p className="text-slate-400 text-sm">{error}</p>
-                                        </motion.div>
-                                    )}
-                                    {results && !isChecking && (
-                                        <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
-                                            <PlagiarismResults {...results} />
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    )}
+                    
+                    <div className="flex-1 p-4 lg:p-6 min-h-0">
+                        <MonacoCodeEditor
+                            language={language}
+                            value={codeInput}
+                            onChange={setCodeInput}
+                            isFullscreen={isEditorFullscreen}
+                            onToggleFullscreen={() => setIsEditorFullscreen(!isEditorFullscreen)}
+                            isReadOnly={isEditorLocked}
+                            onLockedAttempt={() => setShowLockedEditorDialog(true)}
+                        />
+                    </div>
+                    
+                    <div className="bg-slate-800/60 border-t border-cyan-400/20 p-4 flex-shrink-0">
+                        <button
+                            onClick={handleMainButtonAction}
+                            disabled={!codeInput.trim() || isChecking || !language}
+                            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed py-2.5 px-6 rounded-lg font-semibold transition-all shadow-lg hover:shadow-cyan-500/25 flex items-center justify-center gap-3"
+                        >
+                            {isChecking ? (
+                                <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Analyzing Code...</>
+                            ) : results ? (
+                                <><span>🔄</span> Try another </>
+                            ) : (
+                                <><span>🚀</span> Analyse </>
+                            )}
+                        </button>
+                    </div>
                 </div>
+
+                {!isEditorFullscreen && (
+                    <div className="hidden lg:flex w-2/5 bg-slate-900/50 border-l border-cyan-400/20 flex-col">
+                        <div className="bg-slate-800/60 border-b border-cyan-400/20 p-4 flex-shrink-0">
+                            <h3 className="font-semibold text-slate-300 flex items-center gap-2">
+                                Analysis Results
+                            </h3>
+                        </div>
+                        
+                        <div className="flex-1 flex items-center justify-center overflow-y-auto p-4">
+                            <AnimatePresence mode="wait">
+                                {!results && !isChecking && !error && (
+                                    <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-slate-400 p-8">
+                                        <div className="text-5xl mb-4 opacity-50">🔍</div>
+                                        <p className="font-medium mb-2">Ready to Analyze</p>
+                                        <p className="text-sm">Your results will appear here.</p>
+                                    </motion.div>
+                                )}
+                                {isChecking && (
+                                    <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-cyan-400 p-8">
+                                        <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-slate-700 border-t-cyan-400 animate-spin"></div>
+                                        <p className="font-medium">Analyzing...</p>
+                                    </motion.div>
+                                )}
+                                {error && (
+                                    <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-red-400 p-8">
+                                        <div className="text-5xl mb-4">❌</div>
+                                        <p className="font-semibold mb-2">Analysis Failed</p>
+                                        <p className="text-slate-400 text-sm">{error}</p>
+                                    </motion.div>
+                                )}
+                                {results && !isChecking && (
+                                    <motion.div key="results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="w-full h-full">
+                                        <PlagiarismResults {...results} />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                )}
             </div>
         </main>
         
+        {/* Use the showFeedbackPopup state to control the FeedbackForm */}
         <FeedbackForm
-          isOpen={isFeedbackFormOpen}
-          onClose={() => setIsFeedbackFormOpen(false)}
+          isOpen={showFeedbackPopup}
+          onClose={() => setShowFeedbackPopup(false)}
+        />
+        <LockedEditorDialog 
+          isOpen={showLockedEditorDialog}
+          onClose={() => setShowLockedEditorDialog(false)}
         />
       </div>
     );
-  }
+}
 

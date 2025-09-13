@@ -299,38 +299,37 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="w-full max-w-7xl bg-slate-800/30 backdrop-blur-xl rounded-xl border border-slate-600/30 shadow-2xl overflow-hidden relative z-10"
         >
-            {/* Header */}
-            <div className="p-6 border-b border-slate-600/30">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-cyan-500/20 rounded-lg">
-                            <MainIcon className="w-6 h-6 text-cyan-400" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">
-                                Analysis Complete
-                            </h1>
-                            <p className="text-slate-400">
-                                {type.charAt(0).toUpperCase() + type.slice(1)} Detection Report
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={() => { window.location.href = '/plagiarism-detection'; }} 
-                            className="px-4 py-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white transition-all duration-300 text-sm font-medium"
-                        >
-                            Try Code Plagiarism
-                        </button>
-                        <button 
-                            onClick={() => { window.location.href = '/deepfake-detection'; }} 
-                            className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition-all duration-300 text-sm font-medium"
-                        >
-                            Try Another
-                        </button>
-                    </div>
+        {/* Header */}
+        <div className="p-6 border-b border-slate-600/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-cyan-500/20 rounded-lg">
+                    <MainIcon className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-white">
+                        Analysis Complete
+                    </h1>
+                    <p className="text-slate-400">
+                        {type.charAt(0).toUpperCase() + type.slice(1)} Detection Report
+                    </p>
                 </div>
             </div>
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => { window.location.href = '/plagiarism-detection'; }} 
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-sm"
+                >
+                    Try Code Plagiarism
+                </button>
+                <button 
+                    onClick={() => { window.location.href = '/deepfake-detection'; }} 
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-sm"
+                >
+                    Try Another
+                </button>
+            </div>
+        </div>
+
 
             <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Summary */}
