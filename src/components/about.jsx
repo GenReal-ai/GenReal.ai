@@ -15,14 +15,16 @@ const AboutUsSection = () => {
   const leftMotionRef = useRef(null);
   const rightMotionRef = useRef(null);
   const deepfakeProgressRef = useRef(null);
-  const codeBlockRef = useRef(null); // New ref for the code block animation
+  const codeBlockRef = useRef(null); 
   
-  const [currentImage, setCurrentImage] = useState('real');
+ 
 
-  // Navigate to products page
-  const handleStartDetection = () => {
-    alert("Navigating to Products page...");
-  };
+const handleStartDetection = () => {
+  const element = document.getElementById("products");
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth" });
+  }
+};
 
   useEffect(() => {
     const createFloatingElements = () => {
@@ -311,15 +313,21 @@ const AboutUsSection = () => {
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+                {/* Primary Button */}
                 <button 
                   onClick={handleStartDetection}
-                  className="bg-gradient-to-r from-[#00D1FF] to-[#0099CC] text-black font-bold px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:shadow-lg hover:shadow-[#00D1FF]/30 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3 px-7 rounded-full shadow-lg hover:from-cyan-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-300"
                 >
-                  Start Detection
+                  Read More
                 </button>
-                <button className="border-2 border-[#00D1FF] text-[#00D1FF] font-bold px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:bg-[#00D1FF]/10 transition-all duration-300 text-sm sm:text-base">
+
+                {/* Secondary Button */}
+                <button 
+                  className="bg-cyan-600/20 border-2 border-cyan-400 text-cyan-400 font-semibold py-3 px-7 rounded-full shadow-sm hover:bg-cyan-500/20 hover:shadow-md transform hover:scale-105 transition-all duration-300"
+                >
                   View Demo
                 </button>
+
               </div>
             </div>
             <div className="relative flex justify-center lg:justify-end">
@@ -448,7 +456,7 @@ const AboutUsSection = () => {
             <div className="space-y-3 mb-6 mt-6 inline-block text-left">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
-                <span className="text-[#E6F3FF] text-sm font-medium">Multi-language support (50+ languages)</span>
+                <span className="text-[#E6F3FF] text-sm font-medium">Multi-language support (7+ languages)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-[#00D1FF] rounded-full"></div>
