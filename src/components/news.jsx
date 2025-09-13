@@ -11,7 +11,6 @@ const NewsTimeline = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const newsItems = [
-    // ... newsItems array remains the same ...
     {
       title: "Facebook expands deepfake rules, but no full ban",
       image: "/News/news1.webp",
@@ -70,56 +69,66 @@ const NewsTimeline = () => {
     },
   ];
 
-  useEffect(() => {
-    // This effect handles checking for mobile view
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth <= 768);
+  handleResize();
+  window.addEventListener("resize", handleResize);
 
-  // --- REVISED useEffect FOR GSAP ---
-  useEffect(() => {
-    // Don't run GSAP animation on mobile
-    if (isMobile) return;
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
-    const section = sectionRef.current;
-    const horizontal = horizontalRef.current;
+useEffect(() => {
+  if (isMobile) return;
+  const section = sectionRef.current;
+  const horizontal = horizontalRef.current;
+  if (!section || !horizontal) return;
 
-    // Ensure refs are available
-    if (!section || !horizontal) return;
+  let scrollTriggerInstance;
 
-    // Use a GSAP context for safe cleanup
-    const ctx = gsap.context(() => {
-      // Key Change 1: Dynamically get the right padding of the container
-      const paddingRight = parseFloat(gsap.getProperty(horizontal, "paddingRight"));
+  const initScroll = () => {
+    // Kill the old one if it exists
+    if (scrollTriggerInstance) {
+      scrollTriggerInstance.kill();
+      scrollTriggerInstance = null;
+    }
 
-      // Key Change 2: Calculate the correct scroll distance, accounting for padding
-      const scrollDistance = horizontal.scrollWidth - window.innerWidth + paddingRight;
-      
-      // Ensure there's content to scroll before creating the animation
-      if (scrollDistance <= 0) return;
+    const sectionWidth = window.innerWidth;
+    const totalWidth = horizontal.scrollWidth;
 
-      gsap.to(horizontal, {
-        // Animate the x position to the calculated scroll distance
-        x: -scrollDistance,
-        ease: "none", // Linear movement
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          // The scroll duration is the same as the distance we need to move
-          end: () => `+=${scrollDistance}`,
-          scrub: true, // Smoothly ties the animation progress to the scrollbar
-          pin: true,   // Pins the section during the scroll
-          anticipatePin: 1,
-          invalidateOnRefresh: true, // Recalculates values on resize
-        },
-      });
-    }, section); // Scope the context to the section
+    const lastCard = horizontal.lastElementChild;
+    const lastCardWidth = lastCard ? lastCard.offsetWidth : 0;
 
-    // Cleanup function to revert all GSAP animations within the context
-    return () => ctx.revert();
-  }, [isMobile]); // Re-run this effect if the `isMobile` state changes
+    const scrollDistance = totalWidth - sectionWidth + lastCardWidth * 0.2;
+    if (scrollDistance <= 0) return;
+
+    gsap.set(horizontal, { x: 0 });
+
+    scrollTriggerInstance = gsap.to(horizontal, {
+      x: -scrollDistance,
+      ease: "none",
+      scrollTrigger: {
+        trigger: section,
+        start: "top top",
+        end: () => `+=${scrollDistance}`,
+        scrub: true,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+      },
+    }).scrollTrigger;
+  };
+
+  initScroll();
+
+  window.addEventListener("resize", initScroll);
+
+  return () => {
+    window.removeEventListener("resize", initScroll);
+    if (scrollTriggerInstance) scrollTriggerInstance.kill();
+  };
+}, [isMobile]);
+
+
 
   const handleCardClick = (link) => {
     window.open(link, "_blank", "noopener,noreferrer");
@@ -131,41 +140,36 @@ const NewsTimeline = () => {
       className="relative z-0 w-full bg-black text-white overflow-hidden"
       id="news"
     >
-      {/* Header */}
-      <div
-        className="flex flex-col items-center justify-center w-full text-center px-4 pt-16 pb-8"
-        id="news-header" // Changed id to avoid duplicate "news" id
-      >
-        <h2
-          className={`font-bold text-center mb-2 ${
-            isMobile ? "text-2xl" : "text-5xl"
-          }`}
-        >
-          Latest <span className="text-cyan-400">Discoveries</span>
-        </h2>
-        <p className={`text-sm w-full text-center text-gray-400 ${isMobile ? '' : 'text-lg'}`}>
-          Exploring the Digital Frontier
-        </p>
-      </div>
+    {/* Header (centered, larger, tighter spacing) */}
+    <div className="flex flex-col items-center justify-center w-full text-center px-6 pt-16 pb-6">
+      <h2 className="font-bold mb-1 text-[clamp(1.7rem,4vw,3rem)] leading-tight">
+        Latest <span className="text-cyan-400">Discoveries</span>
+      </h2>
+      <p className="text-gray-400 text-[clamp(0.9rem,1.2vw,1.4rem)]">
+        Exploring the Digital Frontier
+      </p>
+    </div>
+
 
       {isMobile ? (
-        // --- MOBILE VIEW (SLIDER) ---
+        // MOBILE VIEW
         <div className="relative w-full flex flex-col items-center px-4 pt-8 pb-16">
-          {/* Card */}
           <div
-            className="w-full max-w-sm bg-[#1a1a1a] text-white rounded-2xl shadow-md p-6 flex flex-col justify-between text-center border border-gray-800"
+            className="w-full max-w-sm bg-[#1a1a1a] text-white rounded-2xl shadow-md p-4 flex flex-col justify-between border border-gray-800"
             onClick={() => handleCardClick(newsItems[currentIndex].link)}
           >
-            <div>
+            <div className="flex-1 flex flex-col">
               <img
                 src={newsItems[currentIndex].image}
                 alt={newsItems[currentIndex].title}
-                className="w-full h-56 object-cover rounded-lg mb-4"
+                loading="eager"
+                decoding="async"
+                className="w-full aspect-video object-cover rounded-lg mb-3"
               />
-              <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+              <h3 className="text-[clamp(1rem,2.5vw,1.4rem)] font-semibold mb-2 line-clamp-2">
                 {newsItems[currentIndex].title}
               </h3>
-              <p className="text-sm text-gray-400 mb-4 line-clamp-4">
+              <p className="text-gray-400 text-[clamp(0.85rem,2vw,1rem)] mb-4 line-clamp-4">
                 {newsItems[currentIndex].summary}
               </p>
             </div>
@@ -176,76 +180,58 @@ const NewsTimeline = () => {
               </button>
             </div>
           </div>
-
-          {/* Navigation Arrows */}
-          <div className="flex justify-between items-center w-full max-w-sm mt-6">
-            <button
-              onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : newsItems.length - 1))}
-              className="p-2 bg-gray-800 rounded-full hover:bg-cyan-500 transition"
-            >
-              ←
-            </button>
-            <button
-              onClick={() => setCurrentIndex((prev) => (prev < newsItems.length - 1 ? prev + 1 : 0))}
-              className="p-2 bg-gray-800 rounded-full hover:bg-cyan-500 transition"
-            >
-              →
-            </button>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="flex justify-center space-x-2 mt-4">
-            {newsItems.map((_, idx) => (
-              <span
-                key={idx}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  idx === currentIndex ? "bg-cyan-500 scale-125" : "bg-gray-600"
-                }`}
-              />
-            ))}
-          </div>
         </div>
       ) : (
-        // --- DESKTOP VIEW (HORIZONTAL SCROLL) ---
+        // DESKTOP VIEW
         <div
           ref={horizontalRef}
-          className="flex items-center w-max space-x-8 sm:space-x-12 lg:space-x-16 px-4 sm:px-8 lg:px-24 py-8 sm:py-12"
+          className="flex items-center w-max space-x-16 py-4 px-4 pr-[10vw]" 
         >
           {newsItems.map((item, index) => (
             <div
               key={index}
-              className="group w-[85vw] sm:w-[320px] md:w-[360px] lg:w-[420px] 
-                         bg-[#1a1a1a] text-white rounded-2xl shadow-md 
-                         p-4 sm:p-6 pb-6 sm:pb-8 flex flex-col justify-between 
-                         text-center border border-gray-800 cursor-pointer 
-                         transition-all duration-300 ease-in-out 
-                         hover:!border-cyan-400 hover:-translate-y-3 
-                         hover:shadow-2xl hover:shadow-cyan-500/20 
-                         overflow-hidden"
+              className="group flex-shrink-0
+                w-[80vw] sm:w-[60vw] md:w-[40vw] lg:w-[28vw] xl:w-[24vw]
+                aspect-[3/4] max-h-[600px]
+                bg-[#1a1a1a] text-white rounded-2xl shadow-md 
+                p-4 md:p-5 lg:p-6 xl:p-7
+                flex flex-col justify-between text-center 
+                border border-gray-800 cursor-pointer 
+                transition-all duration-300 ease-in-out 
+                hover:!border-cyan-400 hover:-translate-y-2 lg:hover:-translate-y-3 
+                hover:shadow-2xl hover:shadow-cyan-500/20 
+                overflow-hidden"
               onClick={() => handleCardClick(item.link)}
             >
-              <div className="flex-1 flex flex-col">
+              {/* Image */}
+              <div className="h-[40%] w-full mb-3">
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full aspect-[16/9] object-cover rounded-lg mb-4 
-                             transition-transform duration-300 ease-in-out 
-                             group-hover:scale-105"
+                  loading="eager"
+                  decoding="async"
+                  className="w-full h-full object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105"
                 />
-                <h3 className="text-lg md:text-xl font-semibold mb-3 line-clamp-2">
+              </div>
+
+              {/* Text */}
+              <div className="flex-1 flex flex-col">
+                <h3 className="font-semibold mb-2 line-clamp-2 leading-tight text-[clamp(1rem,1.2vw,1.5rem)]">
                   {item.title}
                 </h3>
-                <p className="text-sm text-gray-400 mb-4 line-clamp-4 flex-grow">
+                <p className="text-gray-400 mb-3 line-clamp-4 flex-grow leading-relaxed text-[clamp(0.85rem,1vw,1.1rem)]">
                   {item.summary}
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-2 sm:space-y-3 mt-2">
+
+              {/* Footer */}
+              <div className="flex flex-col items-center space-y-2 mt-2">
                 <p className="text-xs text-gray-500">{item.date}</p>
                 <button className="bg-gradient-to-r from-cyan-500 to-blue-600 
-                                   text-white text-sm font-medium py-3 px-5 
-                                   sm:py-2.5 sm:px-6 rounded-full 
-                                   hover:from-cyan-600 hover:to-blue-700 
-                                   transition-all duration-300 transform group-hover:scale-105">
+                  text-white font-medium rounded-full
+                  hover:from-cyan-600 hover:to-blue-700 
+                  transition-all duration-300 transform group-hover:scale-105
+                  text-[clamp(0.8rem,1vw,1rem)] py-2 px-5">
                   Read More
                 </button>
               </div>

@@ -255,10 +255,19 @@ const DynamicFAQ = () => {
                           <li key={i}>{point}</li>
                         ))}
                       </ul>
-
-                      <button className="mt-4 px-4 py-2 rounded bg-cyan-600 text-white text-sm font-semibold hover:scale-105 transition">
-                        Contact Support →
-                      </button>
+                        <button 
+                          onClick={() => {
+                          const el = document.getElementById("contact-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          } else {
+                            console.warn("Element with id='contact-us' not found");
+                          }
+                            }}
+                            className="mt-4 px-4 py-2 rounded bg-cyan-600 text-white text-sm font-semibold hover:scale-105 transition"
+                          >
+                          Contact Support →
+                        </button>
                     </div>
                   )}
                 </div>
@@ -321,11 +330,21 @@ const DynamicFAQ = () => {
               </div>
 
               <div className="pt-6 sm:pt-8">
-                <button
-                  className={`px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-bold text-white transition-all duration-300 bg-gradient-to-r ${currentItem.content.color} hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-105 transform`}
-                >
-                  Contact Support →
-                </button>
+                
+                  <button
+                    className={`px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-bold text-white transition-all duration-300 bg-gradient-to-r ${currentItem.content.color} hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-105 transform`}
+                      onClick={() => {
+                        const el = document.getElementById("contact-us");
+                        if (el) {
+                          el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        } else {
+                          console.warn("Element with id='contact-us' not found");
+                        }
+                      }}
+                  >
+                    Contact Support →
+                  </button>
+              
               </div>
             </div>
           </div>
