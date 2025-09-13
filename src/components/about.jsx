@@ -314,13 +314,13 @@ const handleStartDetection = () => {
               </div>
               <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
                 {/* Primary Button */}
+                <a href="#Products">
                 <button 
-                  onClick={handleStartDetection}
                   className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3 px-7 rounded-full shadow-lg hover:from-cyan-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-300"
                 >
-                  Read More
+                  Start Detection
                 </button>
-
+                </a>
                 {/* Secondary Button */}
                 <button 
                   className="bg-cyan-600/20 border-2 border-cyan-400 text-cyan-400 font-semibold py-3 px-7 rounded-full shadow-sm hover:bg-cyan-500/20 hover:shadow-md transform hover:scale-105 transition-all duration-300"
