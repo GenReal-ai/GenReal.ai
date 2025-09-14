@@ -433,10 +433,10 @@ const AboutUsSection = () => {
         <div ref={rightMotionRef} className="absolute right-4 sm:right-6 top-1/2 w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 bg-gradient-to-r from-[#00D1FF] to-[#00A8CC] rounded-full opacity-70 shadow-lg shadow-[#00D1FF]/50 z-20"></div>
         <div className="content-wrapper max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center z-10">
           <div className="text-center md:text-left">
-            <h2 className="text-[clamp(1.5rem,3vw,2.5rem)] sm:text-[clamp(2rem,3.5vw,3rem)] md:text-[clamp(2.5rem,4vw,3.5rem)] lg:text-[clamp(3rem,4.5vw,4rem)] font-extrabold mb-3 sm:mb-4 md:mb-6 bg-gradient-to-l from-white via-[#00D1FF] to-white bg-clip-text text-transparent leading-tight">
-              <span className="block">Code Plagiarism</span>
-              <span className="block">Detection</span>
-            </h2>
+          <h2 className="text-[clamp(1.5rem,3vw,2.5rem)] sm:text-[clamp(2rem,3.5vw,3rem)] md:text-[clamp(2.5rem,4vw,3.5rem)] lg:text-[clamp(3rem,4.5vw,4rem)] font-extrabold mb-3 sm:mb-4 md:mb-6 bg-gradient-to-l from-white via-[#00D1FF] to-white bg-clip-text text-transparent leading-tight">
+            <span className="block">Code Plagiarism</span>
+            <span className="block">Detection</span>
+          </h2>
 
 
             <div className="space-y-2 sm:space-y-3">

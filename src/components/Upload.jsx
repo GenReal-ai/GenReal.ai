@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, AlertTriangle, X } from 'lucide-react';
 import { FaVideo, FaImage, FaVolumeUp } from 'react-icons/fa';
 
 const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
@@ -8,6 +8,8 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   const [filePreview, setFilePreview] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedType, setSelectedType] = useState('video');
+  const [showMismatchDialog, setShowMismatchDialog] = useState(false);
+  const [mismatchDetails, setMismatchDetails] = useState({ actualType: '', expectedType: '', fileName: '' });
 
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
@@ -53,32 +55,94 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
       for (let item of items) {
         if (item.kind === 'file') {
           const blob = item.getAsFile();
-          setFile(blob);
-          setToastMessage("📋 File pasted from clipboard!");
-          setTimeout(() => setToastMessage(null), 3000);
+          if (validateFileType(blob)) {
+            setFile(blob);
+            setToastMessage("📋 File pasted from clipboard!");
+            setTimeout(() => setToastMessage(null), 3000);
+          }
           break;
         }
       }
     };
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
-  }, []);
+  }, [selectedType]);
+
+  // File type validation function
+  const validateFileType = (selectedFile) => {
+    if (!selectedFile) return false;
+
+    const fileType = selectedFile.type;
+    const fileName = selectedFile.name;
+
+    let isValid = false;
+    let actualType = '';
+    let expectedTypes = '';
+
+    // Determine actual file type
+    if (fileType.startsWith('video/')) {
+      actualType = 'Video';
+    } else if (fileType.startsWith('image/')) {
+      actualType = 'Image';
+    } else if (fileType.startsWith('audio/')) {
+      actualType = 'Audio';
+    } else {
+      actualType = 'Unknown';
+    }
+
+    // Check if file type matches selected type
+    switch (selectedType) {
+      case 'video':
+        isValid = fileType.startsWith('video/');
+        expectedTypes = 'Video files (MP4,MOV)';
+        break;
+      case 'image':
+        isValid = fileType.startsWith('image/');
+        expectedTypes = 'Image files (JPG, PNG, JPEG)';
+        break;
+      case 'audio':
+        isValid = fileType.startsWith('audio/');
+        expectedTypes = 'Audio files (MP3, WAV)';
+        break;
+      default:
+        isValid = false;
+    }
+
+    if (!isValid) {
+      setMismatchDetails({
+        actualType,
+        expectedType: expectedTypes,
+        fileName
+      });
+      setShowMismatchDialog(true);
+    }
+
+    return isValid;
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setDragging(false);
     if (e.dataTransfer.files?.length > 0) {
-      setFile(e.dataTransfer.files[0]);
-      setToastMessage("📁 File Dropped!");
-      setTimeout(() => setToastMessage(null), 3000);
+      const droppedFile = e.dataTransfer.files[0];
+      if (validateFileType(droppedFile)) {
+        setFile(droppedFile);
+        setToastMessage("📁 File Dropped!");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
     }
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files?.length > 0) {
-      setFile(e.target.files[0]);
-      setToastMessage("📁 File Selected!");
-      setTimeout(() => setToastMessage(null), 3000);
+      const selectedFile = e.target.files[0];
+      if (validateFileType(selectedFile)) {
+        setFile(selectedFile);
+        setToastMessage("📁 File Selected!");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+      // Clear the input to allow selecting the same file again after fixing the type
+      e.target.value = '';
     }
   };
 
@@ -100,6 +164,11 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
     }
   };
 
+  const closeMismatchDialog = () => {
+    setShowMismatchDialog(false);
+    setMismatchDetails({ actualType: '', expectedType: '', fileName: '' });
+  };
+
   const getAcceptString = () => {
     switch (selectedType) {
       case 'video':
@@ -116,13 +185,13 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   const getFileTypeDescription = () => {
     switch (selectedType) {
       case 'video':
-        return 'MP4, AVI, MOV, MKV, WEBM';
+        return 'MP4';
       case 'image':
-        return 'JPG, PNG, JPEG, WEBP, GIF';
+        return 'JPG, PNG, JPEG';
       case 'audio':
-        return 'MP3, WAV, M4A, AAC, OGG';
+        return 'MP3, WAV';
       default:
-        return 'MP4, AVI, MOV, MKV, WEBM';
+        return 'MP4';
     }
   };
 
@@ -133,11 +202,10 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
   ];
 
   const colorClasses = {
-  blue: "border-blue-400 bg-blue-400/10 text-blue-400",
-  green: "border-green-400 bg-green-400/10 text-green-400",
-  purple: "border-purple-400 bg-purple-400/10 text-purple-400",
-};
-
+    blue: "border-blue-400 bg-blue-400/10 text-blue-400",
+    green: "border-green-400 bg-green-400/10 text-green-400",
+    purple: "border-purple-400 bg-purple-400/10 text-purple-400",
+  };
 
   const renderFilePreview = () => {
     if (!file || !filePreview) return null;
@@ -215,7 +283,7 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
       </div>
 
-      {/* Modal - Back to original size */}
+      {/* Modal */}
       <div
         ref={modalRef}
         className="relative bg-slate-800/90 backdrop-blur-sm border border-cyan-400/30 rounded-3xl px-4 sm:px-6 md:px-8 py-6 w-full max-w-2xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
@@ -231,7 +299,7 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
           Upload your content
         </h2>
 
-        {/* File Type Selector - Centered */}
+        {/* File Type Selector */}
         <div className="flex justify-center mb-4 sm:mb-6">
           <div className="flex gap-3 sm:gap-4">
             {fileTypeOptions.map((option) => {
@@ -240,13 +308,22 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
               return (
                 <button
                   key={option.id}
-                  onClick={() => setSelectedType(option.id)}
-                className={`min-w-[120px] px-4 py-3 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
-                  isSelected 
-                    ? colorClasses[option.color] 
-                    : "border-slate-600 bg-slate-700/30 text-slate-400 hover:border-slate-500"
-                }`}
-
+                  onClick={() => {
+                    setSelectedType(option.id);
+                    // Clear file when switching types to avoid confusion
+                    if (file) {
+                      setFile(null);
+                      setFilePreview(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }
+                  }}
+                  className={`min-w-[90px] px-4 py-3 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
+                    isSelected 
+                      ? colorClasses[option.color] 
+                      : "border-slate-600 bg-slate-700/30 text-slate-400 hover:border-slate-500"
+                  }`}
                 >
                   <Icon className="text-sm sm:text-lg" />
                   <span className="text-sm sm:text-base md:text-lg font-medium">{option.label}</span>
@@ -257,45 +334,44 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
         </div>
 
         {/* Dropzone or File Preview */}
-          <div
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 flex flex-col items-center justify-center
-              ${file ? 'border-cyan-400/50 bg-slate-700/20 max-h-[350px]' : dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'}
-            `}
-            onDrop={handleDrop}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-          >
-            {file ? (
-              renderFilePreview()
-            ) : (
-              <>
-                <label htmlFor="file-upload" className="cursor-pointer block">
-                  <div className="mb-3 sm:mb-4">
-                    <UploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
-                  </div>
-                  <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
-                    {`Drag and drop ${selectedType} files here`}
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    Supported formats: {getFileTypeDescription()} <br />
-                    <span className="text-cyan-400">Max file size: 500MB</span>
-                  </p>
-                </label>
-                <input
-                  id="file-upload"
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept={getAcceptString()}
-                  onChange={handleFileSelect}
-                />
-              </>
-            )}
-          </div>
-
+        <div
+          className={`border-2 border-dashed rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 text-center transition-all duration-300 flex flex-col items-center justify-center
+            ${file ? 'border-cyan-400/50 bg-slate-700/20 max-h-[350px]' : dragging ? 'border-cyan-400 bg-cyan-400/10 scale-105' : 'border-cyan-400/50 bg-slate-700/30'}
+          `}
+          onDrop={handleDrop}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+        >
+          {file ? (
+            renderFilePreview()
+          ) : (
+            <>
+              <label htmlFor="file-upload" className="cursor-pointer block">
+                <div className="mb-3 sm:mb-4">
+                  <UploadCloud className="text-cyan-400 text-3xl sm:text-4xl md:text-6xl mx-auto animate-pulse" />
+                </div>
+                <p className="font-semibold text-sm sm:text-base md:text-lg mb-2">
+                  {`Drag and drop ${selectedType} files here`}
+                </p>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Supported formats: {getFileTypeDescription()} <br />
+                  <span className="text-cyan-400">Max file size: 500MB</span>
+                </p>
+              </label>
+              <input
+                id="file-upload"
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept={getAcceptString()}
+                onChange={handleFileSelect}
+              />
+            </>
+          )}
+        </div>
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 sm:gap-4">
@@ -326,6 +402,46 @@ const UploadModal = ({ onFileUpload, uploadError, isUploading }) => {
           </button>
         </div>
       </div>
+
+      {/* File Type Mismatch Dialog */}
+      {showMismatchDialog && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-red-400/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="bg-red-500/20 p-3 rounded-full">
+                <AlertTriangle className="text-red-400 text-xl" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">
+                  Incorrect File Type
+                </h3>
+                <div className="text-sm text-slate-300 space-y-2">
+                  <p><span className="font-medium">File:</span> {mismatchDetails.fileName}</p>
+                  <p><span className="font-medium">Detected Type:</span> <span className="text-red-400">{mismatchDetails.actualType}</span></p>
+                  <p><span className="font-medium">Expected:</span> <span className="text-green-400">{mismatchDetails.expectedType}</span></p>
+                </div>
+                <p className="text-xs text-slate-400 mt-3">
+                  Please select the correct file type or change your selection above.
+                </p>
+              </div>
+              <button
+                onClick={closeMismatchDialog}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="text-lg" />
+              </button>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={closeMismatchDialog}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toastMessage && (
