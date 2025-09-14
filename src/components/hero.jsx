@@ -85,16 +85,16 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     return icons[id] || null;
   };
 
-  // Scroll-based visibility logic
+  // Scroll-based visibility logic - ONLY for desktop
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
       // Show navbar when scrolling up, hide when scrolling down
       if (currentScrollY < lastScrollY) {
-        setIsVisible(true); // Show when scrolling up
+        setIsVisible(true);
       } else {
-        setIsVisible(false); // Hide when scrolling down
+        setIsVisible(false);
       }
       
       setLastScrollY(currentScrollY);
@@ -212,10 +212,8 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
         </div>
       </nav>
 
-      {/* Mobile Navigation - Also scroll based */}
-      <div className={`md:hidden fixed top-6 left-6 right-6 z-50 flex justify-between items-center transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-      }`}>
+      {/* Mobile Navigation - ALWAYS VISIBLE */}
+      <div className="md:hidden fixed top-6 left-6 right-6 z-50 flex justify-between items-center">
         {/* Mobile Logo */}
         <div className="flex items-center justify-center w-14 h-14 rounded-full bg-black">
           <img 
@@ -228,11 +226,12 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
         {/* Mobile Menu Button */}
         <button
           onClick={toggleMobileMenu}
-          className="flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 hover:bg-white/5 backdrop-blur-xl bg-black/20 shadow-lg shadow-black/20"
-       >
+          className="flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 hover:bg-white/10 backdrop-blur-xl bg-black/20 shadow-lg shadow-black/20"
+        >
           <div className="relative w-6 h-6 flex flex-col justify-center items-center">
-            <span className={`block h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-blue-500 transform transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-0.5' : ''}`} />
-            <span className={`block h-0.5 w-6 bg-gradient-to-r from-purple-400 to-pink-500 transform transition-all duration-300 mt-1.5 ${isMobileMenuOpen ? '-rotate-45 -translate-y-0.5' : ''}`} />
+            <span className={`block h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-blue-500 transform transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : ''}`} />
+            <span className={`block h-0.5 w-6 bg-gradient-to-r from-purple-400 to-pink-500 transform transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'mt-1.5'}`} />
+            <span className={`block h-0.5 w-6 bg-gradient-to-r from-emerald-400 to-teal-500 transform transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'mt-1.5'}`} />
           </div>
         </button>
       </div>
@@ -242,7 +241,6 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
         ref={mobileMenuRef}
         className="md:hidden fixed top-20 left-6 right-6 z-40 hidden"
       >
-
         <div className="rounded-2xl p-4 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
           <div className="space-y-2">
             {navItems.map((item, index) => {
@@ -275,9 +273,6 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     </>
   );
 };
-
-// The HeroSection component remains unchanged, so it is omitted for brevity.
-// You can keep your existing HeroSection component as it is.
 
 const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSection }) => {
   const [activeSection, setActiveSection] = useState("home");
@@ -508,7 +503,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
         </div>
         <div className="text-center">
           <h2 className="text-cyan-400 text-4xl font-bold">60%</h2>
-          <p className="text-gray-400 mt-2 text-sm max-w-xs">
+          <p className="text-gray-400 mt-2 text-ms max-w-xs">
             of people encountered a deepfake video in the past year
           </p>
         </div>
