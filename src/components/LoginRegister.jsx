@@ -66,7 +66,6 @@ const AuthCallback = () => {
       return data;
 
     } catch (error) {
-      console.error(`Token validation attempt ${attempt} failed:`, error);
       
       const isNetworkError = error.name === 'AbortError' || 
                             error.message.includes('fetch') ||
@@ -93,11 +92,8 @@ const AuthCallback = () => {
         const error = searchParams.get("error");
         const redirect = searchParams.get("redirect") || "/";
 
-        console.log('AuthCallback params:', { token: !!token, error, redirect });
-
         // Handle OAuth error
         if (error) {
-          console.error("OAuth error:", error);
           const errorMessages = {
             'oauth_failed': 'Google authentication failed. Please try again.',
             'oauth_error': 'Authentication error occurred. Please try again.',
@@ -112,7 +108,6 @@ const AuthCallback = () => {
 
         // Check for token
         if (!token) {
-          console.error("No token provided");
           navigate(`/login?error=${encodeURIComponent('Authentication failed. Missing token.')}&redirect=${encodeURIComponent(redirect)}`, { replace: true });
           return;
         }
@@ -120,7 +115,6 @@ const AuthCallback = () => {
         // FIXED: Validate token and fetch user data from API (not from URL params)
         const data = await validateTokenWithRetry(token);
         
-        console.log('User validated successfully:', data.user);
 
         // Use the auth hook's login method with fetched user data
         login(token, data.user);
@@ -129,8 +123,6 @@ const AuthCallback = () => {
 
         // Wait a bit for auth state to update
         await new Promise(resolve => setTimeout(resolve, 1000));
-
-        console.log('Redirecting to:', redirect);
 
         // Navigate using React Router
         let finalRedirect = decodeURIComponent(redirect);
@@ -142,7 +134,6 @@ const AuthCallback = () => {
         navigate(finalRedirect, { replace: true });
 
       } catch (error) {
-        console.error('AuthCallback error:', error);
         const redirect = searchParams.get("redirect") || "/";
         
         let errorMessage;
@@ -375,7 +366,7 @@ const LoginRegister = ({ isLogin: initialLogin = true }) => {
     const currentUrl = window.location.origin;
     const googleAuthUrl = `${API_BASE_URL}/api/auth/google?redirect=${encodeURIComponent(redirectUrl)}&frontend=${encodeURIComponent(currentUrl)}`;
     
-    console.log('Google OAuth URL:', googleAuthUrl);
+
     window.location.href = googleAuthUrl;
   };
 
