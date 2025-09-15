@@ -8,7 +8,7 @@ const Team = () => {
       title: "Founder", 
       linkedinHandle: "Akshath Rajkumar", // Just the LinkedIn username
       contactText: "LinkedIn",
-      avatarUrl: "vishwajeet.jpg", // Replace with actual image path
+      avatarUrl: "akshath.jpg", // Replace with actual image path
       showUserInfo: true,
       enableTilt: true,
       narrativeTitle: "A Mission Forged in Reality",

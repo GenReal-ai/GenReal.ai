@@ -226,15 +226,12 @@ export class AuthUtils {
   // Ping backend to wake it up (call this on app load)
   static async wakeUpBackend() {
     try {
-      console.log('Pinging backend to wake it up...');
       await this.fetchWithRetry(
         "https://backendgenreal-authservice.onrender.com/health",
         { method: "GET" },
         1 // Only retry once for wake-up
       );
-      console.log('Backend is awake');
     } catch (error) {
-      console.log('Backend wake-up failed, but continuing:', error);
       // Don't throw error, just log it
     }
   }

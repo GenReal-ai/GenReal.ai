@@ -18,7 +18,6 @@ import DeepFakeUpload from './pages/DeepfakeUploadHandler';
 import Plagiarism from "./components/Plagiarism-upload";
 import DeepfakeDetectionPlatform from "./components/aboutCards";
 import Team from "./components/team";
-import LoginWidget from "./components/LoginWidget";
 import Dashboard from "./components/Dashboard";
 
 const useActiveSection = (isLoaded) => {
@@ -255,13 +254,6 @@ const AppContent = () => {
         </Routes>
       </AnimatePresence>
 
-      {/* Login Widget - only on home */}
-      {isLoaded && location.pathname === "/" && !loading && (
-        <LoginWidget 
-          isLoggedIn={isAuthenticated} 
-          onLogout={logout}
-        />
-      )}
     </div>  
   );
 };

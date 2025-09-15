@@ -33,17 +33,19 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     { id: 'Products', label: 'Products', href: '#Products' },
     { id: 'news', label: 'News', href: '#news' },
     { id: 'faq', label: 'FAQ', href: '#faq' },
-    { id: 'contact-us', label: 'Contact', href: '#contact-us' }
+    { id: 'contact-us', label: 'Contact', href: '#contact-us' },
+    { id: 'account', label: 'Account', href: '/dashboard' },
   ];
 
   const getItemColor = (id) => {
     const colors = {
       home: 'from-cyan-400 to-blue-500',
-      about: 'from-purple-400 to-pink-500', 
+      about: 'from-purple-400 to-pink-500',
       Products: 'from-emerald-400 to-teal-500',
       news: 'from-orange-400 to-red-500',
       faq: 'from-yellow-400 to-orange-500',
-      'contact-us': 'from-pink-400 to-purple-500'
+      'contact-us': 'from-pink-400 to-purple-500',
+      account: 'from-blue-600 to-cyan-400'
     };
     return colors[id] || 'from-gray-400 to-gray-600';
   };
@@ -80,29 +82,34 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
           <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
           <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
         </svg>
-      )
+      ),
+      account: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2a5 5 0 100 10 5 5 0 000-10zM2 18a8 8 0 1116 0H2z" />
+        </svg>
+      ),
     };
     return icons[id] || null;
   };
 
   // Scroll-based visibility logic - ONLY for desktop
   useEffect(() => {
+    // Prevent this effect from running on mobile
+    if (window.innerWidth < 768) return;
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
-      // Show navbar when scrolling up, hide when scrolling down
       if (currentScrollY < lastScrollY) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
       }
-      
       setLastScrollY(currentScrollY);
     };
 
     const throttledHandleScroll = throttle(handleScroll, 100);
     window.addEventListener('scroll', throttledHandleScroll);
-    
+
     return () => window.removeEventListener('scroll', throttledHandleScroll);
   }, [lastScrollY]);
 
@@ -111,12 +118,12 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     if (!pill) return;
 
     const icon = pill.querySelector('.pill-icon');
-    
+
     if (isEntering) {
       gsap.to(pill, { scale: 1.05, duration: 0.2, ease: "power2.out" });
       if (icon) {
-        gsap.fromTo(icon, 
-          { rotation: 0 }, 
+        gsap.fromTo(icon,
+          { rotation: 0 },
           { rotation: 360, duration: 0.6, ease: "power2.out" }
         );
       }
@@ -136,7 +143,7 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     if (mobileMenuRef.current) {
       if (newState) {
         gsap.set(mobileMenuRef.current, { display: 'block' });
-        gsap.fromTo(mobileMenuRef.current, 
+        gsap.fromTo(mobileMenuRef.current,
           { opacity: 0, y: -20, scale: 0.95 },
           { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "power2.out" }
         );
@@ -155,30 +162,24 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
 
   return (
     <>
-      {/* Desktop Navigation - Scroll based visibility */}
-      <nav 
+      {/* Desktop Navigation */}
+      <nav
         ref={navRef}
-        className={`hidden md:flex fixed top-6 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-        }`}
+        className={`hidden md:flex fixed top-6 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+          }`}
       >
         <div className="flex items-center rounded-full px-4 py-3 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
-          
-          {/* Logo */}
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-black mr-5">
-            <img 
-              src="/logoGenReal.png" 
-              alt="GenReal AI" 
-              className="w-10 h-10 object-cover rounded-full"
+          <div className="flex items-center justify-center w-14 h-14 rounded-full">
+            <img
+              src="/logoGenReal.png"
+              alt="GenReal AI"
+              className="w-12 h-12 object-contain"
             />
           </div>
-
-          {/* Navigation Items */}
           <div className="flex items-center space-x-2">
             {navItems.map((item, index) => {
               const isActive = activeSection === item.id;
               const gradientColor = getItemColor(item.id);
-              
               return (
                 <a
                   key={item.id}
@@ -188,21 +189,21 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
                   onMouseLeave={() => handlePillHover(index, false)}
                   className={`
                     relative flex items-center space-x-2 px-4 py-3 rounded-full transition-all duration-300 group
-                    ${isActive 
-                      ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg` 
-                      : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    ${item.id === "account"
+                      ? `bg-gradient-to-r ${getItemColor(item.id)} text-black font-bold shadow-lg`
+                      : isActive
+                        ? `bg-gradient-to-r ${getItemColor(item.id)} text-black font-bold shadow-lg`
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
                     }
                   `}
                 >
-                  <div className={`pill-icon transition-colors duration-300 ${isActive ? 'text-black' : ''}`}>
+                  <div className={`pill-icon transition-colors duration-300 ${isActive || item.id === 'account' ? 'text-black' : ''}`}>
                     {getItemIcon(item.id)}
                   </div>
                   <span className="text-base font-semibold tracking-wide">
                     {item.label}
                   </span>
-                  
-                  {/* Hover glow effect for inactive items */}
-                  {!isActive && (
+                  {!isActive && item.id !== 'account' && (
                     <div className={`absolute inset-0 bg-gradient-to-r ${gradientColor} rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10`} />
                   )}
                 </a>
@@ -212,50 +213,53 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
         </div>
       </nav>
 
-      {/* Mobile Navigation - ALWAYS VISIBLE */}
+      {/* Mobile Navigation - Always Visible */}
       <div className="md:hidden fixed top-6 left-6 right-6 z-50 flex justify-between items-center">
-        {/* Mobile Logo */}
-        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-black">
-          <img 
-            src="/logoGenReal.png" 
-            alt="GenReal AI" 
+        <div className="flex items-center justify-center w-14 h-14 rounded-full">
+          <img
+            src="/logoGenReal.png"
+            alt="GenReal AI"
             className="w-12 h-12 object-cover rounded-full"
           />
         </div>
-
-        {/* Mobile Menu Button */}
         <button
           onClick={toggleMobileMenu}
           className="flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 hover:bg-white/10 backdrop-blur-xl bg-black/20 shadow-lg shadow-black/20"
         >
-          <div className="relative w-6 h-6 flex flex-col justify-center items-center">
-            <span className={`block h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-blue-500 transform transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : ''}`} />
-            <span className={`block h-0.5 w-6 bg-gradient-to-r from-purple-400 to-pink-500 transform transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'mt-1.5'}`} />
-            <span className={`block h-0.5 w-6 bg-gradient-to-r from-emerald-400 to-teal-500 transform transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'mt-1.5'}`} />
+          {/* ✅ FIXED: More robust 2-bar hamburger icon */}
+          <div className="w-6 h-6 flex flex-col justify-center items-center">
+            <span
+              className={`block h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-blue-500 transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-[2.5px]' : ''
+                }`}
+            />
+            <span
+              className={`block h-0.5 w-6 bg-gradient-to-r from-purple-400 to-pink-500 transform transition-all duration-300 ease-in-out mt-1.5 ${isMobileMenuOpen ? '-rotate-45 -translate-y-[2.5px]' : ''
+                }`}
+            />
           </div>
         </button>
       </div>
 
       {/* Mobile Menu Dropdown */}
-      <div 
+      <div
         ref={mobileMenuRef}
         className="md:hidden fixed top-20 left-6 right-6 z-40 hidden"
       >
         <div className="rounded-2xl p-4 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
           <div className="space-y-2">
-            {navItems.map((item, index) => {
+            {navItems.map((item) => {
               const isActive = activeSection === item.id;
               const gradientColor = getItemColor(item.id);
-              
               return (
                 <a
                   key={item.id}
                   href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  // ✅ FIXED: Call toggleMobileMenu to ensure animation runs on close
+                  onClick={toggleMobileMenu}
                   className={`
                     flex items-center space-x-3 p-3 rounded-xl transition-all duration-300
-                    ${isActive 
-                      ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg` 
+                    ${isActive
+                      ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg`
                       : 'text-gray-300 hover:text-white hover:bg-white/10'
                     }
                   `}
@@ -274,6 +278,7 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
   );
 };
 
+// The HeroSection component remains unchanged
 const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSection }) => {
   const [activeSection, setActiveSection] = useState("home");
   const [isHeroInView, setIsHeroInView] = useState(true);
@@ -283,7 +288,6 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
   const statsRef = useRef(null);
   const heroRef = useRef(null);
 
-  // Use prop activeSection if provided, otherwise use local state
   const currentActiveSection = propActiveSection || activeSection;
 
   /** Detect Mobile */
@@ -315,8 +319,8 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
 
   /** Section Tracking - Only if no prop activeSection provided */
   useEffect(() => {
-    if (propActiveSection) return; // Skip if activeSection is provided as prop
-    
+    if (propActiveSection) return;
+
     const handleScroll = () => {
       const sections = ["home", "about", "Products", "news", "faq", "contact-us"];
       const scrollPosition = window.scrollY + 200;
@@ -332,7 +336,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
 
     const throttledHandleScroll = throttle(handleScroll, 100);
     window.addEventListener('scroll', throttledHandleScroll);
-    handleScroll(); // Initial check
+    handleScroll();
 
     return () => window.removeEventListener('scroll', throttledHandleScroll);
   }, [propActiveSection]);
@@ -363,23 +367,16 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
       id="home"
       ref={heroRef}
     >
-      {/* Background Animations */}
       <GeometricAnimation paused={!isHeroInView} />
       <FaceModel
         paused={!isHeroInView}
         disableTracking={isMobile}
         onModelLoaded={handleFaceModelLoaded}
       />
-
-      {/* Overlay Gradient */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/70 via-black/40 to-black z-20 pointer-events-none" />
-
-      {/* Colorful Pill Navbar - Scroll based */}
-      <ColorfulPillNavbar 
+      <ColorfulPillNavbar
         activeSection={currentActiveSection}
       />
-
-      {/* Desktop Hero */}
       <div className="absolute inset-0 z-30 pointer-events-none hidden md:block">
         <div className="absolute left-1/2 top-[47%] -translate-x-1/2 -translate-y-1/2 text-center">
           <h1 className="text-[clamp(4rem,8vw,6rem)] lg:text-[clamp(4.5rem,7vw,5.5rem)] xl:text-[clamp(5rem,6vw,6rem)] leading-[0.9] font-bold whitespace-nowrap">
@@ -402,12 +399,8 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
           </div>
         </div>
       </div>
-
-      {/* Mobile Hero */}
       <div className="absolute inset-0 z-30 pointer-events-none md:hidden">
         <div className="h-full flex flex-col min-h-screen">
-          
-          {/* Welcome Text */}
           <div className="flex-1 flex flex-col items-center justify-center text-center px-[clamp(1rem,5vw,2rem)] mt-[clamp(4rem,12vh,6rem)]">
             <h1 className="text-[clamp(3rem,9vw,3.5rem)] leading-[1] font-bold max-w-[90vw] mx-auto">
               Welcome to
@@ -420,8 +413,6 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
             <p className="mt-[clamp(0.9rem,2vh,1.25rem)] text-[clamp(0.9rem,3vw,0.95rem)] text-gray-300 max-w-[80vw] mx-auto leading-relaxed">
               Discover the new age of security
             </p>
-
-            {/* Button */}
             <div className="mt-[clamp(1rem,3vh,1.5rem)] pointer-events-auto">
               <a href="#Products">
                 <button className="bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white px-[clamp(1.25rem,5vw,1.75rem)] py-[clamp(0.6rem,2vh,0.9rem)] rounded-full text-[clamp(0.8rem,3vw,0.95rem)] font-semibold transition duration-300 transform hover:scale-105 shadow-lg shadow-orange-400/25">
@@ -430,15 +421,11 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
               </a>
             </div>
           </div>
-
-          {/* Stats Below Button */}
           <div className="flex-none pb-[clamp(1rem,3vh,2rem)] w-full">
             <div className="px-[clamp(0.75rem,4vw,1.5rem)]">
               <div className="pointer-events-auto w-full max-w-[500px] mx-auto">
                 <div className="backdrop-blur-lg rounded-2xl border border-cyan-400/30 p-[clamp(0.75rem,3vw,1.25rem)] shadow-xl shadow-cyan-400/10">
                   <div className="flex flex-col xs:flex-row items-center justify-between gap-[clamp(0.75rem,3vw,1rem)]">
-                    
-                    {/* Stat 1 */}
                     <div className="text-center flex-1">
                       <h3 className="text-cyan-400 text-[clamp(1rem,5vw,1.5rem)] font-bold">
                         80%
@@ -447,11 +434,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
                         companies lack deepfake protocols
                       </p>
                     </div>
-
-                    {/* Divider */}
                     <div className="hidden xs:block w-px h-[clamp(2.5rem,8vh,3.5rem)] bg-gray-500/50"></div>
-
-                    {/* Stat 2 */}
                     <div className="text-center flex-1">
                       <h3 className="text-cyan-400 text-[clamp(1rem,5vw,1.5rem)] font-bold">
                         60%
@@ -461,13 +444,10 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
                       </p>
                     </div>
                   </div>
-
-                  {/* Scroll Indicator */}
                   <div className="flex items-center justify-center mt-[clamp(0.75rem,2.5vh,1rem)] pt-[clamp(0.75rem,2.5vh,1rem)] border-t border-gray-700/50">
                     <p
-                      className={`text-[clamp(0.65rem,2.5vw,0.75rem)] text-white/50 transition-all duration-1000 ease-out ${
-                        animateScroll ? "opacity-100" : "opacity-0"
-                      }`}
+                      className={`text-[clamp(0.65rem,2.5vw,0.75rem)] text-white/50 transition-all duration-1000 ease-out ${animateScroll ? "opacity-100" : "opacity-0"
+                        }`}
                     >
                       ↓ Scroll to explore
                     </p>
@@ -476,11 +456,8 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
               </div>
             </div>
           </div>
-
         </div>
       </div>
-
-      {/* Desktop Stats */}
       <div
         ref={statsRef}
         className="absolute opacity-0 w-full bottom-0 z-40 hidden md:flex justify-around items-center px-8 py-4 pointer-events-auto"
@@ -493,9 +470,8 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
         </div>
         <div className="translate-y-6 h-[4vw] flex justify-center items-center flex-col">
           <p
-            className={`relative transition-all text-white/60 duration-1000 ease-out ${
-              animateScroll ? "top-0" : "top-[20px]"
-            }`}
+            className={`relative transition-all text-white/60 duration-1000 ease-out ${animateScroll ? "top-0" : "top-[20px]"
+              }`}
           >
             Scroll Down
           </p>
@@ -503,7 +479,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
         </div>
         <div className="text-center">
           <h2 className="text-cyan-400 text-4xl font-bold">60%</h2>
-          <p className="text-gray-400 mt-2 text-ms max-w-xs">
+          <p className="text-gray-400 mt-2 text-sm max-w-xs">
             of people encountered a deepfake video in the past year
           </p>
         </div>
