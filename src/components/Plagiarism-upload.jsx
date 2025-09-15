@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
+import Feedback from "./feedback";
 
 // --- Cyan Netted Background ---
 const NetworkBackground = () => (
@@ -220,115 +221,6 @@ const LockedEditorDialog = ({ isOpen, onClose }) => {
               </motion.div>
             </motion.div>
         )}
-      </AnimatePresence>
-    );
-};
-
-// --- Feedback Form Component ---
-const FeedbackForm = ({ isOpen, onClose }) => {
-    const [rating, setRating] = useState(0);
-    const [hoverRating, setHoverRating] = useState(0);
-    const [feedbackText, setFeedbackText] = useState('');
-    const [isSubmitted, setIsSubmitted] = useState(false);
-  
-    const handleSubmit = () => {
-      console.log("Feedback Submitted:", { rating, feedbackText });
-      setIsSubmitted(true);
-      setTimeout(() => {
-        onClose();
-        setTimeout(() => {
-          setIsSubmitted(false);
-          setRating(0);
-          setFeedbackText('');
-        }, 500);
-      }, 2000);
-    };
-  
-    if (!isOpen) return null;
-  
-    return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }} 
-            animate={{ scale: 1, opacity: 1 }} 
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/20 rounded-2xl w-full max-w-lg shadow-2xl relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button 
-              onClick={onClose} 
-              className="absolute top-4 right-4 text-slate-400 hover:text-cyan-300 transition-colors text-2xl"
-            >
-              ×
-            </button>
-            
-            {isSubmitted ? (
-              <div className="p-8 text-center">
-                <motion.div 
-                  initial={{ scale: 0.5, opacity: 0 }} 
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-green-400 text-4xl mx-auto mb-3 w-12 h-12 flex items-center justify-center bg-green-400/10 rounded-full"
-                >
-                  ✓
-                </motion.div>
-                <h2 className="text-xl font-bold text-white">Thank You!</h2>
-                <p className="text-slate-400 mt-2">Your feedback has been submitted successfully.</p>
-              </div>
-            ) : (
-              <div className="p-6 sm:p-8">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
-                  Share Your Feedback
-                </h2>
-                <p className="text-slate-400 mb-4">How accurate were the results?</p>
-                
-                <div className="mb-4">
-                  <div className="block text-slate-300 mb-2 text-sm font-medium">Your Rating</div>
-                  <div className="flex items-center gap-1 text-2xl text-slate-500">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        className={`cursor-pointer transition-colors ${(hoverRating || rating) >= star ? 'text-yellow-400' : ''}`}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        onClick={() => setRating(star)}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="block text-slate-300 mb-2 text-sm font-medium">
-                    Comments (Optional)
-                  </div>
-                  <textarea
-                    value={feedbackText} 
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    placeholder="Tell us more about your experience..."
-                    className="w-full h-20 bg-slate-700/50 border border-cyan-400/20 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors text-sm"
-                  />
-                </div>
-                
-                <button
-                  onClick={handleSubmit}
-                  className="w-full py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                  disabled={rating === 0}
-                >
-                  Submit Feedback
-                </button>
-              </div>
-            )}
-          </motion.div>
-        </motion.div>
       </AnimatePresence>
     );
 };
@@ -622,7 +514,7 @@ export default function AIPlagiarismChecker() {
         </main>
         
         {/* Use the showFeedbackPopup state to control the FeedbackForm */}
-        <FeedbackForm
+        <Feedback
           isOpen={showFeedbackPopup}
           onClose={() => setShowFeedbackPopup(false)}
         />
