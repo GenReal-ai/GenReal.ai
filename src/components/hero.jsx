@@ -33,7 +33,8 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     { id: 'Products', label: 'Products', href: '#Products' },
     { id: 'news', label: 'News', href: '#news' },
     { id: 'faq', label: 'FAQ', href: '#faq' },
-    { id: 'contact-us', label: 'Contact', href: '#contact-us' }
+    { id: 'contact-us', label: 'Contact', href: '#contact-us' },
+    { id: 'account', label: 'Account', href: '/dashboard' },
   ];
 
   const getItemColor = (id) => {
@@ -43,7 +44,8 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
       Products: 'from-emerald-400 to-teal-500',
       news: 'from-orange-400 to-red-500',
       faq: 'from-yellow-400 to-orange-500',
-      'contact-us': 'from-pink-400 to-purple-500'
+      'contact-us': 'from-pink-400 to-purple-500',
+       account: 'from-blue-600 to-cyan-400'
     };
     return colors[id] || 'from-gray-400 to-gray-600';
   };
@@ -80,7 +82,14 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
           <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
           <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
         </svg>
-      )
+      ),
+
+      account: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2a5 5 0 100 10 5 5 0 000-10zM2 18a8 8 0 1116 0H2z" />
+        </svg>
+      ),
+
     };
     return icons[id] || null;
   };
@@ -165,13 +174,14 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
         <div className="flex items-center rounded-full px-4 py-3 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
           
           {/* Logo */}
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-black mr-5">
-            <img 
-              src="/logoGenReal.png" 
-              alt="GenReal AI" 
-              className="w-10 h-10 object-cover rounded-full"
-            />
-          </div>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full mr-5">
+              <img 
+                src="/logoGenReal.png" 
+                alt="GenReal AI" 
+                className="w-10 h-10 object-cover rounded-full"
+              />
+            </div>
+
 
           {/* Navigation Items */}
           <div className="flex items-center space-x-2">
@@ -180,20 +190,24 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
               const gradientColor = getItemColor(item.id);
               
               return (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  ref={el => pillRefs.current[index] = el}
-                  onMouseEnter={() => handlePillHover(index, true)}
-                  onMouseLeave={() => handlePillHover(index, false)}
-                  className={`
-                    relative flex items-center space-x-2 px-4 py-3 rounded-full transition-all duration-300 group
-                    ${isActive 
-                      ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg` 
-                      : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }
-                  `}
-                >
+<a
+  key={item.id}
+  href={item.href}
+  ref={el => pillRefs.current[index] = el}
+  onMouseEnter={() => handlePillHover(index, true)}
+  onMouseLeave={() => handlePillHover(index, false)}
+  className={`
+    relative flex items-center space-x-2 px-4 py-3 rounded-full transition-all duration-300 group
+    ${
+      item.id === "account"
+        ? `bg-gradient-to-r ${getItemColor(item.id)} text-black font-bold shadow-lg`
+        : isActive 
+          ? `bg-gradient-to-r ${getItemColor(item.id)} text-black font-bold shadow-lg` 
+          : 'text-gray-300 hover:text-white hover:bg-white/10'
+    }
+  `}
+>
+
                   <div className={`pill-icon transition-colors duration-300 ${isActive ? 'text-black' : ''}`}>
                     {getItemIcon(item.id)}
                   </div>
@@ -390,7 +404,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
             </span>
             .AI
           </h1>
-          <p className="mt-[clamp(1rem,2vw,2rem)] text-[clamp(0.875rem,1.5vw,1.125rem)] text-gray-300">
+          <p className="mt-[clamp(1rem,2vw,2rem)] text-[clamp(0.87{ id: 'account', label: 'Account', href: '#account' },5rem,1.5vw,1.125rem)] text-gray-300">
             Discover the new age of security
           </p>
           <div className="relative pointer-events-auto">
@@ -507,7 +521,7 @@ const HeroSection = ({ Loaded, onFaceModelLoaded, activeSection: propActiveSecti
             of people encountered a deepfake video in the past year
           </p>
         </div>
-      </div>
+      </div>  
     </div>
   );
 };
