@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // Import useEffect
 import { motion } from 'framer-motion';
 import { 
   Home, 
@@ -13,8 +13,10 @@ import {
   Waves,
   AreaChart,
   CheckCircle,
-  XCircle
+  XCircle,
+  MessageSquare
 } from 'lucide-react';
+import FeedbackForm from './feedback'; 
 
 // ================== HELPER FUNCTIONS ==================
 
@@ -73,6 +75,20 @@ const CompanyLogo = ({ onClick }) => (
 // ================== UNIFIED RESULT COMPONENT ==================
 
 const UnifiedResult = ({ onReset, analysisResult }) => {
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  // --- AUTOMATICALLY TRIGGER FEEDBACK POPUP ---
+  useEffect(() => {
+    // If results are available, set a timer to show the feedback form
+    if (analysisResult) {
+      const timer = setTimeout(() => {
+        setShowFeedback(true);
+      }, 2500); // 2.5-second delay
+
+      // Clean up the timer if the component unmounts
+      return () => clearTimeout(timer);
+    }
+  }, [analysisResult]); // This effect runs when analysisResult is received
 
   const processData = (data) => {
     if (!data) return null;
@@ -169,6 +185,16 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
 
   const handleHomeClick = () => {
     window.location.href = '/';
+  };
+
+  // Get model name based on detection type
+  const getModelName = (type) => {
+    switch (type) {
+      case 'video': return 'Video Deepfake Detection';
+      case 'image': return 'Image Deepfake Detection';
+      case 'audio': return 'Audio Deepfake Detection';
+      default: return 'Deepfake Detection';
+    }
   };
 
   if (!processedResult) {
@@ -315,6 +341,7 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
                 </div>
             </div>
             <div className="flex items-center gap-3">
+                {/* FEEDBACK BUTTON REMOVED */}
                 <button 
                     onClick={() => { window.location.href = '/plagiarism-detection'; }} 
                     className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-sm"
@@ -474,6 +501,13 @@ const UnifiedResult = ({ onReset, analysisResult }) => {
             </div>
         </motion.div>
       </div>
+
+      {/* Feedback Form */}
+      <FeedbackForm
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        modelName={getModelName(type)}
+      />
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {

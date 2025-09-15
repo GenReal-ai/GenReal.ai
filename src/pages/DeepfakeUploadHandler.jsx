@@ -28,7 +28,6 @@ const DeepfakeUploadHandler = () => {
 
   const validateFile = (file) => {
     const fileType = getFileType(file);
-    console.log("Base URL:", import.meta.env.VITE_API_URL);
 
     if (fileType === 'unknown') {
       return { 
@@ -87,19 +86,17 @@ const DeepfakeUploadHandler = () => {
       formData.append('file', fileToUpload);
       formData.append('fileType', fileType);
 
-      console.log(`Uploading ${fileType} file: ${fileToUpload.name} (${(fileToUpload.size / (1024 * 1024)).toFixed(2)}MB)`);
-
       // Use the unified analyze endpoint
       const response = await api.post('/api/analyze', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 360000, // 6 minutes timeout
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`Upload progress: ${percentCompleted}%`);
+         
         }
       });
 
-      console.log('Analysis completed:', response.data);
+
 
       // Set analysis result with additional metadata
       setAnalysisResult({
@@ -115,7 +112,6 @@ const DeepfakeUploadHandler = () => {
       }, 1500);
 
     } catch (error) {
-      console.error('Upload/Analysis error:', error);
       
       let errorMessage = 'Upload failed. Please try again.';
       

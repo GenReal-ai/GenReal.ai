@@ -37,6 +37,10 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     { id: 'account', label: 'Account', href: '/dashboard' },
   ];
 
+  // Separate the account item from the main navigation items
+  const accountItem = navItems.find(item => item.id === 'account');
+  const mainNavItems = navItems.filter(item => item.id !== 'account');
+
   const getItemColor = (id) => {
     const colors = {
       home: 'from-cyan-400 to-blue-500',
@@ -92,71 +96,55 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
     return icons[id] || null;
   };
 
-  // Scroll-based visibility logic - ONLY for desktop
   useEffect(() => {
-    // Prevent this effect from running on mobile
     if (window.innerWidth < 768) return;
-
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY < lastScrollY) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+      setIsVisible(currentScrollY < lastScrollY);
       setLastScrollY(currentScrollY);
     };
-
     const throttledHandleScroll = throttle(handleScroll, 100);
     window.addEventListener('scroll', throttledHandleScroll);
-
     return () => window.removeEventListener('scroll', throttledHandleScroll);
   }, [lastScrollY]);
 
-  const handlePillHover = (index, isEntering) => {
-    const pill = pillRefs.current[index];
-    if (!pill) return;
+  const handlePillHover = (el, isEntering) => {
+      if (!el) return;
+      const icon = el.querySelector('.pill-icon');
+      
+      gsap.to(el, { 
+        scale: isEntering ? 1.05 : 1, 
+        duration: 0.2, 
+        ease: "power2.out" 
+      });
 
-    const icon = pill.querySelector('.pill-icon');
-
-    if (isEntering) {
-      gsap.to(pill, { scale: 1.05, duration: 0.2, ease: "power2.out" });
       if (icon) {
-        gsap.fromTo(icon,
-          { rotation: 0 },
-          { rotation: 360, duration: 0.6, ease: "power2.out" }
-        );
+        if (isEntering) {
+          // ✅ Use fromTo to force the animation to restart from 0 every time
+          gsap.fromTo(icon, 
+            { rotation: 0 }, 
+            { rotation: 360, duration: 0.6, ease: "power2.out" }
+          );
+        } else {
+          // On mouse leave, immediately set rotation back to 0 without animation
+          gsap.set(icon, { rotation: 0 });
+        }
       }
-    } else {
-      gsap.to(pill, { scale: 1, duration: 0.2, ease: "power2.out" });
-      if (icon) {
-        gsap.set(icon, { rotation: 0 });
-      }
-    }
-  };
+    };
 
   const toggleMobileMenu = () => {
     const newState = !isMobileMenuOpen;
     setIsMobileMenuOpen(newState);
     onMobileMenuToggle?.(newState);
-
     if (mobileMenuRef.current) {
-      if (newState) {
-        gsap.set(mobileMenuRef.current, { display: 'block' });
-        gsap.fromTo(mobileMenuRef.current,
-          { opacity: 0, y: -20, scale: 0.95 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "power2.out" }
-        );
-      } else {
-        gsap.to(mobileMenuRef.current, {
-          opacity: 0,
-          y: -20,
-          scale: 0.95,
-          duration: 0.2,
-          ease: "power2.in",
-          onComplete: () => gsap.set(mobileMenuRef.current, { display: 'none' })
-        });
-      }
+      gsap.to(mobileMenuRef.current, {
+        display: newState ? 'block' : 'none',
+        opacity: newState ? 1 : 0,
+        y: newState ? 0 : -20,
+        scale: newState ? 1 : 0.95,
+        duration: newState ? 0.3 : 0.2,
+        ease: newState ? "power2.out" : "power2.in",
+      });
     }
   };
 
@@ -165,19 +153,23 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
       {/* Desktop Navigation */}
       <nav
         ref={navRef}
-        className={`hidden md:flex fixed top-6 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-          }`}
+        className={`hidden md:flex fixed top-6 left-6 right-6 z-50 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}
       >
-        <div className="flex items-center rounded-full px-4 py-3 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
-          <div className="flex items-center justify-center w-14 h-14 rounded-full">
-            <img
-              src="/logoGenReal.png"
-              alt="GenReal AI"
-              className="w-12 h-12 object-contain"
-            />
+        <div className="flex items-center justify-between w-full rounded-full px-4 py-2 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
+          {/* Left: Logo */}
+          <div className="flex-shrink-0">
+            <a href="#home" className="flex items-center">
+              <img
+                src="/logoGenReal.png"
+                alt="GenReal AI"
+                className="w-12 h-12 object-contain"
+              />
+            </a>
           </div>
+
+          {/* Center: Main Navigation Items */}
           <div className="flex items-center space-x-2">
-            {navItems.map((item, index) => {
+            {mainNavItems.map((item, index) => {
               const isActive = activeSection === item.id;
               const gradientColor = getItemColor(item.id);
               return (
@@ -185,57 +177,54 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
                   key={item.id}
                   href={item.href}
                   ref={el => pillRefs.current[index] = el}
-                  onMouseEnter={() => handlePillHover(index, true)}
-                  onMouseLeave={() => handlePillHover(index, false)}
-                  className={`
-                    relative flex items-center space-x-2 px-4 py-3 rounded-full transition-all duration-300 group
-                    ${item.id === "account"
-                      ? `bg-gradient-to-r ${getItemColor(item.id)} text-black font-bold shadow-lg`
-                      : isActive
-                        ? `bg-gradient-to-r ${getItemColor(item.id)} text-black font-bold shadow-lg`
-                        : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }
-                  `}
+                  onMouseEnter={() => handlePillHover(pillRefs.current[index], true)}
+                  onMouseLeave={() => handlePillHover(pillRefs.current[index], false)}
+                  className={`relative flex items-center space-x-2 px-4 py-3 rounded-full transition-all duration-300 group ${isActive ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg` : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
                 >
-                  <div className={`pill-icon transition-colors duration-300 ${isActive || item.id === 'account' ? 'text-black' : ''}`}>
+                  <div className={`pill-icon transition-colors duration-300 ${isActive ? 'text-black' : ''}`}>
                     {getItemIcon(item.id)}
                   </div>
-                  <span className="text-base font-semibold tracking-wide">
-                    {item.label}
-                  </span>
-                  {!isActive && item.id !== 'account' && (
+                  <span className="text-base font-semibold tracking-wide">{item.label}</span>
+                  {!isActive && (
                     <div className={`absolute inset-0 bg-gradient-to-r ${gradientColor} rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10`} />
                   )}
                 </a>
               );
             })}
           </div>
+
+          {/* Right: Account Button */}
+          <div className="flex-shrink-0">
+            {accountItem && (
+              <a
+                key={accountItem.id}
+                href={accountItem.href}
+                onMouseEnter={(e) => handlePillHover(e.currentTarget, true)}
+                onMouseLeave={(e) => handlePillHover(e.currentTarget, false)}
+                className={`relative flex items-center space-x-2 px-4 py-3 rounded-full transition-all duration-300 group bg-gradient-to-r ${getItemColor(accountItem.id)} text-black font-bold shadow-lg`}
+              >
+                <div className="pill-icon text-black">
+                  {getItemIcon(accountItem.id)}
+                </div>
+                <span className="text-base font-semibold tracking-wide">{accountItem.label}</span>
+              </a>
+            )}
+          </div>
         </div>
       </nav>
 
-      {/* Mobile Navigation - Always Visible */}
+      {/* Mobile Navigation */}
       <div className="md:hidden fixed top-6 left-6 right-6 z-50 flex justify-between items-center">
-        <div className="flex items-center justify-center w-14 h-14 rounded-full">
-          <img
-            src="/logoGenReal.png"
-            alt="GenReal AI"
-            className="w-12 h-12 object-cover rounded-full"
-          />
-        </div>
+        <a href="#home" className="flex items-center justify-center w-14 h-14 rounded-full">
+            <img src="/logoGenReal.png" alt="GenReal AI" className="w-12 h-12 object-cover rounded-full" />
+        </a>
         <button
           onClick={toggleMobileMenu}
           className="flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 hover:bg-white/10 backdrop-blur-xl bg-black/20 shadow-lg shadow-black/20"
         >
-          {/* ✅ FIXED: More robust 2-bar hamburger icon */}
           <div className="w-6 h-6 flex flex-col justify-center items-center">
-            <span
-              className={`block h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-blue-500 transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-[2.5px]' : ''
-                }`}
-            />
-            <span
-              className={`block h-0.5 w-6 bg-gradient-to-r from-purple-400 to-pink-500 transform transition-all duration-300 ease-in-out mt-1.5 ${isMobileMenuOpen ? '-rotate-45 -translate-y-[2.5px]' : ''
-                }`}
-            />
+            <span className={`block h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-blue-500 transform transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-[2.5px]' : ''}`} />
+            <span className={`block h-0.5 w-6 bg-gradient-to-r from-purple-400 to-pink-500 transform transition-all duration-300 ease-in-out mt-1.5 ${isMobileMenuOpen ? '-rotate-45 -translate-y-[2.5px]' : ''}`} />
           </div>
         </button>
       </div>
@@ -243,32 +232,33 @@ const ColorfulPillNavbar = ({ activeSection, onMobileMenuToggle }) => {
       {/* Mobile Menu Dropdown */}
       <div
         ref={mobileMenuRef}
-        className="md:hidden fixed top-20 left-6 right-6 z-40 hidden"
+        className="md:hidden fixed top-20 left-6 right-6 z-40 hidden" // Initially hidden
       >
         <div className="rounded-2xl p-4 backdrop-blur-xl bg-black/20 shadow-xl shadow-black/30">
           <div className="space-y-2">
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
               const gradientColor = getItemColor(item.id);
+              const isAccount = item.id === 'account';
               return (
                 <a
                   key={item.id}
                   href={item.href}
-                  // ✅ FIXED: Call toggleMobileMenu to ensure animation runs on close
                   onClick={toggleMobileMenu}
-                  className={`
-                    flex items-center space-x-3 p-3 rounded-xl transition-all duration-300
-                    ${isActive
-                      ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg`
-                      : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }
-                  `}
+                  className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300
+                    ${isAccount 
+                      ? 'text-gray-300 hover:text-white hover:bg-white/10' 
+                      : isActive 
+                        ? `bg-gradient-to-r ${gradientColor} text-black font-bold shadow-lg` 
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`}
                 >
                   <div className={`${isActive ? 'text-black' : 'text-white'} transition-colors duration-300`}>
                     {getItemIcon(item.id)}
                   </div>
                   <span className="font-semibold text-sm">{item.label}</span>
                 </a>
+
               );
             })}
           </div>
