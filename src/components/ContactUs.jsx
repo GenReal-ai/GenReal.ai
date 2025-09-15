@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, MapPin, Send, MessageCircle, Linkedin } from 'lucide-react';
+import { Mail, MapPin, Send, MessageCircle, Linkedin, AlertCircle } from 'lucide-react';
 
 // Reusable Floating Label Input Component
-const FloatingLabelInput = ({ name, label, type = 'text', value, onChange }) => {
+const FloatingLabelInput = ({ name, label, type = 'text', value, onChange, error }) => {
     const [isFocused, setIsFocused] = useState(false);
     const hasValue = value.length > 0;
 
@@ -15,7 +15,7 @@ const FloatingLabelInput = ({ name, label, type = 'text', value, onChange }) => 
                 animate={{
                     y: isFocused || hasValue ? -24 : 0,
                     scale: isFocused || hasValue ? 0.85 : 1,
-                    color: isFocused ? '#22d3ee' : '#9ca3af',
+                    color: error ? '#ef4444' : isFocused ? '#22d3ee' : '#9ca3af',
                 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 style={{ originX: 0 }}
@@ -31,14 +31,27 @@ const FloatingLabelInput = ({ name, label, type = 'text', value, onChange }) => 
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 required={name !== 'phone'} // Phone can be optional
-                className="w-full px-3 py-3 bg-transparent border-b-2 text-white transition-colors duration-300 outline-none focus:border-cyan-400 border-gray-600"
+                className={`w-full px-3 py-3 bg-transparent border-b-2 text-white transition-colors duration-300 outline-none ${
+                    error ? 'border-red-500 focus:border-red-400' : 'focus:border-cyan-400 border-gray-600'
+                }`}
             />
+            {error && (
+                <motion.p 
+                    className="text-red-400 text-sm mt-1 flex items-center gap-1"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <AlertCircle className="w-3 h-3" />
+                    {error}
+                </motion.p>
+            )}
         </motion.div>
     );
 };
 
 // Reusable Floating Label Textarea Component with Autosize
-const FloatingLabelTextarea = ({ name, label, value, onChange }) => {
+const FloatingLabelTextarea = ({ name, label, value, onChange, error }) => {
     const [isFocused, setIsFocused] = useState(false);
     const hasValue = value.length > 0;
     const textareaRef = useRef(null);
@@ -58,7 +71,7 @@ const FloatingLabelTextarea = ({ name, label, value, onChange }) => {
                 animate={{
                     y: isFocused || hasValue ? -24 : 0,
                     scale: isFocused || hasValue ? 0.85 : 1,
-                    color: isFocused ? '#22d3ee' : '#9ca3af',
+                    color: error ? '#ef4444' : isFocused ? '#22d3ee' : '#9ca3af',
                 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 style={{ originX: 0 }}
@@ -75,8 +88,21 @@ const FloatingLabelTextarea = ({ name, label, value, onChange }) => {
                 onBlur={() => setIsFocused(false)}
                 required
                 rows={1}
-                className="w-full px-3 py-3 bg-transparent border-b-2 text-white transition-colors duration-300 outline-none focus:border-cyan-400 border-gray-600 resize-none overflow-hidden"
+                className={`w-full px-3 py-3 bg-transparent border-b-2 text-white transition-colors duration-300 outline-none resize-none overflow-hidden ${
+                    error ? 'border-red-500 focus:border-red-400' : 'focus:border-cyan-400 border-gray-600'
+                }`}
             />
+            {error && (
+                <motion.p 
+                    className="text-red-400 text-sm mt-1 flex items-center gap-1"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <AlertCircle className="w-3 h-3" />
+                    {error}
+                </motion.p>
+            )}
         </motion.div>
     );
 };
@@ -140,7 +166,6 @@ const GradientContactPanel = ({ variants }) => {
   );
 };
 
-
 const ContactForm = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -150,20 +175,125 @@ const ContactForm = () => {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
+
+  const API_BASE_URL = import.meta.env.VITE_SUGGESTION_SERVICE_API ;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear field-specific error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (apiError) {
+      setApiError('');
+    }
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (formData.name.trim().length > 50) {
+      newErrors.name = 'Name cannot exceed 50 characters';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else {
+      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+    }
+
+    if (formData.phone.trim() && !/^[\+]?[\s\-\(\)]*([0-9][\s\-\(\)]*){10,}$/.test(formData.phone.trim())) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+
+    if (!formData.subject.trim()) {
+      newErrors.subject = 'Subject is required';
+    } else if (formData.subject.trim().length < 5) {
+      newErrors.subject = 'Subject must be at least 5 characters';
+    } else if (formData.subject.trim().length > 100) {
+      newErrors.subject = 'Subject cannot exceed 100 characters';
+    }
+
+    if (!formData.message.trim()) {
+      newErrors.message = 'Message is required';
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters';
+    } else if (formData.message.trim().length > 1000) {
+      newErrors.message = 'Message cannot exceed 1000 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
-    setFormData({
-      name: '', email: '', phone: '', subject: '', message: ''
-    });
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setApiError('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim() || undefined,
+          subject: formData.subject.trim(),
+          message: formData.message.trim()
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        console.log('Contact form submitted successfully:', result);
+        setSubmitted(true);
+        setFormData({
+          name: '', email: '', phone: '', subject: '', message: ''
+        });
+        
+        // Hide success message after 5 seconds
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        // Handle validation errors from server
+        if (result.errors && Array.isArray(result.errors)) {
+          const serverErrors = {};
+          result.errors.forEach(error => {
+            if (error.path) {
+              serverErrors[error.path] = error.msg;
+            }
+          });
+          setErrors(serverErrors);
+        } else {
+          setApiError(result.message || 'Failed to submit contact form. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      setApiError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const containerVariants = {
@@ -177,6 +307,12 @@ const ContactForm = () => {
   };
   
   const successVariants = {
+    hidden: { opacity: 0, y: -20, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.3 } }
+  };
+
+  const errorVariants = {
     hidden: { opacity: 0, y: -20, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1 },
     exit: { opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.3 } }
@@ -239,29 +375,86 @@ const ContactForm = () => {
                     animate="visible"
                     exit="exit"
                   >
-                    <p className="text-green-300 font-medium">Message sent! We'll be in touch soon.</p>
+                    <p className="text-green-300 font-medium">Message sent successfully! We'll be in touch soon.</p>
+                  </motion.div>
+                )}
+
+                {apiError && (
+                  <motion.div 
+                    className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-center"
+                    variants={errorVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                  >
+                    <p className="text-red-300 font-medium flex items-center justify-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      {apiError}
+                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <form onSubmit={handleSubmit} className="space-y-8">
-                <FloatingLabelInput name="name" label="Name" value={formData.name} onChange={handleChange} />
+                <FloatingLabelInput 
+                  name="name" 
+                  label="Name" 
+                  value={formData.name} 
+                  onChange={handleChange}
+                  error={errors.name}
+                />
                 <div className="grid sm:grid-cols-2 gap-8">
-                  <FloatingLabelInput name="email" label="Email" type="email" value={formData.email} onChange={handleChange} />
-                  <FloatingLabelInput name="phone" label="Phone (Optional)" type="tel" value={formData.phone} onChange={handleChange} />
+                  <FloatingLabelInput 
+                    name="email" 
+                    label="Email" 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={handleChange}
+                    error={errors.email}
+                  />
+                  <FloatingLabelInput 
+                    name="phone" 
+                    label="Phone (Optional)" 
+                    type="tel" 
+                    value={formData.phone} 
+                    onChange={handleChange}
+                    error={errors.phone}
+                  />
                 </div>
-                <FloatingLabelInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} />
-                <FloatingLabelTextarea name="message" label="Message" value={formData.message} onChange={handleChange} />
+                <FloatingLabelInput 
+                  name="subject" 
+                  label="Subject" 
+                  value={formData.subject} 
+                  onChange={handleChange}
+                  error={errors.subject}
+                />
+                <FloatingLabelTextarea 
+                  name="message" 
+                  label="Message" 
+                  value={formData.message} 
+                  onChange={handleChange}
+                  error={errors.message}
+                />
 
                 <motion.button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-600 to-cyan-400 text-white font-semibold py-3 px-8 rounded-xl flex items-center justify-center space-x-3 text-base"
-                  whileHover={{ scale: 1.03, boxShadow: '0px 5px 20px rgba(0, 255, 255, 0.25)' }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={isSubmitting}
+                  className="w-full bg-gradient-to-r from-cyan-600 to-cyan-400 text-white font-semibold py-3 px-8 rounded-xl flex items-center justify-center space-x-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={!isSubmitting ? { scale: 1.03, boxShadow: '0px 5px 20px rgba(0, 255, 255, 0.25)' } : {}}
+                  whileTap={!isSubmitting ? { scale: 0.98 } : {}}
                   transition={{ type: 'spring', stiffness: 300, damping: 17 }}
                 >
-                  <Send className="w-5 h-5" />
-                  <span>Send Message</span>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      <span>Send Message</span>
+                    </>
+                  )}
                 </motion.button>
               </form>
             </div>
@@ -273,4 +466,3 @@ const ContactForm = () => {
 };
 
 export default ContactForm;
-
