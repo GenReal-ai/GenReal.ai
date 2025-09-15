@@ -151,94 +151,105 @@ useEffect(() => {
     </div>
 
 
-      {isMobile ? (
-        // MOBILE VIEW
-        <div className="relative w-full flex flex-col items-center px-4 pt-8 pb-16">
-          <div
-            className="w-full max-w-sm bg-[#1a1a1a] text-white rounded-2xl shadow-md p-4 flex flex-col justify-between border border-gray-800"
-            onClick={() => handleCardClick(newsItems[currentIndex].link)}
-          >
-            <div className="flex-1 flex flex-col">
-              <img
-                src={newsItems[currentIndex].image}
-                alt={newsItems[currentIndex].title}
-                loading="eager"
-                decoding="async"
-                className="w-full aspect-video object-cover rounded-lg mb-3"
-              />
-              <h3 className="text-[clamp(1rem,2.5vw,1.4rem)] font-semibold mb-2 line-clamp-2">
-                {newsItems[currentIndex].title}
-              </h3>
-              <p className="text-gray-400 text-[clamp(0.85rem,2vw,1rem)] mb-4 line-clamp-4">
-                {newsItems[currentIndex].summary}
-              </p>
-            </div>
-            <div className="flex flex-col items-center space-y-3">
-              <p className="text-xs text-gray-500">{newsItems[currentIndex].date}</p>
-              <button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium py-2.5 px-6 rounded-full hover:from-cyan-600 hover:to-blue-700 transition-all duration-300">
-                Read More
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        // DESKTOP VIEW
-        <div
-          ref={horizontalRef}
-          className="flex items-center w-max space-x-16 py-4 px-4 pr-[10vw]" 
-        >
-          {newsItems.map((item, index) => (
-            <div
-              key={index}
-              className="group flex-shrink-0
-                w-[80vw] sm:w-[60vw] md:w-[40vw] lg:w-[28vw] xl:w-[24vw]
-                aspect-[3/4] max-h-[600px]
-                bg-[#1a1a1a] text-white rounded-2xl shadow-md 
-                p-4 md:p-5 lg:p-6 xl:p-7
-                flex flex-col justify-between text-center 
-                border border-gray-800 cursor-pointer 
-                transition-all duration-300 ease-in-out 
-                hover:!border-cyan-400 hover:-translate-y-2 lg:hover:-translate-y-3 
-                hover:shadow-2xl hover:shadow-cyan-500/20 
-                overflow-hidden"
-              onClick={() => handleCardClick(item.link)}
-            >
-              {/* Image */}
-              <div className="h-[40%] w-full mb-3">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  loading="eager"
-                  decoding="async"
-                  className="w-full h-full object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105"
-                />
-              </div>
+{isMobile ? (
+  // MOBILE VIEW → Vertical stacked news feed
+  <div className="relative w-full flex flex-col items-center px-4 pt-8 pb-16 space-y-6">
+    {newsItems.map((item, index) => (
+      <div
+        key={index}
+        className="w-full max-w-sm bg-[#1a1a1a] text-white rounded-2xl shadow-md 
+                   p-4 flex flex-col justify-between border border-gray-800
+                   hover:border-cyan-400 transition-all duration-300"
+        onClick={() => handleCardClick(item.link)}
+      >
+        {/* Image */}
+        <img
+          src={item.image}
+          alt={item.title}
+          loading="eager"
+          decoding="async"
+          className="w-full aspect-video object-cover rounded-lg mb-3"
+        />
 
-              {/* Text */}
-              <div className="flex-1 flex flex-col">
-                <h3 className="font-semibold mb-2 line-clamp-2 leading-tight text-[clamp(1rem,1.2vw,1.5rem)]">
-                  {item.title}
-                </h3>
-                <p className="text-gray-400 mb-3 line-clamp-4 flex-grow leading-relaxed text-[clamp(0.85rem,1vw,1.1rem)]">
-                  {item.summary}
-                </p>
-              </div>
+        {/* Title + Summary */}
+        <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+          {item.title}
+        </h3>
+        <p className="text-gray-400 text-sm mb-4 line-clamp-4">
+          {item.summary}
+        </p>
 
-              {/* Footer */}
-              <div className="flex flex-col items-center space-y-2 mt-2">
-                <p className="text-xs text-gray-500">{item.date}</p>
-                <button className="bg-gradient-to-r from-cyan-500 to-blue-600 
-                  text-white font-medium rounded-full
-                  hover:from-cyan-600 hover:to-blue-700 
-                  transition-all duration-300 transform group-hover:scale-105
-                  text-[clamp(0.8rem,1vw,1rem)] py-2 px-5">
-                  Read More
-                </button>
-              </div>
-            </div>
-          ))}
+        {/* Footer */}
+        <div className="flex flex-col items-center space-y-3">
+          <p className="text-xs text-gray-500">{item.date}</p>
+          <button className="bg-gradient-to-r from-cyan-500 to-blue-600 
+            text-white text-sm font-medium py-2.5 px-6 rounded-full
+            hover:from-cyan-600 hover:to-blue-700 transition-all duration-300">
+            Read More
+          </button>
         </div>
-      )}
+      </div>
+    ))}
+  </div>
+) : (
+  // DESKTOP VIEW → Keep horizontal GSAP scrolling
+  <div
+    ref={horizontalRef}
+    className="flex items-center w-max space-x-16 py-4 px-4 pr-[10vw]"
+  >
+    {newsItems.map((item, index) => (
+      <div
+        key={index}
+        className="group flex-shrink-0
+          w-[80vw] sm:w-[60vw] md:w-[40vw] lg:w-[28vw] xl:w-[24vw]
+          aspect-[3/4] max-h-[600px]
+          bg-[#1a1a1a] text-white rounded-2xl shadow-md 
+          p-4 md:p-5 lg:p-6 xl:p-7
+          flex flex-col justify-between text-center 
+          border border-gray-800 cursor-pointer 
+          transition-all duration-300 ease-in-out 
+          hover:!border-cyan-400 hover:-translate-y-2 lg:hover:-translate-y-3 
+          hover:shadow-2xl hover:shadow-cyan-500/20 
+          overflow-hidden"
+        onClick={() => handleCardClick(item.link)}
+      >
+        {/* Image */}
+        <div className="h-[40%] w-full mb-3">
+          <img
+            src={item.image}
+            alt={item.title}
+            loading="eager"
+            decoding="async"
+            className="w-full h-full object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105"
+          />
+        </div>
+
+        {/* Text */}
+        <div className="flex-1 flex flex-col">
+          <h3 className="font-semibold mb-2 line-clamp-2 leading-tight text-[clamp(1rem,1.2vw,1.5rem)]">
+            {item.title}
+          </h3>
+          <p className="text-gray-400 mb-3 line-clamp-4 flex-grow leading-relaxed text-[clamp(0.85rem,1vw,1.1rem)]">
+            {item.summary}
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-col items-center space-y-2 mt-2">
+          <p className="text-xs text-gray-500">{item.date}</p>
+          <button className="bg-gradient-to-r from-cyan-500 to-blue-600 
+            text-white font-medium rounded-full
+            hover:from-cyan-600 hover:to-blue-700 
+            transition-all duration-300 transform group-hover:scale-105
+            text-[clamp(0.8rem,1vw,1rem)] py-2 px-5">
+            Read More
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
     </section>
   );
 };
