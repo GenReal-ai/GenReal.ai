@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Shield, Plus, Trash2, Eye, EyeOff, RefreshCw, X, ChevronLeft, BookText, CreditCard, User, Settings, Copy, Key, Server, ChevronsRight, LogOut } from 'lucide-react';
+import { AuthUtils } from "./utils/authUtils"; 
 
 // --- 1. CREATE AUTH CONTEXT ---
 const AuthContext = createContext(null);
@@ -21,23 +22,22 @@ const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // On initial load, simulate checking for a stored user session.
     useEffect(() => {
-        // This mimics AuthUtils.getUser() and AuthUtils.getToken()
-        const storedUser = { name: "Demo User", email: "user@email.com" }; // Mocked user data
-        if (storedUser) {
-            setUser(storedUser);
-            setIsAuthenticated(true);
-        }
+      // Replace hardcoded mock with your util
+      const storedUser = AuthUtils.getUser();  
+      if (storedUser) {
+        setUser(storedUser);
+        setIsAuthenticated(true);
+      }
     }, []);
 
+
     const logout = () => {
-        // This mimics AuthUtils.logout()
-        setUser(null);
-        setIsAuthenticated(false);
-        // In a real app, you would redirect to a login page here.
-        alert("You have been logged out."); 
+      AuthUtils.logout(); // clears localStorage
+      setUser(null);
+      setIsAuthenticated(false);
     };
+
 
     const authContextValue = {
         user,
@@ -119,9 +119,9 @@ const Sidebar = ({ view, setView }) => {
   ];
 
   return (
-    <div className="w-64 bg-black border-r border-gray-800/50 p-4 flex flex-col">
+    <div className="w-64 bg-[#0a0f1c] border-r border-gray-800/50 p-4 flex flex-col">
       <div className="flex items-center gap-3 mb-10">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 bg-[#0a0f1c] rounded-lg flex items-center justify-center overflow-hidden">
             <img 
               src="logoGenReal.png" 
               alt="logoGenReal" 
@@ -395,7 +395,7 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans flex">
+    <div className="min-h-screen bg-[#0a0f1c] text-white font-sans flex">
       <Sidebar view={view} setView={setView} />
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
         {/* New Header with Back to Home button */}
