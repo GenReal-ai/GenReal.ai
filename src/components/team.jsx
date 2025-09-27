@@ -6,29 +6,30 @@ const Team = () => {
     {
       name: "Akshath Rajkumar",
       title: "Founder", 
-      linkedinHandle: "Akshath Rajkumar", // Just the LinkedIn username
+      linkedinHandle: "akshath-rajkumar-223ba5289",
       contactText: "LinkedIn",
-      avatarUrl: "akshath.jpg", // Replace with actual image path
+      avatarUrl: "akshath.jpg", 
       showUserInfo: true,
       enableTilt: true,
       narrativeTitle: "A Mission Forged in Reality",
       narrativeText: [
-        "In the pivotal year of 2023, the digital landscape felt like a battlefield. Witnessing deepfakes systematically manipulate public opinion during major elections wasn't just an academic problem—it was a personal call to action. It became clear that the tools of AI, which I had helped develop at Meta, were being weaponized.",
-        "That moment was the genesis of our mission. We couldn't stand by while digital trust eroded. We decided to combine our deep expertise in AI and computer vision to build the defense our world desperately needed—a shield against the rising tide of digital deception."
+          "I am a founder of GenReal, a company dedicated to AI detection across videos, code, and other digital content. ",
+          "Our mission is to help individuals and organizations maintain authenticity and trust. I am currently a student at VIT Vellore (Roll Number: 23BAI0059), where I combine academic knowledge with hands-on innovation in AI and deep learning"
+          
       ]
     },
     {
       name: "Vishwajith P",
       title: "Co-Founder",
-      linkedinHandle: "Vishwajith P", // Just the LinkedIn username
+      linkedinHandle: "vishwajith-p", // Just the LinkedIn username
       contactText: "LinkedIn",
       avatarUrl: "vishwajeet.jpg", // Replace with actual image path
       showUserInfo: true,
       enableTilt: true,
-      narrativeTitle: "The Architect's Blueprint",
+      narrativeTitle: "Redefining Online Authenticity",
       narrativeText: [
-        "Coming from a background of building massive, scalable AI systems after a PhD at Stanford, the challenge was clear: detection models had to be not only incredibly accurate but also fast enough to work in the real world. The theory was sound, but the engineering had to be flawless.",
-        "We're not just building another algorithm. We're architecting a new foundation for online authenticity. This involves pioneering new neural network structures and creating a system robust enough to stay ahead of the constantly evolving threat of synthetic media. It's the most challenging and meaningful problem I've ever worked on."
+          "We’re building more than just algorithms—we’re creating the foundation for online trust. Our detection models are designed to be not only accurate, but also fast and scalable for real-world use. ",
+          "By pioneering new neural network architectures and developing resilient systems, we stay ahead of the rapidly evolving threat of synthetic media. This is one of the most challenging and meaningful problems of our time, and solving it is at the core of our mission."
       ]
     },
   ];

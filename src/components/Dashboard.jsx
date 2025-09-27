@@ -1,62 +1,105 @@
-import React, { useState, useEffect } from "react";
-import {
-  Shield,
-  FileSearch,
-  Code,
-  Key,
-  Plus,
-  Settings,
-  BarChart3,
-  Book,
-  DollarSign,
-  Copy,
-  Eye,
-  EyeOff,
-  Activity,
-  Zap,
-  Globe,
-  User,
-  Bell,
-  LogOut,
-  ChevronDown,
-  Trash2,
-  RefreshCw,
-  X, // For the close button in the dialog
-} from "lucide-react";
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { Shield, Plus, Trash2, Eye, EyeOff, RefreshCw, X, ChevronLeft, BookText, CreditCard, User, Settings, Copy, Key, Server, ChevronsRight, LogOut } from 'lucide-react';
 
-// A custom, reusable dialog component for a consistent look and feel
-const CustomDialog = ({ isOpen, onClose, onConfirm, title, children, confirmText = "Confirm", confirmVariant = "primary" }) => {
+// --- 1. CREATE AUTH CONTEXT ---
+const AuthContext = createContext(null);
+
+// --- HELPER FUNCTIONS ---
+const generateApiKey = () => {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const length = 32;
+  let result = 'g-'; // Updated prefix as requested
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+};
+
+// --- 2. CREATE AUTH PROVIDER COMPONENT ---
+// This component now simulates an already authenticated user, as requested.
+const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    // On initial load, simulate checking for a stored user session.
+    useEffect(() => {
+        // This mimics AuthUtils.getUser() and AuthUtils.getToken()
+        const storedUser = { name: "Demo User", email: "user@email.com" }; // Mocked user data
+        if (storedUser) {
+            setUser(storedUser);
+            setIsAuthenticated(true);
+        }
+    }, []);
+
+    const logout = () => {
+        // This mimics AuthUtils.logout()
+        setUser(null);
+        setIsAuthenticated(false);
+        // In a real app, you would redirect to a login page here.
+        alert("You have been logged out."); 
+    };
+
+    const authContextValue = {
+        user,
+        isAuthenticated,
+        logout
+    };
+
+    return (
+        <AuthContext.Provider value={authContextValue}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+// --- 3. CREATE A CUSTOM HOOK FOR EASY ACCESS ---
+const useAuth = () => {
+    return useContext(AuthContext);
+};
+
+
+// --- UI COMPONENTS ---
+
+const Dialog = ({ isOpen, onClose, onConfirm, title, children, confirmText = "Confirm", confirmVariant = "cyan" }) => {
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.keyCode === 27) onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   if (!isOpen) return null;
 
-  const confirmButtonStyles = {
-    primary: "bg-cyan-600 hover:bg-cyan-500 text-white",
-    danger: "bg-red-600 hover:bg-red-500 text-white",
+  const confirmColors = {
+    cyan: "bg-cyan-600 hover:bg-cyan-500",
+    red: "bg-red-600 hover:bg-red-500",
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]" onClick={onClose}>
-      <div 
-        className="bg-slate-800/80 border border-slate-700 rounded-xl shadow-2xl shadow-black/40 p-6 w-full max-w-md mx-4 animate-fade-in"
-        onClick={e => e.stopPropagation()} // Prevent closing when clicking inside the dialog
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-gray-900 border border-gray-700/50 rounded-xl p-6 w-full max-w-md shadow-2xl shadow-cyan-500/10"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-700/50 transition-colors">
-            <X className="w-5 h-5 text-slate-400" />
+          <h3 className="text-xl font-semibold text-white">{title}</h3>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors">
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="text-slate-300 text-sm mb-6">
-          {children}
-        </div>
+        <div className="text-gray-300 mb-6">{children}</div>
         <div className="flex justify-end gap-3">
-          <button 
-            onClick={onClose} 
-            className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors text-sm font-medium">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium text-white transition-colors"
+          >
             Cancel
           </button>
-          <button 
-            onClick={onConfirm} 
-            className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${confirmButtonStyles[confirmVariant]}`}>
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors ${confirmColors[confirmVariant]}`}
+          >
             {confirmText}
           </button>
         </div>
@@ -65,295 +108,320 @@ const CustomDialog = ({ isOpen, onClose, onConfirm, title, children, confirmText
   );
 };
 
+const Sidebar = ({ view, setView }) => {
+  const { user, logout } = useAuth(); // Correctly uses the context
 
-const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [showApiKey, setShowApiKey] = useState({});
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [deletingProjects, setDeletingProjects] = useState(new Set());
-  
-  // State for managing the custom dialog
-  const [dialogState, setDialogState] = useState({ isOpen: false, type: null, data: null });
-  const [newProjectName, setNewProjectName] = useState("");
-
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: "VideoGuard App",
-      type: "Deepfake Detection",
-      apiKey: "sk-proj-abc123def456...",
-      requests: 12847,
-      status: "active",
-      created: "2024-08-15",
-    },
-    {
-      id: 2,
-      name: "EduCheck Platform",
-      type: "Plagiarism Detection",
-      apiKey: "sk-proj-xyz789ghi012...",
-      requests: 8965,
-      status: "active",
-      created: "2024-07-22",
-    },
-    {
-      id: 3,
-      name: "Media Verification",
-      type: "Combined Services",
-      apiKey: "sk-proj-mno345pqr678...",
-      requests: 5234,
-      status: "paused",
-      created: "2024-06-10",
-    },
-  ]);
-
-  const [usage, setUsage] = useState({
-    totalRequests: 26046,
-    thisMonth: 8945,
-    successRate: 99.7,
-    avgResponseTime: 240,
-  });
-
-  const modelPricing = [
-    {
-      name: "Deepfake Detection",
-      model: "deepfake-v2.1",
-      pricing: { tier1: { limit: "0-1K requests", price: "$0.05" }, tier2: { limit: "1K-10K requests", price: "$0.03" }, tier3: { limit: "10K+ requests", price: "$0.02" } },
-      features: ["Video Analysis", "Image Detection", "Real-time Processing"],
-    },
-    {
-      name: "Plagiarism Detection",
-      model: "plagiarism-v1.8",
-      pricing: { tier1: { limit: "0-500 requests", price: "$0.08" }, tier2: { limit: "500-5K requests", price: "$0.05" }, tier3: { limit: "5K+ requests", price: "$0.03" } },
-      features: ["AI Content Detection", "Source Matching", "Citation Analysis"],
-    },
+  const navItems = [
+    { id: 'dashboard', icon: Server, label: 'Projects' },
+    { id: 'documentation', icon: BookText, label: 'API Docs' },
+    { id: 'billing', icon: CreditCard, label: 'Credits' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
-  const toggleApiKeyVisibility = (projectId) => setShowApiKey(prev => ({ ...prev, [projectId]: !prev[projectId] }));
-  const copyToClipboard = (text) => navigator.clipboard.writeText(text);
-
-  // --- Logic for Handlers that are now decoupled from the UI ---
-  
-  const executeCreateProject = (projectName) => {
-    if (projectName) {
-      const newProject = {
-        id: Date.now(),
-        name: projectName,
-        type: "Unspecified Service",
-        apiKey: `sk-proj-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 10)}...`,
-        requests: 0,
-        status: "active",
-        created: new Date().toISOString().split('T')[0],
-      };
-      setProjects(prevProjects => [...prevProjects, newProject]);
-      setActiveTab("projects");
-    }
-  };
-  
-  const executeDeleteProject = (projectId) => {
-    setDeletingProjects(prev => new Set(prev).add(projectId));
-    setTimeout(() => {
-      setProjects(prev => prev.filter(p => p.id !== projectId));
-      setDeletingProjects(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(projectId);
-        return newSet;
-      });
-    }, 500);
-  };
-
-  const executeRegenerateApiKey = (projectId) => {
-    setProjects(projects => projects.map(p => 
-      p.id === projectId 
-        ? { ...p, apiKey: `sk-proj-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 10)}...` } 
-        : p
-    ));
-  };
-  
-  // --- Dialog confirm/close handlers ---
-
-  const handleDialogConfirm = () => {
-    const { type, data } = dialogState;
-    if (type === 'create') {
-      executeCreateProject(newProjectName);
-    }
-    if (type === 'delete') {
-      executeDeleteProject(data.id);
-    }
-    if (type === 'regenerate') {
-      executeRegenerateApiKey(data.id);
-    }
-    handleDialogClose();
-  };
-
-  const handleDialogClose = () => {
-    setDialogState({ isOpen: false, type: null, data: null });
-    setNewProjectName("");
-  };
-
-  const TabButton = ({ id, label, icon: Icon, isActive, onClick }) => (
-    <button onClick={() => onClick(id)} className={`group flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${isActive ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-500/20" : "text-gray-400 hover:text-gray-300 hover:bg-slate-800/60 hover:border-slate-600/50 border border-transparent"}`}>
-      <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? '' : 'group-hover:rotate-6'}`} />
-      <span className="text-sm font-medium">{label}</span>
-    </button>
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      <style jsx>{`
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
-          50% { box-shadow: 0 0 30px rgba(6, 182, 212, 0.5); }
-        }
-        @keyframes project-fade-out {
-          from { opacity: 1; transform: scale(1); }
-          to { opacity: 0; transform: scale(0.95); }
-        }
-        @keyframes fade-in {
-          from { opacity: 0; transform: scale(0.98) translateY(10px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .animate-project-fade-out { animation: project-fade-out 0.5s ease-out forwards; }
-        .animate-glow { animation: glow 2s ease-in-out infinite; }
-        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
-        .card-hover {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .card-hover:hover {
-          border-color: rgba(56, 189, 248, 0.3);
-          background-color: rgba(30, 41, 59, 0.6);
-        }
-      `}</style>
-
-      {/* Compact Header */}
-      <div className="border-b border-slate-800/50 backdrop-blur-sm bg-slate-900/30 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            {/* Logo - UPDATED to be a clickable link */}
-            <a href="/" className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-cyan-500 rounded-lg p-1 -ml-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center animate-glow group-hover:scale-110 transition-transform duration-300">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-300 via-blue-300 to-cyan-400 bg-clip-text text-transparent">
-                  AI Detection API
-                </h1>
-              </div>
-            </a>
-
-            {/* User Profile & Status */}
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full"><div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div><span className="text-green-400 text-sm font-medium">Operational</span></div>
-              <button className="p-2 hover:bg-slate-800/50 rounded-lg transition-all duration-300 hover:scale-110 relative group"><Bell className="w-5 h-5 text-slate-400 group-hover:text-cyan-400 transition-colors" /><div className="absolute top-1 right-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div></button>
-              <div className="relative">
-                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded-lg transition-all duration-300 hover:scale-105 group">
-                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center"><User className="w-4 h-4 text-white" /></div>
-                  <div className="hidden sm:block text-left"><div className="text-sm font-medium">Alex Chen</div><div className="text-xs text-slate-400">Developer</div></div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} />
-                </button>
-                {showUserMenu && (<div className="absolute right-0 top-full mt-2 w-48 bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl shadow-xl py-2 z-50"><button className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700/50 transition-colors flex items-center gap-3"><Settings className="w-4 h-4" />Settings</button><button className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700/50 transition-colors flex items-center gap-3 text-red-400"><LogOut className="w-4 h-4" />Sign Out</button></div>)}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-wrap gap-3 mb-8">
-          <TabButton id="overview" label="Overview" icon={BarChart3} isActive={activeTab === "overview"} onClick={setActiveTab} />
-          <TabButton id="projects" label="Projects" icon={Code} isActive={activeTab === "projects"} onClick={setActiveTab} />
-          <TabButton id="pricing" label="Pricing" icon={DollarSign} isActive={activeTab === "pricing"} onClick={setActiveTab} />
-          <TabButton id="docs" label="Documentation" icon={Book} isActive={activeTab === "docs"} onClick={setActiveTab} />
-        </div>
-        
-        {/* Render active tab content here... */}
-        {activeTab === 'overview' && (
-            <div> {/* Placeholder for Overview Tab Content */}</div>
-        )}
-        {activeTab === 'projects' && (
-             <div className={`transition-all duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold">Your Projects</h2>
-                  <button onClick={() => { setNewProjectName("My New App"); setDialogState({ isOpen: true, type: 'create' }); }} className="px-6 py-3 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-400/30 rounded-xl hover:from-cyan-600/50 hover:to-blue-600/50 transition-all duration-300 flex items-center gap-3 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 group">
-                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" /> New Project
-                  </button>
-                </div>
-                <div className="grid gap-6">
-                  {projects.map((project, index) => (
-                    <div key={project.id} className={`bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 transition-all duration-300 card-hover ${deletingProjects.has(project.id) ? 'animate-project-fade-out' : ''}`} style={{ animationDelay: `${index * 100}ms` }}>
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2"><h3 className="text-xl font-semibold text-white">{project.name}</h3><span className={`px-3 py-1 text-xs rounded-full ${project.status === 'active' ? 'bg-green-400/20 text-green-400 border border-green-400/30' : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30'}`}>{project.status}</span></div>
-                          <p className="text-sm text-slate-400">{project.type}</p>
-                        </div>
-                        <div className="flex items-center">
-                          <button className="p-3 hover:bg-slate-700/50 rounded-lg transition-all duration-300 group"><Settings className="w-5 h-5 text-slate-400 group-hover:text-cyan-400" /></button>
-                          <button onClick={() => setDialogState({ isOpen: true, type: 'delete', data: { id: project.id, name: project.name } })} className="p-3 hover:bg-red-500/20 rounded-lg transition-all duration-300 group ml-2" title="Delete Project"><Trash2 className="w-5 h-5 text-slate-400 group-hover:text-red-400" /></button>
-                        </div>
-                      </div>
-                      <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/30">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="text-sm text-slate-400 mb-1">API Key</div>
-                            <div className="font-mono text-sm text-white">{showApiKey[project.id] ? project.apiKey : "sk-proj-" + "•".repeat(20)}</div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => setDialogState({ isOpen: true, type: 'regenerate', data: { id: project.id, name: project.name } })} className="p-2 hover:bg-slate-700/50 rounded-lg transition-all duration-300 group" title="Regenerate Key"><RefreshCw className="w-4 h-4 text-slate-400 group-hover:text-cyan-400" /></button>
-                            <button onClick={() => toggleApiKeyVisibility(project.id)} className="p-2 hover:bg-slate-700/50 rounded-lg transition-all duration-300 group" title={showApiKey[project.id] ? "Hide Key" : "Show Key"}>{showApiKey[project.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
-                            <button onClick={() => copyToClipboard(project.apiKey)} className="p-2 hover:bg-slate-700/50 rounded-lg transition-all duration-300 group" title="Copy Key"><Copy className="w-4 h-4" /></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-        )}
-        {/* Other tabs can be added here */}
-      </div>
-
-      {/* --- DIALOG RENDERING --- */}
-      <CustomDialog
-        isOpen={dialogState.isOpen}
-        onClose={handleDialogClose}
-        onConfirm={handleDialogConfirm}
-        title={
-          dialogState.type === 'create' ? "Create New Project" :
-          dialogState.type === 'delete' ? "Delete Project" :
-          dialogState.type === 'regenerate' ? "Regenerate API Key" : ""
-        }
-        confirmText={
-          dialogState.type === 'create' ? "Create" :
-          dialogState.type === 'delete' ? "Delete" :
-          dialogState.type === 'regenerate' ? "Regenerate" : ""
-        }
-        confirmVariant={dialogState.type === 'delete' ? 'danger' : 'primary'}
-      >
-        {dialogState.type === 'create' && (
-          <div>
-            <p className="mb-4">Enter a name for your new project.</p>
-            <input
-              type="text"
-              value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)}
-              className="w-full bg-slate-900/70 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              autoFocus
+    <div className="w-64 bg-black border-r border-gray-800/50 p-4 flex flex-col">
+      <div className="flex items-center gap-3 mb-10">
+          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+            <img 
+              src="logoGenReal.png" 
+              alt="logoGenReal" 
+              className="w-full h-full object-cover"
             />
           </div>
-        )}
-        {dialogState.type === 'delete' && (
-          <p>Are you sure you want to permanently delete the project <strong className="text-cyan-400">{dialogState.data?.name}</strong>? This action cannot be undone.</p>
-        )}
-        {dialogState.type === 'regenerate' && (
-          <p>Are you sure you want to regenerate the API key for <strong className="text-cyan-400">{dialogState.data?.name}</strong>? The old key will be invalidated immediately.</p>
-        )}
-      </CustomDialog>
+
+        <h1 className="text-xl font-bold text-white">Genreal AI</h1>
+      </div>
+      <nav className="flex-1 flex flex-col gap-2">
+        {navItems.map(item => (
+          <button
+            key={item.id}
+            onClick={() => setView(item.id)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              view === item.id 
+                ? 'bg-gray-800 text-white' 
+                : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
+            }`}
+          >
+            <item.icon className="w-5 h-5" />
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      {user && ( // User details will display correctly
+          <div className="mt-auto">
+            <div className="flex items-center gap-3 p-3 bg-gray-900/50 border border-gray-800/50 rounded-lg">
+              <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-cyan-400"/>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              </div>
+              <button onClick={logout} className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors" title="Log Out">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+      )}
     </div>
   );
 };
 
+// --- PAGE VIEWS ---
+
+const ProjectsView = ({ projects, setProjects }) => {
+  const [showApiKey, setShowApiKey] = useState({});
+  const [copyStatus, setCopyStatus] = useState({});
+  const [dialog, setDialog] = useState({ isOpen: false, type: null, data: null });
+  const [newProjectName, setNewProjectName] = useState('');
+
+  const toggleApiKey = (id) => setShowApiKey((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const copyToClipboard = (text, id) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopyStatus({ [id]: true });
+      setTimeout(() => setCopyStatus({ [id]: false }), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+    document.body.removeChild(textArea);
+  };
+  
+  const handleDialogConfirm = () => {
+    const { type, data } = dialog;
+    if (type === 'delete') {
+      setProjects(prev => prev.filter(p => p.id !== data.id));
+    }
+    if (type === 'regenerate') {
+      setProjects(prev => prev.map(p => p.id === data.id ? { ...p, apiKey: generateApiKey() } : p));
+    }
+    if (type === 'create') {
+      if (newProjectName.trim()) {
+        const newProject = {
+          id: Date.now(),
+          name: newProjectName.trim(),
+          apiKey: generateApiKey(),
+          status: 'active',
+          createdAt: new Date().toLocaleDateString(),
+        };
+        setProjects(prev => [newProject, ...prev]);
+        setNewProjectName('');
+      }
+    }
+    setDialog({ isOpen: false, type: null, data: null });
+  };
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold">Projects</h2>
+        <button
+          onClick={() => setDialog({ isOpen: true, type: "create", data: null })}
+          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm font-semibold transition-colors shadow-md shadow-cyan-500/20"
+        >
+          <Plus className="w-5 h-5" /> New Project
+        </button>
+      </div>
+
+      <div className="bg-gray-900/50 border border-gray-800/50 rounded-xl">
+        {projects.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p>No projects yet.</p>
+            <p>Click "New Project" to get started.</p>
+          </div>
+        ) : (
+        <div className="divide-y divide-gray-800/50">
+            {projects.map((project) => (
+            <div key={project.id} className="p-4 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+              <div className="md:col-span-1">
+                <h3 className="text-lg font-semibold text-white">{project.name}</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                  <span className={`w-2 h-2 rounded-full ${project.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                  <span>{project.status.charAt(0).toUpperCase() + project.status.slice(1)}</span>
+                  <span>•</span>
+                  <span>Created {project.createdAt}</span>
+                </div>
+              </div>
+              
+              <div className="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+                <div className="flex items-center bg-gray-800/60 rounded-lg px-3 py-2 font-mono text-sm w-full sm:w-auto">
+                    <span className="text-gray-300 flex-1 truncate">
+                        {showApiKey[project.id] ? project.apiKey : `sk-genreal-••••••••••••••••••••`}
+                    </span>
+                    <button onClick={() => toggleApiKey(project.id)} className="p-1 ml-2 text-gray-400 hover:text-white">
+                        {showApiKey[project.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => copyToClipboard(project.apiKey, project.id)} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white transition-colors">
+                        {copyStatus[project.id] ? <span className="text-xs">Copied!</span> : <Copy className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => setDialog({ isOpen: true, type: 'regenerate', data: project })} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white transition-colors">
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setDialog({ isOpen: true, type: 'delete', data: project })} className="p-2 bg-gray-800 hover:bg-red-500/20 rounded-lg text-gray-300 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        )}
+      </div>
+      
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={() => setDialog({ isOpen: false, type: null, data: null })}
+        onConfirm={handleDialogConfirm}
+        title={
+          dialog.type === 'delete' ? 'Delete Project' :
+          dialog.type === 'regenerate' ? 'Regenerate API Key' : 'Create New Project'
+        }
+        confirmText={
+          dialog.type === 'delete' ? 'Delete' :
+          dialog.type === 'regenerate' ? 'Regenerate' : 'Create'
+        }
+        confirmVariant={dialog.type === 'delete' ? 'red' : 'cyan'}
+      >
+        {dialog.type === 'delete' && <p>Are you sure you want to delete the project <strong>"{dialog.data?.name}"</strong>? This action cannot be undone.</p>}
+        {dialog.type === 'regenerate' && <p>Are you sure you want to regenerate the API key for <strong>"{dialog.data?.name}"</strong>? Your old key will be invalidated immediately.</p>}
+        {dialog.type === 'create' && (
+          <div>
+            <label htmlFor="projectName" className="block text-sm font-medium text-gray-300 mb-2">Project Name</label>
+            <input
+              type="text"
+              id="projectName"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+              placeholder="e.g., My Awesome App"
+            />
+          </div>
+        )}
+      </Dialog>
+    </>
+  );
+};
+
+const ApiDocsView = () => {
+    const codeExample = `curl -X POST https://api.genreal.ai/v1/detect \\
+-H "Authorization: Bearer YOUR_API_KEY" \\
+-H "Content-Type: application/json" \\
+-d '{
+  "source_url": "https://example.com/media.mp4"
+}'`;
+
+  return (
+    <div className="text-gray-300">
+      <h2 className="text-3xl font-bold text-white mb-2">API Documentation</h2>
+      <p className="text-gray-400 mb-8">Integrate our deepfake detection API into your application.</p>
+      
+      <div className="space-y-8">
+        <section>
+          <h3 className="text-xl font-semibold text-white mb-3 border-l-4 border-cyan-500 pl-3">Authentication</h3>
+          <p>Authenticate your API requests by including your secret API key in the request's Authorization header.</p>
+        </section>
+        <section>
+          <h3 className="text-xl font-semibold text-white mb-3 border-l-4 border-cyan-500 pl-3">Endpoints</h3>
+          <div className="bg-gray-900/50 border border-gray-800/50 rounded-xl p-4">
+            <p className="font-mono text-sm"><span className="font-bold text-cyan-400 mr-2">POST</span> /v1/detect</p>
+            <p className="mt-2 text-gray-400">Submits a media file for deepfake analysis.</p>
+          </div>
+        </section>
+        <section>
+          <h3 className="text-xl font-semibold text-white mb-3 border-l-4 border-cyan-500 pl-3">Example Request</h3>
+          <div className="bg-black border border-gray-800/50 rounded-xl">
+             <div className="px-4 py-2 border-b border-gray-800/50 text-xs text-gray-400">cURL Example</div>
+             <pre className="p-4 text-sm whitespace-pre-wrap overflow-x-auto">
+                 <code>{codeExample}</code>
+             </pre>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+const BillingView = () => {
+    const [credits, setCredits] = useState(1250);
+    return (
+        <div>
+            <h2 className="text-3xl font-bold text-white mb-8">Credits & Billing</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1 bg-gray-900/50 border border-gray-800/50 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <p className="text-sm text-gray-400 font-medium">Available Credits</p>
+                        <p className="text-4xl font-bold text-white mt-2">{credits.toLocaleString()}</p>
+                    </div>
+                    <button className="w-full mt-6 bg-cyan-600 hover:bg-cyan-500 rounded-lg py-2 text-sm font-semibold transition-colors">
+                        Buy More Credits
+                    </button>
+                </div>
+                <div className="md:col-span-2 bg-gray-900/50 border border-gray-800/50 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Usage This Month</h3>
+                    <div className="h-48 flex items-center justify-center text-gray-500">
+                        <p>Usage chart coming soon.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- MAIN APP LAYOUT ---
+const DashboardLayout = () => {
+  const [view, setView] = useState('dashboard');
+  const [projects, setProjects] = useState([
+    { id: 1, name: "AI Content Detector", apiKey: generateApiKey(), status: "active", createdAt: "09/15/2023" },
+    { id: 2, name: "Video Verification Tool", apiKey: generateApiKey(), status: "active", createdAt: "08/21/2023" },
+    { id: 3, name: "Staging Environment", apiKey: generateApiKey(), status: "paused", createdAt: "07/02/2023" },
+  ]);
+
+  const renderView = () => {
+    switch(view) {
+      case 'dashboard': return <ProjectsView projects={projects} setProjects={setProjects} />;
+      case 'documentation': return <ApiDocsView />;
+      case 'billing': return <BillingView />;
+      case 'settings': return <div><h2 className="text-3xl font-bold">Settings</h2><p className="text-gray-500 mt-4">Settings page under construction.</p></div>;
+      default: return <ProjectsView projects={projects} setProjects={setProjects} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-sans flex">
+      <Sidebar view={view} setView={setView} />
+      <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        {/* New Header with Back to Home button */}
+        <header className="flex items-center justify-end mb-8">
+             <a
+               href="/"
+               className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors text-gray-300 hover:text-white"
+             >
+               <ChevronLeft className="w-4 h-4" /> Back to Home
+             </a>
+        </header>
+        {renderView()}
+      </main>
+    </div>
+  );
+};
+
+
+// --- ROOT APP COMPONENT ---
+const Dashboard = () => {
+  return (
+      <AuthProvider>
+        <DashboardLayout />
+      </AuthProvider>
+  );
+};
+
 export default Dashboard;
+
