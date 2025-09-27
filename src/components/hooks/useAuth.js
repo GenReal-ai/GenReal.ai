@@ -48,7 +48,6 @@ export const useAuth = () => {
           }
         }
       }).catch(error => {
-        console.error('Token validation failed:', error);
         // On validation error, clear auth state
         AuthUtils.removeToken();
         setIsAuthenticated(false);
@@ -62,7 +61,7 @@ export const useAuth = () => {
       });
 
     } catch (error) {
-      console.error('Auth check failed:', error);
+      
       // On error, clear auth state
       AuthUtils.removeToken();
       setIsAuthenticated(false);
@@ -73,7 +72,7 @@ export const useAuth = () => {
 
   // Login function
   const login = useCallback((token, userData) => {
-    console.log('useAuth: Login called with:', { token: !!token, user: userData });
+    
     
     AuthUtils.setToken(token);
     AuthUtils.setUser(userData);
@@ -87,7 +86,7 @@ export const useAuth = () => {
       })
     );
     
-    console.log('useAuth: Login completed, auth state updated');
+    
   }, []);
 
   // Logout function
@@ -97,7 +96,7 @@ export const useAuth = () => {
       setIsAuthenticated(false);
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      
       // Still clear local state even if API call fails
       AuthUtils.removeToken();
       setIsAuthenticated(false);

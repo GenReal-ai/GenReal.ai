@@ -1,4 +1,4 @@
-// utils/authUtils.js - Frontend authentication utilities with cold start handling
+const API_BASE_URL = import.meta.env.VITE_AUTH_API_URL;
 export class AuthUtils {
   // --- Token + User Management ---
   static getToken() {
@@ -135,12 +135,12 @@ export class AuthUtils {
       }
     }
   }
-    
+
   // --- Auth Flow ---
   static async refreshToken() {
     try {
       const response = await this.fetchWithRetry(
-        "https://backendgenreal-authservice.onrender.com/api/auth/refresh-token",
+        `${API_BASE_URL}/api/auth/refresh-token`,
         {
           method: "POST",
           credentials: "include",
@@ -164,7 +164,7 @@ export class AuthUtils {
 
   static async logout() {
     try {
-      await this.fetchWithRetry("https://backendgenreal-authservice.onrender.com/api/auth/logout", {
+      await this.fetchWithRetry(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
         headers: this.getAuthHeaders(),
@@ -186,7 +186,7 @@ export class AuthUtils {
   static async checkCredits(requiredCredits = 1) {
     try {
       const response = await this.authenticatedFetch(
-        "https://backendgenreal-authservice.onrender.com/api/auth/credits"
+        `${API_BASE_URL}/api/auth/credits`
       );
       const data = await response.json();
 
@@ -203,7 +203,7 @@ export class AuthUtils {
   static async validateToken() {
     try {
       const response = await this.authenticatedFetch(
-        "https://backendgenreal-authservice.onrender.com/api/auth/validate"
+        `${API_BASE_URL}/api/auth/validate`
       );
       
       if (!response.ok) {
@@ -223,16 +223,14 @@ export class AuthUtils {
     }
   }
 
-  // Ping backend to wake it up (call this on app load)
   static async wakeUpBackend() {
     try {
       await this.fetchWithRetry(
-        "https://backendgenreal-authservice.onrender.com/health",
+        `${API_BASE_URL}/health`,
         { method: "GET" },
-        1 // Only retry once for wake-up
+        1 
       );
     } catch (error) {
-      // Don't throw error, just log it
     }
   }
 }
