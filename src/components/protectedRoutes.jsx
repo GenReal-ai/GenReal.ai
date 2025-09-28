@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, requireCredits = 0 }) => {
   }
 
   // If not authenticated, redirect to login with current path as redirect
-  if (!isAuthenticated) {
+  if (!loading && !isAuthenticated) {
     const redirectPath = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
     return <Navigate to={`/login?redirect=${redirectPath}`} replace />;
   }

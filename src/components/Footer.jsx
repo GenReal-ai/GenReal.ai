@@ -31,13 +31,14 @@ const Footer = () => {
         </div>
 
         {/* Right Section */}
-        <div className="flex-1 flex flex-col items-start md:items-end text-sm">
+        <div className="flex-1 flex flex-col items-start md:items-end text-sm text-right">
           <h4 className="text-cyan-300 font-bold text-lg mb-4">Contact</h4>
           <ul className="space-y-2">
             <li><span className="font-medium">Email:</span> genreal.ai@gmail.com</li>
             <li><span className="font-medium">Phone:</span> +91 7878787878</li>
           </ul>
         </div>
+
       </div>
 
       {/* Divider */}

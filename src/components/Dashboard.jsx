@@ -129,7 +129,7 @@ const Sidebar = ({ view, setView }) => {
             />
           </div>
 
-        <h1 className="text-xl font-bold text-white">Genreal AI</h1>
+        <h1 className="text-xl font-bold text-white">GenRealAI</h1>
       </div>
       <nav className="flex-1 flex flex-col gap-2">
         {navItems.map(item => (
