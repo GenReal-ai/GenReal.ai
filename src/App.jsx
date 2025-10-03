@@ -96,9 +96,6 @@ const Home = ({ isLoaded, onFaceModelLoaded }) => {
       <div id="contact-us">
         <ContactUs />
       </div>
-      <div id="team">
-        <Team />
-      </div>
       <Footer />
     </div>
   );
